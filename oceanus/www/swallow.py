@@ -1,11 +1,10 @@
 import falcon
-import random
 import os
 import json
 import redis
 import base64
 import logging
-from pprint import pformat
+from pprint import pprint, pformat
 from cerberus import Validator
 from datetime import datetime
 from logging import getLogger
@@ -15,7 +14,6 @@ logger = getLogger(__name__)
 handler = logging.StreamHandler()
 logger.setLevel(getattr(logging, LOG_LEVEL))
 logger.addHandler(handler)
-
 
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
@@ -36,10 +34,6 @@ class SwallowResource(object):
 
         return result
 
-    def create_session_id(self):
-        source_str = '0123456789abcdef'
-        return "".join([random.choice(source_str) for x in range(16)])
-
     def validate_json(self, field, value, error):
         if not value:
             return
@@ -47,6 +41,12 @@ class SwallowResource(object):
             json.loads(value)
         except:
             error(field, 'Must be valid JSON')
+
+    def clean_json(self, json_text):
+        json_text = json.loads(json_text)
+        pprint(json_text)
+        json_text = json.dumps(json_text, sort_keys=True)
+        return json_text
 
     def on_get(self, req, resp):
 
@@ -57,9 +57,9 @@ class SwallowResource(object):
         user_data = {
             # date and time
             'dt': str(datetime.utcnow()),
-            # client id
+            # client id in user cookie
             'sid': req.get_param('sid', required=True),
-            # remote address
+            # remote address ip
             'rad': rad,
             # event name
             'evt': req.get_param('evt', required=True),
@@ -67,7 +67,7 @@ class SwallowResource(object):
             'ua': req.user_agent,
             # oceanus id
             'oid': req.get_param('oid', required=True),
-            # user uniq id
+            # user uniq id ex. bizocean id
             'uid': req.get_param('uid', required=False),
             # encode
             'enc': req.get_param('enc', required=True),
@@ -112,7 +112,7 @@ class SwallowResource(object):
                    'nullable': True, 'empty': True, 'maxlength': 256},
             'enc': {'type': 'string',
                     'empty': True,
-                    'regex': '^[0-9a-zA-Z\-]+$',
+                    'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
                     'maxlength': 16},
             'scr': {'type': 'string',
                     'nullable': True, 'empty': True, 'maxlength': 16},
@@ -122,12 +122,16 @@ class SwallowResource(object):
 
         v = Validator(validate_schema)
         validate_result = v.validate(user_data)
+
         redis_result = False
         if validate_result:
+            user_data['jsn'] = self.clean_json(user_data['jsn'])
+            user_data['enc'] = user_data['enc'].upper()
             resp.status = falcon.HTTP_200
             redis_data = json.dumps(user_data)
             redis_result = self.write_to_redis(redis_data)
         else:
+            logger.error("validate error:{0} {1}".format(v.errors, user_data))
             resp.status = falcon.HTTP_400
 
         if req.get_param('debug', required=False):
