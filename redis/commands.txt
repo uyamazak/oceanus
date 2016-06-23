@@ -1,0 +1,2 @@
+docker run -p 6379:6379 asia.gcr.io/oceanus-dev/oceanus-redis:v0.1
+gcloud docker push asia.gcr.io/oceanus-dev/oceanus-redis:v0.1

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gunicorn-pod
+spec:
+  containers:
+    - name: gunicorn-container
+      image: oceanus
+      ports:
+      - containerPort: 80
+

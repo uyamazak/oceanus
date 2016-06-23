@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: oceanus-gunicorn
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: oceanus-gunicorn
+    spec:
+      containers:
+      - name: oceanus-gunicorn
+        image: us.gcr.io/oceanus-dev/oceanus:latest
+        ports:
+        - containerPort: 80
