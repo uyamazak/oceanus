@@ -43,6 +43,8 @@ class SwallowResource(object):
             error(field, 'Must be valid JSON')
 
     def clean_json(self, json_text):
+        if not json_text:
+            return
         json_text = json.loads(json_text)
         pprint(json_text)
         json_text = json.dumps(json_text, sort_keys=True)
