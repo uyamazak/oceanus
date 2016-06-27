@@ -46,9 +46,16 @@ class SwallowResource(object):
         if not json_text:
             return
         json_text = json.loads(json_text)
-        pprint(json_text)
         json_text = json.dumps(json_text, sort_keys=True)
         return json_text
+
+    def adjust_user_data(self, user_data):
+        user_data['enc'] = user_data['enc'].upper()
+        if len(user_data['ua']) > 256:
+            user_data['ua'] = user_data['ua'][0:256]
+            logger.info('cut ua 256:{0}'.format(user_data['ua']) )
+
+        return user_data
 
     def on_get(self, req, resp):
 
@@ -122,13 +129,13 @@ class SwallowResource(object):
                     'nullable': True, 'empty': True, 'maxlength': 16},
         }
 
+        user_data = self.adjust_user_data(user_data)
         v = Validator(validate_schema)
         validate_result = v.validate(user_data)
 
         redis_result = False
         if validate_result:
             user_data['jsn'] = self.clean_json(user_data['jsn'])
-            user_data['enc'] = user_data['enc'].upper()
             resp.status = falcon.HTTP_200
             redis_data = json.dumps(user_data)
             redis_result = self.write_to_redis(redis_data)

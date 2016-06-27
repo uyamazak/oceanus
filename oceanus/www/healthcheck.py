@@ -6,6 +6,7 @@ REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 REDIS_LIST = os.environ['REDISLIST']
 
+
 class HelthCheckResource(object):
     def on_get(self, req, resp):
         try:
@@ -13,7 +14,7 @@ class HelthCheckResource(object):
             r.info()
         except Exception as e:
             resp.status = falcon.HTTP_503
-            resp.body = 'fail connecting redis'
+            resp.body = 'fail connecting redis {0}'.format(e)
             return
 
         resp.status = falcon.HTTP_200
