@@ -4,7 +4,8 @@ docker images | grep swallow | head -1
 
 docker build -t asia.gcr.io/oceanus-dev/oceanus-swallow:v1 /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
 
-docker run -p 80:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test asia.gcr.io/oceanus-dev/oceanus-swallow:v1
+docker run -p 80:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e asia.gcr.io/oceanus-dev/oceanus-swallow:v1
+
 
 ### Kubernetes
 

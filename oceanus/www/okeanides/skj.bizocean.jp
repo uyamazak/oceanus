@@ -7,7 +7,7 @@ oceanus.a=((function(opt){
  var d=document;
  var args=[];
  var opt=opt||[];
- args.oid=opt.oid||2;
+ args.oid=opt.oid||4;
  args.evt=opt.evt||null;
  args.uid=opt.uid||null;
  args.ref=(opt.ref||d.referrer).substr(0,1024);
@@ -31,28 +31,6 @@ oceanus.a=((function(opt){
   }
  }
  docCookies.setItem(s_key,sid,94608000,"/");
- args.sid=sid;
- //bizocean variables
- var jsn=opt.jsn||{};
- var kw_match=getParameterByName("keyword");
- if(kw_match){
-  jsn.kwd=kw_match;
-  var cat_match=location.pathname.match(/\/search\/([0-9]+)/);
-  if(cat_match) jsn.cat=decodeURIComponent(cat_match[1]);
- }
- if(w.JSON&&Object.keys(jsn).length){
-  args.jsn=w.JSON.stringify(jsn);
- }
- if(!args.uid){
-  var biz_id=getParameterByName('member_state[id]',docCookies.getItem("auth_state"));
-  if(biz_id){
-   args.uid=biz_id;
-  }else if(typeof(w.memberInfo)!='undefined'&&
-   typeof(w.memberInfo.member_state)!='undefined'&&
-   typeof(w.memberInfo.member_state.id)!='undefined'){
-   args.uid=w.memberInfo.member_state.id||null;
-  }
- }
  return args;
 }));
 oceanus.f=oceanus.f||((function(args){

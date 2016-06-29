@@ -22,11 +22,10 @@ ENV PUBSUB_TOPIC projects/oceanus-dev/topics/oceanus-test
 ENV DATA_SET oceanus_prod
 ENV JSON_KEY_FILE Oceanus-dev-784c5c9ec4b7.json
 ENV SESSION_KEY oceanus_sid
-ENV TABLE_PREFIX oceanus_v1
+ENV TABLE_PREFIX oceanus_v2_
 
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
-ENV REDISLIST oceanus_prod
 ENV CHUNK_NUM 50
 ENV LOG_LEVEL DEBUG
 

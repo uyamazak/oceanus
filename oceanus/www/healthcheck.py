@@ -4,7 +4,6 @@ import os
 
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
-REDIS_LIST = os.environ['REDISLIST']
 
 
 class HelthCheckResource(object):

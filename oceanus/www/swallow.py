@@ -4,20 +4,21 @@ import json
 import redis
 import base64
 import logging
-from pprint import pprint, pformat
+import settings
+from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from logging import getLogger
 
 LOG_LEVEL = os.environ['LOG_LEVEL']
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 logger.setLevel(getattr(logging, LOG_LEVEL))
 logger.addHandler(handler)
 
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
-REDIS_LIST = os.environ['REDISLIST']
+
+OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class SwallowResource(object):
@@ -25,9 +26,9 @@ class SwallowResource(object):
     r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
     redis_errors = 0
 
-    def write_to_redis(self, data):
+    def write_to_redis(self, data, site_name):
         try:
-            result = self.r.lpush(REDIS_LIST, data)
+            result = self.r.lpush(site_name, data)
         except Exception as e:
             logger.critical('Problem adding data to Redis. {0}'.format(e))
             self.redis_errors += 1
@@ -53,11 +54,19 @@ class SwallowResource(object):
         user_data['enc'] = user_data['enc'].upper()
         if len(user_data['ua']) > 256:
             user_data['ua'] = user_data['ua'][0:256]
-            logger.info('cut ua 256:{0}'.format(user_data['ua']) )
+            logger.info('cut ua 256:{0}'.format(user_data['ua']))
 
         return user_data
 
-    def on_get(self, req, resp):
+    def on_get(self, req, resp, site_name=None):
+        if site_name is None:
+            site_name = 'bizocean'
+        elif site_name not in OCEANUS_SITES:
+            resp.status = falcon.HTTP_404
+            message = 'site name not found:{0}'.format(site_name)
+            resp.body = message
+            logger.error(message)
+            return
 
         resp.set_header('Access-Control-Allow-Origin', '*')
 
@@ -65,7 +74,7 @@ class SwallowResource(object):
         rad = req.access_route[0]
         user_data = {
             # date and time
-            'dt': str(datetime.utcnow()),
+            'dt':  str(datetime.utcnow()),
             # client id in user cookie
             'sid': req.get_param('sid', required=True),
             # remote address ip
@@ -73,7 +82,7 @@ class SwallowResource(object):
             # event name
             'evt': req.get_param('evt', required=True),
             # user agent
-            'ua': req.user_agent,
+            'ua':  req.user_agent,
             # oceanus id
             'oid': req.get_param('oid', required=True),
             # user uniq id ex. bizocean id
@@ -94,7 +103,7 @@ class SwallowResource(object):
         }
 
         validate_schema = {
-            'dt': {'type': 'string'},
+            'dt':  {'type': 'string'},
             'oid': {'type': 'string',
                     'maxlength': 16},
             'sid': {'type': 'string',
@@ -117,8 +126,8 @@ class SwallowResource(object):
                     'nullable': True, 'empty': True, 'maxlength': 1024},
             'jsn': {'validator': self.validate_json,
                     'nullable': True, 'empty': True, 'maxlength': 1024},
-            'ua': {'type': 'string',
-                   'nullable': True, 'empty': True, 'maxlength': 256},
+            'ua':  {'type': 'string',
+                    'nullable': True, 'empty': True, 'maxlength': 256},
             'enc': {'type': 'string',
                     'empty': True,
                     'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
@@ -138,13 +147,14 @@ class SwallowResource(object):
             user_data['jsn'] = self.clean_json(user_data['jsn'])
             resp.status = falcon.HTTP_200
             redis_data = json.dumps(user_data)
-            redis_result = self.write_to_redis(redis_data)
+            redis_result = self.write_to_redis(redis_data, site_name)
         else:
             logger.error("validate error:{0} {1}".format(v.errors, user_data))
             resp.status = falcon.HTTP_400
 
         if req.get_param('debug', required=False):
             resp.body = "oceanus swallow debug" \
+                         + "\n\n site_name:" + site_name \
                          + "\n\n user_data:\n" + pformat(user_data) \
                          + '\n\n validate: ' + pformat(validate_result) \
                          + '\n\n validate errors:\n' + pformat(v.errors) \
@@ -152,7 +162,8 @@ class SwallowResource(object):
                          + '\n\n context:\n' + pformat(req.context) \
                          + '\n\n headers:\n' + pformat(req.headers) \
                          + '\n\n env:\n' + pformat(req.env) \
-                         + '\n\n redis result: ' + pformat(redis_result)
+                         + '\n\n redis result: ' + pformat(redis_result) \
+                         + '\n\n redis keys: ' + pformat(self.r.keys())
         else:
             # response 1px gif
             resp.append_header('Cache-Control', 'no-cache')
