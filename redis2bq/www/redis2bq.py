@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import datetime
 import json
+import signal
 import os
 import redis
 import time
@@ -34,6 +35,8 @@ OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class redis2bq():
+    lines = []
+    exit_signal = False
 
     def connect_bigquery(self):
         json_key = JSON_KEY_FILE
@@ -74,8 +77,16 @@ class redis2bq():
         return created
 
     def write_to_bq(self, site_name):
+
+        def signal_exit_func(num, frame):
+            print('gx {} {} {}'.format(num, frame, site_name))
+            self.clean_up(site_name)
+
+        signal.signal(signal.SIGINT, signal_exit_func)
+        signal.signal(signal.SIGTERM, signal_exit_func)
+
         """Write the data to BigQuery in small chunks."""
-        lines = []
+        self.lines = []
         line = None
         redis_errors = 0
         allowed_redis_errors = 5
@@ -88,6 +99,9 @@ class redis2bq():
             time.sleep(5)
 
         while True:
+            if self.exit_signal:
+                break
+
             logger.info("LOG_LEVEL:{0}".format(LOG_LEVEL))
             logger.info("PROJECT_ID:{0}, "
                         "DATA_SET:{1}, "
@@ -100,7 +114,7 @@ class redis2bq():
                                                 REDIS_PORT,
                                                 site_name))
 
-            while len(lines) < CHUNK_NUM:
+            while len(self.lines) < CHUNK_NUM:
                 # We'll use a blocking list pop -- it returns when there is
                 # new data.
                 res = None
@@ -108,7 +122,7 @@ class redis2bq():
                     res = r.brpop(site_name)
                     logger.info("{0} - CHUNK:{1}/{2}".format(
                         site_name,
-                        len(lines) + 1,
+                        len(self.lines) + 1,
                         CHUNK_NUM))
                     logger.debug("{0}".format(res))
                 except Exception as e:
@@ -128,24 +142,43 @@ class redis2bq():
                     logger.error('json loads error {0}'.format(e))
                     continue
 
-                lines.append(line)
+                self.lines.append(line)
 
             table_name = self.create_table_name(site_name)
             table_name_tomorrow = self.create_table_name(site_name,
                                                          delta_days=1)
             self.prepare_table(client, table_name)
             self.prepare_table(client, table_name_tomorrow)
-            # insert the lines into bigquery
-            inserted = client.push_rows(DATA_SET, table_name, lines, 'dt')
+            # insert the self.lines into bigquery
+            inserted = client.push_rows(DATA_SET, table_name, self.lines, 'dt')
             if not inserted:
                 client = self.connect_bigquery()
                 table_name = self.create_table_name(site_name)
                 self.prepare_table(client, table_name)
                 time.sleep(5)
-                inserted = client.push_rows(DATA_SET, table_name, lines, 'dt')
-            logger.info('bigquery inserted:{0}'.format(inserted))
-            lines = []
+                inserted = client.push_rows(DATA_SET,
+                                            table_name,
+                                            self.lines,
+                                            'dt')
+            logger.info('bigquery [{0}] inserted:{1}'.format(site_name,
+                                                             inserted))
+            self.lines = []
 
+    def clean_up(self, site_name):
+        self.exit_signal = True
+        client = self.connect_bigquery()
+        table_name = self.create_table_name(site_name)
+        # insert the self.lines into bigquery
+        inserted = None
+        if len(self.lines):
+            inserted = client.push_rows(DATA_SET, table_name, self.lines, 'dt')
+        logger.info("graceful exit [{0}] "
+                    "bigquery inserted:{1} {2}".format(site_name,
+                                                       inserted,
+                                                       len(self.lines)))
+        if inserted:
+            self.lines = []
+        return
 
 if __name__ == '__main__':
     logger.info("starting write to BigQuery....!")
@@ -157,5 +190,20 @@ if __name__ == '__main__':
     """
     multiprocess OCEANUS_SITES num
     """
+    plist = []
     for site_name in OCEANUS_SITES:
-        Process(target=multi, args=(site_name,)).start()
+        plist.append(Process(target=multi, args=(site_name,)))
+
+    for p in plist:
+        p.start()
+
+    def graceful_exit(num, frame):
+        for p in plist:
+            print('graceful_exit')
+            p.terminate()
+
+    for sig in (signal.SIGINT,
+                signal.SIGTERM,
+                signal.SIGQUIT,
+                signal.SIGABRT):
+        signal.signal(sig, graceful_exit)
