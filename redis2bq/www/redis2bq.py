@@ -3,6 +3,7 @@ import datetime
 import json
 import signal
 import os
+import sys
 import redis
 import time
 import logging
@@ -36,7 +37,7 @@ OCEANUS_SITES = settings.OCEANUS_SITES
 
 class redis2bq():
     lines = []
-    exit_signal = False
+    keep_processing = True
 
     def connect_bigquery(self):
         json_key = JSON_KEY_FILE
@@ -98,10 +99,7 @@ class redis2bq():
                                                         table_created))
             time.sleep(5)
 
-        while True:
-            if self.exit_signal:
-                break
-
+        while self.keep_processing:
             logger.info("LOG_LEVEL:{0}".format(LOG_LEVEL))
             logger.info("PROJECT_ID:{0}, "
                         "DATA_SET:{1}, "
@@ -165,10 +163,9 @@ class redis2bq():
             self.lines = []
 
     def clean_up(self, site_name):
-        self.exit_signal = True
+        self.keep_processing = False
         client = self.connect_bigquery()
         table_name = self.create_table_name(site_name)
-        # insert the self.lines into bigquery
         inserted = None
         if len(self.lines):
             inserted = client.push_rows(DATA_SET, table_name, self.lines, 'dt')
@@ -178,7 +175,7 @@ class redis2bq():
                                                        len(self.lines)))
         if inserted:
             self.lines = []
-        return
+        sys.exit('cleaned up:{}'.format(site_name))
 
 if __name__ == '__main__':
     logger.info("starting write to BigQuery....!")
@@ -199,8 +196,9 @@ if __name__ == '__main__':
 
     def graceful_exit(num, frame):
         for p in plist:
-            print('graceful_exit')
+            logger.info('graceful_exit num:{} frame:{}'.format(num, frame))
             p.terminate()
+            p.join()
 
     for sig in (signal.SIGINT,
                 signal.SIGTERM,
