@@ -8,4 +8,5 @@ OCEANUS_SITES = (
     "skj",
     "bizpow",
     "trwk",
+    "aripo",
 )

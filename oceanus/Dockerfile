@@ -28,7 +28,7 @@ WORKDIR /var/www
 
 COPY www /var/www
 
-CMD gunicorn -c gunicorn_conf.py oceanus:app
+CMD ["gunicorn", "-c", "gunicorn_conf.py", "oceanus:app"]
 
 EXPOSE 80
 EXPOSE 443
