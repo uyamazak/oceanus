@@ -35,4 +35,4 @@ WORKDIR /var/www
 
 COPY www /var/www
 
-CMD python3.5 redis2bq.py
+CMD ["python3.5","redis2bq.py"]

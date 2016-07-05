@@ -1,6 +1,6 @@
 docker build -t asia.gcr.io/oceanus-dev/oceanus-redis2bq:v1 /home/BIZOCEAN/yu_yamazaki/project-oceanus/redis2bq
 
-docker images | grep redis2bq | head -1
+docker images | grep redis2bq | head -5
 
 kubectl run oceanus-redis2bq --image=asia.gcr.io/oceanus-dev/oceanus-redis2bq:v0.74  --env="REDISMASTER_SERVICE_HOST=10.3.247.6"
 

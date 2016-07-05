@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import datetime
 import json
-import signal
 import os
 import sys
 import redis
 import time
 import logging
-import settings
+from settings import TABLE_SCHEMA, OCEANUS_SITES
+from signal import signal, SIGINT, SIGTERM, SIGQUIT, SIGABRT
 from multiprocessing import Process
 from bigquery import get_client
 from logging import getLogger
@@ -30,19 +30,17 @@ TABLE_PREFIX = os.environ['TABLE_PREFIX']
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 CHUNK_NUM = int(os.environ['CHUNK_NUM'])
-r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-
-OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class redis2bq():
     lines = []
     keep_processing = True
+    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+    client = None
 
     def connect_bigquery(self):
         json_key = JSON_KEY_FILE
-        client = get_client(json_key_file=json_key, readonly=False)
-        return client
+        self.client = get_client(json_key_file=json_key, readonly=False)
 
     def create_table_name(self, site_name, delta_days=0):
         if delta_days != 0:
@@ -53,75 +51,134 @@ class redis2bq():
             return TABLE_PREFIX + site_name + \
                     datetime.datetime.now().strftime('_%Y%m%d')
 
-    def prepare_table(self, client, table_name):
+    def prepare_table(self, table_name):
         """ create today's table in BigQuery"""
-        exists = client.check_table(DATA_SET, table_name)
+        exists = self.client.check_table(DATA_SET, table_name)
         created = False
         if not exists:
-            schema = [
-                {'name': 'dt',  'type': 'STRING', 'mode': 'REQUIRED'},
-                {'name': 'oid', 'type': 'STRING', 'mode': 'REQUIRED'},
-                {'name': 'sid', 'type': 'STRING', 'mode': 'REQUIRED'},
-                {'name': 'uid', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'rad', 'type': 'STRING', 'mode': 'REQUIRED'},
-                {'name': 'evt', 'type': 'STRING', 'mode': 'REQUIRED'},
-                {'name': 'tit', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'url', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'ref', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'jsn', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'ua',  'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'enc', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'scr', 'type': 'STRING', 'mode': 'nullable'},
-                {'name': 'vie', 'type': 'STRING', 'mode': 'nullable'},
-            ]
-            created = client.create_table(DATA_SET, table_name, schema)
+            created = self.client.create_table(DATA_SET,
+                                               table_name,
+                                               TABLE_SCHEMA)
         return created
 
-    def write_to_bq(self, site_name):
+    def write_to_redis(self, data, site_name):
+        try:
+            result = self.r.lpush(site_name, data)
+        except Exception as e:
+            logger.critical('Problem adding data to Redis. {0}'.format(e))
 
-        def signal_exit_func(num, frame):
-            print('gx {} {} {}'.format(num, frame, site_name))
-            self.clean_up(site_name)
+        return result
 
-        signal.signal(signal.SIGINT, signal_exit_func)
-        signal.signal(signal.SIGTERM, signal_exit_func)
+    def restore_to_redis(self, site_name, lines):
+        if not len(lines):
+            return None
+        try:
+            for l in lines:
+                line = json.dumps(l)
+                result = self.write_to_redis(line, site_name)
+        except Exception as e:
+            logger.error('Problem restore to redis. {e}'.format(e))
+            return False
+
+        return result
+
+    def write_to_bq(self, site_name, lines):
+        if not len(lines):
+            return None
+        table_name = self.create_table_name(site_name)
+        table_created = self.prepare_table(table_name)
+
+        if table_created:
+            time.sleep(30)
+
+        try:
+            table_name = self.create_table_name(site_name)
+            inserted = self.client.push_rows(DATA_SET,
+                                             table_name,
+                                             self.lines,
+                                             'dt')
+        except Exception as e:
+            logger.error('Problem writing data BigQuery. {e}'.format(e))
+            return False
+
+        return inserted
+
+    def clean_up(self, site_name):
+        if not len(self.lines):
+            sys.exit('cleaned up:no lines [{}]'.format(site_name))
+            return
+
+        bq_inserted = self.write_to_bq(site_name, self.lines)
+        if bq_inserted:
+            logger.info("cleaned up [{0}] "
+                        "bigquery inserted:{1} lines".format(site_name,
+                                                             len(self.lines)))
+            self.lines = []
+            sys.exit('exit:[{}]'.format(site_name))
+            return
+
+        redis_pushed = self.restore_to_redis(site_name, self.lines)
+        if redis_pushed:
+            logger.info("cleaned up [{0}] "
+                        "redis restore:{1} lines".format(site_name,
+                                                         len(self.lines)))
+            self.lines = []
+            sys.exit('exit:[{}]'.format(site_name))
+            return
+
+        sys.exit('cleaned up failed: '
+                 '[{}] {} lines exit'.format(site_name,
+                                             len(self.lines)))
+
+    def signal_exit_func(self, num, frame):
+        self.keep_processing = False
+        self.clean_up(site_name)
+
+    def main(self, site_name):
+        signal(SIGINT, self.signal_exit_func)
+        signal(SIGTERM, self.signal_exit_func)
 
         """Write the data to BigQuery in small chunks."""
         self.lines = []
         line = None
         redis_errors = 0
         allowed_redis_errors = 5
-        client = self.connect_bigquery()
+        self.connect_bigquery()
         table_name = self.create_table_name(site_name=site_name)
-        table_created = self.prepare_table(client, table_name)
+        table_created = self.prepare_table(table_name)
         if table_created:
-            logger.info('table: {0} created:{1}'.format(table_name,
-                                                        table_created))
-            time.sleep(5)
+            logger.info('table {0} created:{1}'.format(table_name,
+                                                       table_created))
+            time.sleep(6)
 
         while self.keep_processing:
-            logger.info("LOG_LEVEL:{0}".format(LOG_LEVEL))
-            logger.info("PROJECT_ID:{0}, "
-                        "DATA_SET:{1}, "
-                        "table_name:{2}".format(PROJECT_ID,
+            logger.info("LOG_LEVEL:{0}, "
+                        "PROJECT_ID:{1}, "
+                        "DATA_SET:{2}, "
+                        "table_name:{3}, "
+                        "REDIS_HOST:{4}, "
+                        "REDIS_PORT:{5}, "
+                        "REDIS_LIST:{6}".format(LOG_LEVEL,
+                                                PROJECT_ID,
                                                 DATA_SET,
-                                                table_name))
-            logger.info("REDIS_HOST:{0}, "
-                        "REDIS_PORT:{1}, "
-                        "REDIS_LIST:{2}".format(REDIS_HOST,
+                                                table_name,
+                                                REDIS_HOST,
                                                 REDIS_PORT,
                                                 site_name))
+
+            table_name_tomorrow = self.create_table_name(site_name,
+                                                         delta_days=1)
+            self.prepare_table(table_name_tomorrow)
 
             while len(self.lines) < CHUNK_NUM:
                 # We'll use a blocking list pop -- it returns when there is
                 # new data.
                 res = None
                 try:
-                    res = r.brpop(site_name)
-                    logger.info("{0} - CHUNK:{1}/{2}".format(
-                        site_name,
-                        len(self.lines) + 1,
-                        CHUNK_NUM))
+                    res = self.r.brpop(site_name)
+                    logger.info("{0}-CHUNK:{1}/{2}".format(site_name,
+                                                           len(self.lines) + 1,
+                                                           CHUNK_NUM))
                     logger.debug("{0}".format(res))
                 except Exception as e:
                     logger.error('Problem getting data from Redis.'
@@ -142,50 +199,33 @@ class redis2bq():
 
                 self.lines.append(line)
 
-            table_name = self.create_table_name(site_name)
-            table_name_tomorrow = self.create_table_name(site_name,
-                                                         delta_days=1)
-            self.prepare_table(client, table_name)
-            self.prepare_table(client, table_name_tomorrow)
             # insert the self.lines into bigquery
-            inserted = client.push_rows(DATA_SET, table_name, self.lines, 'dt')
-            if not inserted:
-                client = self.connect_bigquery()
-                table_name = self.create_table_name(site_name)
-                self.prepare_table(client, table_name)
-                time.sleep(5)
-                inserted = client.push_rows(DATA_SET,
-                                            table_name,
-                                            self.lines,
-                                            'dt')
-            logger.info('bigquery [{0}] inserted:{1}'.format(site_name,
-                                                             inserted))
-            self.lines = []
+            inserted = self.write_to_bq(site_name, self.lines)
+            if inserted:
+                logger.info('bigquery [{0}] inserted:{1}'.format(site_name,
+                                                                 inserted))
+            else:
+                """retry"""
+                logger.info('bigquery not inserted retrying...')
+                time.sleep(6)
+                self.connect_bigquery()
+                inserted = self.write_to_bq(site_name, self.lines)
 
-    def clean_up(self, site_name):
-        self.keep_processing = False
-        client = self.connect_bigquery()
-        table_name = self.create_table_name(site_name)
-        inserted = None
-        if len(self.lines):
-            inserted = client.push_rows(DATA_SET, table_name, self.lines, 'dt')
-        logger.info("graceful exit [{0}] "
-                    "bigquery inserted:{1} {2}".format(site_name,
-                                                       inserted,
-                                                       len(self.lines)))
-        if inserted:
+            if not inserted:
+                logger.info('bigquery not inserted. restore redis')
+                self.restore_to_redis(site_name, self.lines)
+
             self.lines = []
-        sys.exit('cleaned up:{}'.format(site_name))
 
 if __name__ == '__main__':
     logger.info("starting write to BigQuery....!")
 
     def multi(site_name):
         r2bq = redis2bq()
-        r2bq.write_to_bq(site_name)
+        r2bq.main(site_name)
 
     """
-    multiprocess OCEANUS_SITES num
+    multiprocess number of OCEANUS_SITES
     """
     plist = []
     for site_name in OCEANUS_SITES:
@@ -196,12 +236,9 @@ if __name__ == '__main__':
 
     def graceful_exit(num, frame):
         for p in plist:
-            logger.info('graceful_exit num:{} frame:{}'.format(num, frame))
+            logger.info('graceful_exit')
             p.terminate()
             p.join()
 
-    for sig in (signal.SIGINT,
-                signal.SIGTERM,
-                signal.SIGQUIT,
-                signal.SIGABRT):
-        signal.signal(sig, graceful_exit)
+    for s in (SIGINT, SIGTERM, SIGQUIT, SIGABRT):
+        signal(s, graceful_exit)
