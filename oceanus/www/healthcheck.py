@@ -23,9 +23,9 @@ class HelthCheckResource(object):
             for key in r_keys:
                 lists[key] = r.llen(key)
                 total = total + r.llen(key)
-                resp.status = falcon.HTTP_200
-                resp.body = "debug\nredis:{}\ntotal:{}".format(lists, total)
-                return
+            resp.status = falcon.HTTP_200
+            resp.body = "debug\nredis:{}\ntotal:{}".format(lists, total)
+            return
 
         resp.status = falcon.HTTP_200
         resp.body = "ok"
