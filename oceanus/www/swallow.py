@@ -107,7 +107,7 @@ class SwallowResource(object):
             'oid': {'type': 'string',
                     'maxlength': 16},
             'sid': {'type': 'string',
-                    'regex': '^[0-9a-f]{16,32}$'},
+                    'regex': '^[0-9a-f]{1,32}$'},
             'uid': {'type': 'string',
                     'nullable': True,
                     'empty': True,
