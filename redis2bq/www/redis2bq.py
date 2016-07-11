@@ -6,7 +6,6 @@ import sys
 import redis
 import time
 import logging
-from pprint import pprint, pformat
 from settings import TABLE_SCHEMA, OCEANUS_SITES
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
@@ -43,8 +42,8 @@ class redis2bq:
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
     def connect_bigquery(self):
-        json_key = JSON_KEY_FILE
-        self.bq_client = get_client(json_key_file=json_key, readonly=False)
+        self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                    readonly=False)
 
     def create_table_name(self, delta_days=0):
         if delta_days != 0:
@@ -65,9 +64,14 @@ class redis2bq:
                                                   TABLE_SCHEMA)
         return created
 
-    def prepare_tomorrow(self):
+    def prepare_table(self):
         table_name_tomorrow = self.create_table_name(delta_days=1)
-        return self.create_table(table_name_tomorrow)
+        table_name = self.create_table_name()
+        self.create_table(table_name_tomorrow)
+        created = self.create_table(table_name)
+        if created:
+            time.sleep(30)
+        return created
 
     def write_to_redis(self, line):
         try:
@@ -99,11 +103,6 @@ class redis2bq:
     def write_to_bq(self, lines):
         if not len(lines):
             return None
-        table_name = self.create_table_name()
-        table_created = self.create_table(table_name)
-
-        if table_created:
-            time.sleep(30)
 
         try:
             table_name = self.create_table_name()
@@ -180,7 +179,6 @@ class redis2bq:
                                                 REDIS_PORT,
                                                 self.site))
 
-            self.prepare_tomorrow()
             while len(self.lines) < CHUNK_NUM:
                 res = None
                 try:
@@ -209,6 +207,7 @@ class redis2bq:
                 self.lines.append(line)
 
             redis_errors = 0
+            self.prepare_table()
             # insert the self.lines into bigquery
             inserted = self.write_to_bq(self.lines)
             if inserted:
