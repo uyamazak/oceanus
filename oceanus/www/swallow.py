@@ -5,9 +5,11 @@ import redis
 import base64
 import logging
 import settings
+import time
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
+from email import utils
 
 LOG_LEVEL = os.environ['LOG_LEVEL']
 logger = logging.getLogger(__name__)
@@ -166,10 +168,12 @@ class SwallowResource(object):
                          + '\n\n redis keys: ' + pformat(self.r.keys())
         else:
             # response 1px gif
-            resp.append_header('Cache-Control', 'no-cache')
+            resp.append_header('Cache-Control', 'no-cache, no-store, must-revalidate')
             resp.append_header('Content-type', 'image/gif')
-            resp.body = base64.b64decode('R0lGODlhAQABAGAAACH5BAEKAP'
-                                         '8ALAAAAAABAAEAAAgEAP8FBAA7')
+            resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
+            resp.append_header('pragma', 'no-cache')
+            resp.body = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
+                                         'ACwAAAAAAQABAAACAkQBADs=')
 
 if __name__ == "__main__":
     app = falcon.API()

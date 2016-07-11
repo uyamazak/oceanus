@@ -20,3 +20,5 @@ gcloud docker push asia.gcr.io/oceanus-dev/oceanus-swallow:v1
 kubectl run oceanus --image=asia.gcr.io/oceanus-dev/oceanus-swallow:v1 --port=80 --replicas=2 --env=REDISMASTER_SERVICE_HOST=10.3.247.6
 
 kubectl expose deployment oceanus --type=NodePort
+
+cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www/settings.py /home/BIZOCEAN/yu_yamazaki/project-oceanus/redis2bq/www/settings.py
