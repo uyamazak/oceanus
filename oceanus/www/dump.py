@@ -25,7 +25,10 @@ class DumpDataResource(object):
             resp.body = message
             return
 
-        resp.append_header('Cache-Control', 'no-cache')
+        resp.append_header('Cache-Control',
+                           'no-cache, no-store, must-revalidate')
         resp.append_header('Content-type', 'image/gif')
-        resp.body = base64.b64decode('R0lGODlhAQABAGAAACH5BAEKAP'
-                                     '8ALAAAAAABAAEAAAgEAP8FBAA7')
+        resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
+        resp.append_header('pragma', 'no-cache')
+        resp.body = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
+                                     'ACwAAAAAAQABAAACAkQBADs=')

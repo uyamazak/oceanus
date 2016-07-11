@@ -5,11 +5,9 @@ import redis
 import base64
 import logging
 import settings
-import time
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from email import utils
 
 LOG_LEVEL = os.environ['LOG_LEVEL']
 logger = logging.getLogger(__name__)
@@ -54,9 +52,10 @@ class SwallowResource(object):
 
     def adjust_user_data(self, user_data):
         user_data['enc'] = user_data['enc'].upper()
-        if len(user_data['ua']) > 256:
-            user_data['ua'] = user_data['ua'][0:256]
-            logger.info('cut ua 256:{0}'.format(user_data['ua']))
+        ua_max = 512
+        if len(user_data['ua']) > ua_max:
+            user_data['ua'] = user_data['ua'][0:ua_max]
+            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
 
@@ -129,7 +128,7 @@ class SwallowResource(object):
             'jsn': {'validator': self.validate_json,
                     'nullable': True, 'empty': True, 'maxlength': 1024},
             'ua':  {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 256},
+                    'nullable': True, 'empty': True, 'maxlength': 512},
             'enc': {'type': 'string',
                     'empty': True,
                     'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
@@ -168,7 +167,8 @@ class SwallowResource(object):
                          + '\n\n redis keys: ' + pformat(self.r.keys())
         else:
             # response 1px gif
-            resp.append_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            resp.append_header('Cache-Control',
+                               'no-cache, no-store, must-revalidate')
             resp.append_header('Content-type', 'image/gif')
             resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
             resp.append_header('pragma', 'no-cache')

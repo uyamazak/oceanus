@@ -1,7 +1,22 @@
 # oceanus common settings
 """
-use redis list key, BigQuery table name, url path
+used as
+- redis list's key name,
+- part of BigQuery table name,
+- url path (/swallow/bizocean)
+  default bizocean
 
+"""
+OCEANUS_SITES = (
+    "bizocean",
+    "skj",
+    "bizpow",
+    "trwk",
+    "aripo",
+)
+
+"""
+BigQuery's table schema
 """
 TABLE_SCHEMA = [
     {'name': 'dt',  'type': 'STRING', 'mode': 'REQUIRED'},
@@ -19,11 +34,3 @@ TABLE_SCHEMA = [
     {'name': 'scr', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'vie', 'type': 'STRING', 'mode': 'nullable'},
 ]
-
-OCEANUS_SITES = (
-    "bizocean",
-    "skj",
-    "bizpow",
-    "trwk",
-    "aripo",
-)
