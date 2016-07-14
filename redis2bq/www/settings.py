@@ -42,14 +42,16 @@ used as
 - part of BigQuery table name,
 - url path (/swallow/bizocean)
   default bizocean
-
+e.g.
+({name}, {table schema list}, {method})
+In oceanus-redis2bq ,
+the thread of the same number as the number of site starts
 """
 
 OCEANUS_SITES = (
-    ("bizocean", LOG_TABLE_SCHEMA,  'swallow'),
-    ("skj",      LOG_TABLE_SCHEMA,  'swallow'),
-    ("bizpow",   LOG_TABLE_SCHEMA,  'swallow'),
-    ("trwk",     LOG_TABLE_SCHEMA,  'swallow'),
-    ("aripo",    LOG_TABLE_SCHEMA,  'swallow'),
-    ("movie",    FORM_TABLE_SCHEMA, 'pirate'),
+    ("bizocean",  LOG_TABLE_SCHEMA,  'swallow'),
+    ("skj",       LOG_TABLE_SCHEMA,  'swallow'),
+    ("bizpow",    LOG_TABLE_SCHEMA,  'swallow'),
+    ("moneynext", LOG_TABLE_SCHEMA,  'swallow'),
+    ("movie",     FORM_TABLE_SCHEMA, 'pirate'),
 )

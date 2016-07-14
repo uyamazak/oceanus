@@ -16,15 +16,32 @@ class HelthCheckResource(object):
             resp.body = 'fail connecting redis {0}'.format(e)
             return
 
-        resp.status = falcon.HTTP_200
-        if req.get_param('debug', required=False):
-            r_keys = r.keys("*")
-            lists = {}
-            total = 0
-            for key in r_keys:
-                lists[key] = r.llen(key)
-                total = total + r.llen(key)
-            resp.body = "debug\nredis:{}\ntotal:{}".format(lists, total)
+        debug = req.get_param('debug', required=False)
+        check_delay = req.get_param('check_delay', required=False)
+        if not debug and \
+           not check_delay:
+            resp.status = falcon.HTTP_200
+            resp.body = "ok"
             return
 
-        resp.body = "ok"
+        r_keys = r.keys("*")
+        lists = {}
+        total = 0
+        for key in r_keys:
+            lists[key] = r.llen(key)
+            total = total + r.llen(key)
+
+        if debug:
+            resp.body = ("debug\nredis:{}\ntotal:{}\n"
+                         "redis_info:{}").format(lists, total,
+                                                 r_info)
+            return
+        deley_limit = 20
+        if check_delay:
+            resp.body = ("check_delay\nredis:{}\n"
+                         "total:{}/{}\nredis_info:{}").format(lists, total,
+                                                              deley_limit,
+                                                              r_info)
+            if total > deley_limit:
+                resp.body = "over deley_limit!\n\n" + resp.body
+                resp.status = falcon.HTTP_503
