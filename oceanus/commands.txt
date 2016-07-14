@@ -1,6 +1,6 @@
 ### LOCAL
 
-docker images | grep swallow | head -1
+docker images | grep swallow | head -10
 
 docker build -t asia.gcr.io/oceanus-dev/oceanus-swallow:v1 /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
 
