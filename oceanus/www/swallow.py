@@ -2,29 +2,26 @@ import falcon
 import os
 import json
 import redis
-import base64
-import logging
 import settings
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-
-LOG_LEVEL = os.environ['LOG_LEVEL']
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-logger.setLevel(getattr(logging, LOG_LEVEL))
-logger.addHandler(handler)
-
-REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
-REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
+from utils import oceanus_logging, beacon_gif
+logger = oceanus_logging()
 
 OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class SwallowResource(object):
-
-    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-    redis_errors = 0
+    """
+    The oceanus swallow gets access log, event log with json data.
+    Instead BigQuery it to quick response, save to redis on local network.
+    """
+    def __init__(self):
+        REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
+        REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
+        self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+        self.redis_errors = 0
 
     def write_to_redis(self, data, site_name):
         try:
@@ -59,10 +56,19 @@ class SwallowResource(object):
 
         return user_data
 
+    def site_exists(self, site_name, method_label):
+        sites = [name for name, table, method
+                 in OCEANUS_SITES
+                 if method == method_label]
+        if site_name in sites:
+            return True
+        else:
+            return False
+
     def on_get(self, req, resp, site_name=None):
         if site_name is None:
             site_name = 'bizocean'
-        elif site_name not in OCEANUS_SITES:
+        elif not self.site_exists(site_name, "swallow"):
             resp.status = falcon.HTTP_404
             message = 'site name not found:{0}'.format(site_name)
             resp.body = message
@@ -172,8 +178,7 @@ class SwallowResource(object):
             resp.append_header('Content-type', 'image/gif')
             resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
             resp.append_header('pragma', 'no-cache')
-            resp.body = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
-                                         'ACwAAAAAAQABAAACAkQBADs=')
+            resp.body = beacon_gif()
 
 if __name__ == "__main__":
     app = falcon.API()

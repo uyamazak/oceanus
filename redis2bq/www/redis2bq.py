@@ -6,7 +6,7 @@ import sys
 import redis
 import time
 import logging
-from settings import TABLE_SCHEMA, OCEANUS_SITES
+from settings import OCEANUS_SITES
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
 from bigquery import get_client
@@ -35,7 +35,8 @@ CHUNK_NUM = int(os.environ['CHUNK_NUM'])
 class redis2bq:
 
     def __init__(self, site):
-        self.site = site
+        self.site = site[0]
+        self.table_schema = site[1]
         self.keep_processing = True
         self.lines = []
         self.bq_client = None
@@ -61,7 +62,7 @@ class redis2bq:
         if not exists:
             created = self.bq_client.create_table(DATA_SET,
                                                   table_name,
-                                                  TABLE_SCHEMA)
+                                                  self.table_schema)
         return created
 
     def prepare_table(self):

@@ -1,12 +1,14 @@
 import falcon
-import swallow
-import healthcheck
-import okeanides
-import dump
+from swallow import SwallowResource
+from pirate import PirateResource
+from healthcheck import HelthCheckResource
+from okeanides import StaticResource
+from dump import DumpDataResource
 
 app = falcon.API()
-app.add_route('/swallow', swallow.SwallowResource())
-app.add_route('/swallow/{site_name}', swallow.SwallowResource())
-app.add_route('/lb', healthcheck.HelthCheckResource())
-app.add_route('/okeanides/{name}', okeanides.JsResource())
-app.add_route('/dump', dump.DumpDataResource())
+app.add_route('/swallow', SwallowResource())
+app.add_route('/swallow/{site_name}', SwallowResource())
+app.add_route('/pirate/{site_name}', PirateResource())
+app.add_route('/lb', HelthCheckResource())
+app.add_route('/static/{filetype}/{name}', StaticResource())
+app.add_route('/dump', DumpDataResource())
