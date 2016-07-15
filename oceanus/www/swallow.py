@@ -1,15 +1,12 @@
 import falcon
-import os
 import json
 import redis
-import settings
+from settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
 from utils import oceanus_logging, beacon_gif
 logger = oceanus_logging()
-
-OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class SwallowResource(object):
@@ -18,8 +15,6 @@ class SwallowResource(object):
     Instead BigQuery it to quick response, save to redis on local network.
     """
     def __init__(self):
-        REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
-        REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         self.redis_errors = 0
 

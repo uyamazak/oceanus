@@ -5,30 +5,21 @@ import os
 import sys
 import redis
 import time
-import logging
-from settings import OCEANUS_SITES
+from settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
 from bigquery import get_client
-from logging import getLogger
-
-LOG_LEVEL = os.environ['LOG_LEVEL']
-logger = getLogger(__name__)
-handler = logging.StreamHandler()
-logger.setLevel(getattr(logging, LOG_LEVEL))
-logger.addHandler(handler)
+from utils import oceanus_logging
+logger = oceanus_logging()
 
 # BigQuery settings
 PROJECT_ID = os.environ['PROJECT_ID']
 
 DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
-SESSION_KEY = os.environ['SESSION_KEY']
 TABLE_PREFIX = os.environ['TABLE_PREFIX']
 
 # redis settings
-REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
-REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 CHUNK_NUM = int(os.environ['CHUNK_NUM'])
 
 
@@ -172,19 +163,17 @@ class redis2bq:
             time.sleep(6)
 
         while self.keep_processing:
-            logger.info("LOG_LEVEL:{0}, "
-                        "PROJECT_ID:{1}, "
-                        "DATA_SET:{2}, "
-                        "table_name:{3}, "
-                        "REDIS_HOST:{4}, "
-                        "REDIS_PORT:{5}, "
-                        "REDIS_LIST:{6}".format(LOG_LEVEL,
-                                                PROJECT_ID,
-                                                DATA_SET,
-                                                table_name,
-                                                REDIS_HOST,
-                                                REDIS_PORT,
-                                                self.site_name))
+            logger.info("PROJECT_ID:{}, "
+                        "DATA_SET:{}, "
+                        "table_name:{}, "
+                        "REDIS_HOST:{}, "
+                        "REDIS_PORT:{}, "
+                        "REDIS_LIST:{}".format(PROJECT_ID,
+                                               DATA_SET,
+                                               table_name,
+                                               REDIS_HOST,
+                                               REDIS_PORT,
+                                               self.site_name))
 
             while len(self.lines) < CHUNK_NUM:
                 res = None

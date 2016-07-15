@@ -1,4 +1,9 @@
 # oceanus common settings
+import os
+
+REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
+REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
+
 """
 BigQuery's table schema
 """
@@ -55,3 +60,4 @@ OCEANUS_SITES = (
     ("moneynext", LOG_TABLE_SCHEMA,  'swallow'),
     ("movie",     FORM_TABLE_SCHEMA, 'pirate'),
 )
+
