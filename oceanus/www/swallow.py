@@ -140,6 +140,7 @@ class SwallowResource(object):
             'ua':  {'type': 'string',
                     'nullable': True, 'empty': True, 'maxlength': 512},
             'enc': {'type': 'string',
+                    'nullable': True,
                     'empty': True,
                     'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
                     'maxlength': 16},
