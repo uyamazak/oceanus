@@ -36,7 +36,7 @@ class redis2bq:
         self.bq_client = None
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-    def connect_bigquery(self):
+    def connect_BigQuery(self):
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
                                     readonly=False)
 
@@ -109,7 +109,8 @@ class redis2bq:
                                                 self.lines,
                                                 'dt')
         except Exception as e:
-            logger.error('Problem writing data BigQuery. {}'.format(e))
+            logger.error('Problem writing data BigQuery. {}')
+            logger.debug('{}'.format(e))
             return False
 
         return inserted
@@ -122,10 +123,10 @@ class redis2bq:
         bq_inserted = self.write_to_bq(self.lines)
         if bq_inserted:
             logger.info("[{}] cleaned up "
-                        "bigquery inserted:{} lines".format(self.site_name,
+                        "BigQuery inserted:{} lines".format(self.site_name,
                                                             len(self.lines)))
             self.lines = []
-            sys.exit('[{}] exit'.format(self.site_name))
+            sys.exit('[{}] BigQuery inserted and exit'.format(self.site_name))
             return
 
         redis_pushed = self.restore_to_redis(self.lines)
@@ -134,12 +135,12 @@ class redis2bq:
                         "redis restore:{} lines".format(self.site_name,
                                                         len(self.lines)))
             self.lines = []
-            sys.exit('[{}] exit'.format(self.site_name))
+            sys.exit('[{}] redis pushed and exit'.format(self.site_name))
             return
 
         sys.exit('[{}] cleaned up failed: '
-                 '{} lines exit'.format(self.site_name,
-                                        len(self.lines)))
+                 'lost {} lines and exit'.format(self.site_name,
+                                                 len(self.lines)))
 
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
@@ -154,7 +155,7 @@ class redis2bq:
         line = None
         redis_errors = 0
         allowed_redis_errors = 10
-        self.connect_bigquery()
+        self.connect_BigQuery()
         table_name = self.create_table_name()
         table_created = self.create_table(table_name)
         if table_created:
@@ -197,32 +198,32 @@ class redis2bq:
                     line = json.loads(res[1].decode('utf-8'),
                                       encoding="utf-8")
                 except Exception as e:
-                    logger.error('json loads error {}'.format(e))
+                    logger.error('json.loads error {}'.format(e))
                     continue
 
                 self.lines.append(line)
 
             redis_errors = 0
             self.prepare_table()
-            # insert the self.lines into bigquery
+            # insert the self.lines into BigQuery
             inserted = self.write_to_bq(self.lines)
             if inserted:
-                logger.info('[{}] bigquery inserted:{}'.format(self.site_name,
+                logger.info('[{}] BigQuery inserted:{}'.format(self.site_name,
                                                                inserted))
                 self.lines = []
                 continue
             else:
                 """retry"""
-                logger.warning('bigquery not inserted. retry...')
+                logger.warning('BigQuery not inserted. retry...')
                 time.sleep(6)
-                self.connect_bigquery()
+                self.connect_BigQuery()
                 inserted = self.write_to_bq(self.lines)
 
             if inserted:
-                logger.warning('big query retry success')
+                logger.warning('BigQuery retry success')
             else:
-                logger.warning('fail retry, bigquery not inserted. '
-                               'restore redis')
+                logger.warning('retry failed, BigQuery not inserted. '
+                               'restore redis...')
                 self.restore_to_redis(self.lines)
 
             self.lines = []
