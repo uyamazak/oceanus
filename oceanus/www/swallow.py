@@ -43,8 +43,17 @@ class SwallowResource(object):
         return json_text
 
     def adjust_user_data(self, user_data):
-        user_data['enc'] = user_data['enc'].upper()
+        """
+        in order to prevent unnecessary validate error
+        convert lower, upper, length
+        """
+        if user_data['enc']:
+            user_data['enc'] = user_data['enc'].upper()
+        user_data['sid'] = user_data['sid'].lower()
+        user_data['evt'] = user_data['evt'].lower()
         ua_max = 512
+        if not user_data['ua']:
+            user_data['ua'] = ''
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
             logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
@@ -72,7 +81,7 @@ class SwallowResource(object):
 
         resp.set_header('Access-Control-Allow-Origin', '*')
 
-        # for load balancer
+        # Except for the IP of the load balancer
         rad = req.access_route[0]
         user_data = {
             # date and time
@@ -90,7 +99,7 @@ class SwallowResource(object):
             # user uniq id ex. bizocean id
             'uid': req.get_param('uid', required=False),
             # encode
-            'enc': req.get_param('enc', required=True),
+            'enc': req.get_param('enc', required=False),
             'url': req.get_param('url', required=True),
             # referer
             'ref': req.get_param('ref', required=False),
@@ -121,7 +130,7 @@ class SwallowResource(object):
                              '2[0-4][0-9]|25[0-5])$'},
             'evt': {'type': 'string', 'maxlength': 16},
             'tit': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 256},
+                    'nullable': True, 'empty': True, 'maxlength': 512},
             'url': {'type': 'string',
                     'nullable': True, 'empty': True, 'maxlength': 1024},
             'ref': {'type': 'string',
