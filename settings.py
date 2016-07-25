@@ -7,7 +7,6 @@ REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 """
 BigQuery's table schema
 """
-
 LOG_TABLE_SCHEMA = [
     {'name': 'dt',  'type': 'STRING', 'mode': 'REQUIRED'},
     {'name': 'oid', 'type': 'STRING', 'mode': 'REQUIRED'},
@@ -42,17 +41,28 @@ FORM_TABLE_SCHEMA = [
 ]
 
 """
-site is dictionary
+'OCEANUS_SITES' is list of dictionaries
+ contain several parameters
 
-site_name used as
-- redis list's key name,
-- part of BigQuery table name,
-- url path (/swallow/bizocean)
-  default bizocean
+'site_name' used as
+ - redis list's key name,
+ - part of BigQuery table name,
+ - url path (/swallow/bizocean)
+   default bizocean
+'table_schema' table schema of BigQuery
+'method' swallow or pirate
+'chunk_num'
+ When writing to the BigQuery, divided into small chunks
+ 1 is every time, default 50
 
-CHUNK_NUM redis resered number
 e.g.
-({name(string)}, {table schema(dict)}, {method(string)}, {CHUNK_NUM(int)})
+(
+    {"site_name": (string)},
+    {"table_schema": (dict)},
+    {"method": (string)},
+    {"chunk_num": (int)}
+)
+
 In oceanus-redis2bq ,
 the thread of the same number as the number of site starts
 """

@@ -62,6 +62,28 @@ class SwallowResource(object):
 
         return user_data
 
+    def get_client_rad(self, access_route):
+        """In most cases , the IP of the client's IP
+        and load balancer is returned ,
+        rarely contains the user side of the proxy IP ,
+        come back three IP
+
+        access_route e.g.
+        - local etc
+          [192.168.1.1]
+        - GKE with Load balancer
+          [*.*.*.*, 130.211.0.0/22]
+        - with client's proxy etc
+          [002512 172.16.18.111, *.*.*.*, 130.211.0.0/22]
+        """
+
+        if len(access_route) == 3:
+            """when contain client's proxy ip"""
+            return access_route[1]
+        else:
+            """local or Google Load balancer"""
+            return access_route[0]
+
     def site_exists(self, site_name, method_label):
         sites = [site["site_name"] for site in OCEANUS_SITES
                  if site["method"] == method_label]
@@ -82,8 +104,8 @@ class SwallowResource(object):
 
         resp.set_header('Access-Control-Allow-Origin', '*')
 
-        # Except for the IP of the load balancer
-        rad = req.access_route[0]
+        rad = self.get_client_rad(req.access_route)
+
         user_data = {
             # date and time
             'dt':  str(datetime.utcnow()),
