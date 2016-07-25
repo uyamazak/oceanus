@@ -1,1 +1,4 @@
 git push --all google
+# back up kc settings in yaml
+kc get services -o yaml
+kc get deployment -o yaml
