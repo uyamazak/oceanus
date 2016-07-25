@@ -1,6 +1,7 @@
 Object.keys||(Object.keys=function(){var e=Object.prototype.hasOwnProperty,d=!{toString:null}.propertyIsEnumerable("toString"),g="toString toLocaleString valueOf hasOwnProperty isPrototypeOf propertyIsEnumerable constructor".split(" "),b=g.length;return function(c){if("object"!==typeof c&&"function"!==typeof c||null===c)throw new TypeError("Object.keys called on non-object");var a=[],h;for(h in c)e.call(c,h)&&a.push(h);if(d)for(h=0;h<b;h++)e.call(c,g[h])&&a.push(g[h]);return a}}());
 var oceanus_pirate=oceanus_pirate||[];
-oceanus_pirate.swallow_url="{%oceanus_host%}/pirate/movie";
+oceanus_pirate.host="{%oceanus_host%}";
+oceanus_pirate.url= oceanus_pirate.host+"/pirate/movieform";
 oceanus_pirate.a=((function(opt){
  var docCookies={getItem:function(a){if(!a||!this.hasItem(a)){return null}return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)"+escape(a).replace(/[\-\.\+\*]/g,"\\$&")+"\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"),"$1"))},setItem:function(d,g,c,b,a,e){if(!d||/^(?:expires|max\-age|path|domain|secure)$/i.test(d)){return}var f="";if(c){switch(c.constructor){case Number:f=c===Infinity?"; expires=Tue, 19 Jan 2038 03:14:07 GMT":"; max-age="+c;break;case String:f="; expires="+c;break;case Date:f="; expires="+c.toGMTString();break}}document.cookie=escape(d)+"="+escape(g)+f+(a?"; domain="+a:"")+(b?"; path="+b:"")+(e?"; secure":"")},removeItem:function(b,a){if(!b||!this.hasItem(b)){return}document.cookie=escape(b)+"=; expires=Thu, 01 Jan 1970 00:00:00 GMT"+(a?"; path="+a:"")},hasItem:function(a){return(new RegExp("(?:^|;\\s*)"+escape(a).replace(/[\-\.\+\*]/g,"\\$&")+"\\s*\\=")).test(document.cookie)},keys:function(){var a=document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g,"").split(/\s*(?:\=[^;]*)?;\s*/);for(var b=0;b<a.length;b++){a[b]=unescape(a[b])}return a}};
  var getParameterByName=function(b,a){if(!a){a=window.location.href}b=b.replace(/[\[\]]/g,"\\$&");var c=new RegExp("[?&]"+b+"(=([^&#]*)|&|#|$)");results=c.exec(a);if(!results){return null}if(!results[2]){return""}return decodeURIComponent(results[2].replace(/\+/g," "))};
@@ -57,7 +58,7 @@ oceanus_pirate.f=oceanus_pirate.f||((function(args){
  args=this.a(args);
  var d=document;
  var en=encodeURIComponent;
- var swallow_url=this.swallow_url;
+ var url=this.url;
  var aArray=[];
  var aKeys=Object.keys(args);
  for(var i=0,len=aKeys.length;i<len;i++){
@@ -65,7 +66,7 @@ oceanus_pirate.f=oceanus_pirate.f||((function(args){
  }
  var qs=aArray.join('&');
  var b=new Image();
- b.src=swallow_url+'?'+qs;
+ b.src=url+'?'+qs;
  b.onload=function(e){};
  b.onerror=function(e){};
 }));

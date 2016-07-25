@@ -19,9 +19,6 @@ DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
 TABLE_PREFIX = os.environ['TABLE_PREFIX']
 
-# redis settings
-CHUNK_NUM = int(os.environ['CHUNK_NUM'])
-
 
 class redis2bq:
 
@@ -29,14 +26,15 @@ class redis2bq:
         """
         arg site is defined in settings.py
         """
-        self.site_name = site[0]
-        self.table_schema = site[1]
+        self.site_name = site["site_name"]
+        self.table_schema = site["table_schema"]
+        self.chunk_num = site["chunk_num"]
         self.keep_processing = True
         self.lines = []
         self.bq_client = None
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-    def connect_BigQuery(self):
+    def connect_bigquery(self):
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
                                     readonly=False)
 
@@ -63,6 +61,7 @@ class redis2bq:
         return created
 
     def prepare_table(self):
+        """create today and tommow tables"""
         table_name_tomorrow = self.create_table_name(delta_days=1)
         table_name = self.create_table_name()
         self.create_table(table_name_tomorrow)
@@ -80,6 +79,9 @@ class redis2bq:
         return result
 
     def restore_to_redis(self, lines):
+        """when app killed or when writing to the BigQuery
+        it has failed to return the data to redis
+        """
         if not len(lines):
             return None
         count = 0
@@ -93,7 +95,7 @@ class redis2bq:
                     count = count + 1
                 logger.debug("result:{}, count:{}".format(result, count))
         except Exception as e:
-            logger.error('Problem restore to redis. {}'.format(e))
+            logger.error('Problem restore to Redis. {}'.format(e))
             return False
 
         return count
@@ -102,20 +104,24 @@ class redis2bq:
         if not len(lines):
             return None
 
+        table_name = self.create_table_name()
         try:
-            table_name = self.create_table_name()
             inserted = self.bq_client.push_rows(DATA_SET,
                                                 table_name,
                                                 self.lines,
                                                 'dt')
         except Exception as e:
-            logger.error('Problem writing data BigQuery. {}')
+            logger.error('Problem writing data BigQuery.')
             logger.debug('{}'.format(e))
             return False
 
         return inserted
 
     def clean_up(self):
+        """When the process is finished ,
+        return the data to redis or BigQuery
+        so that data is not lost"""
+
         if not len(self.lines):
             sys.exit('[{}] cleaned up:no lines'.format(self.site_name))
             return
@@ -132,10 +138,10 @@ class redis2bq:
         redis_pushed = self.restore_to_redis(self.lines)
         if redis_pushed:
             logger.info("[{}] cleaned up "
-                        "redis restore:{} lines".format(self.site_name,
+                        "Redis restore:{} lines".format(self.site_name,
                                                         len(self.lines)))
             self.lines = []
-            sys.exit('[{}] redis pushed and exit'.format(self.site_name))
+            sys.exit('[{}] Redis pushed and exit'.format(self.site_name))
             return
 
         sys.exit('[{}] cleaned up failed: '
@@ -155,7 +161,7 @@ class redis2bq:
         line = None
         redis_errors = 0
         allowed_redis_errors = 10
-        self.connect_BigQuery()
+        self.connect_bigquery()
         table_name = self.create_table_name()
         table_created = self.create_table(table_name)
         if table_created:
@@ -176,13 +182,13 @@ class redis2bq:
                                                REDIS_PORT,
                                                self.site_name))
 
-            while len(self.lines) < CHUNK_NUM:
+            while len(self.lines) < self.chunk_num:
                 res = None
                 try:
                     res = self.r.brpop(self.site_name, 0)
                     logger.info("[{}]-CHUNK:{}/{}".format(self.site_name,
                                                           len(self.lines) + 1,
-                                                          CHUNK_NUM))
+                                                          self.chunk_num))
                     logger.debug("res:{}".format(res[1]))
                 except Exception as e:
                     logger.error('[{}] Problem getting data from Redis.'
@@ -190,7 +196,7 @@ class redis2bq:
                     redis_errors += 1
                     time.sleep(3)
                     if redis_errors > allowed_redis_errors:
-                        logger.critical("Too many redis errors"
+                        logger.critical("Too many Redis errors"
                                         " {}:".format(redis_errors, e))
                         time.sleep(10)
                     continue
@@ -216,14 +222,14 @@ class redis2bq:
                 """retry"""
                 logger.warning('BigQuery not inserted. retry...')
                 time.sleep(6)
-                self.connect_BigQuery()
+                self.connect_bigquery()
                 inserted = self.write_to_bq(self.lines)
 
             if inserted:
                 logger.warning('BigQuery retry success')
             else:
                 logger.warning('retry failed, BigQuery not inserted. '
-                               'restore redis...')
+                               'restore Redis...')
                 self.restore_to_redis(self.lines)
 
             self.lines = []

@@ -49,8 +49,10 @@ class SwallowResource(object):
         """
         if user_data['enc']:
             user_data['enc'] = user_data['enc'].upper()
-        user_data['sid'] = user_data['sid'].lower()
-        user_data['evt'] = user_data['evt'].lower()
+        if user_data['sid']:
+            user_data['sid'] = user_data['sid'].lower()
+        if user_data['evt']:
+            user_data['evt'] = user_data['evt'].lower()
         ua_max = 512
         if not user_data['ua']:
             user_data['ua'] = ''
@@ -61,9 +63,8 @@ class SwallowResource(object):
         return user_data
 
     def site_exists(self, site_name, method_label):
-        sites = [name for name, table, method
-                 in OCEANUS_SITES
-                 if method == method_label]
+        sites = [site["site_name"] for site in OCEANUS_SITES
+                 if site["method"] == method_label]
         if site_name in sites:
             return True
         else:
@@ -161,7 +162,11 @@ class SwallowResource(object):
             redis_data = json.dumps(user_data)
             redis_result = self.write_to_redis(redis_data, site_name)
         else:
-            logger.error("validate error:{0} {1}".format(v.errors, user_data))
+            logger.error("validate error:{}"
+                         "user_data:{}"
+                         "access_route:{}".format(v.errors,
+                                                  user_data,
+                                                  req.access_route))
             resp.status = falcon.HTTP_400
 
         if req.get_param('debug', required=False):

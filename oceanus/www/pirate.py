@@ -17,6 +17,23 @@ class PirateResource(SwallowResource):
     The oceanus pirate receives form data
     in JSON format, save the BigQuery
     """
+    def adjust_user_data(self, user_data):
+        """
+        in order to prevent unnecessary validate error
+        convert lower, upper, length
+        """
+        if user_data['enc']:
+            user_data['enc'] = user_data['enc'].upper()
+        user_data['sid'] = user_data['sid'].lower()
+        ua_max = 512
+        if not user_data['ua']:
+            user_data['ua'] = ''
+        if len(user_data['ua']) > ua_max:
+            user_data['ua'] = user_data['ua'][0:ua_max]
+            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
+
+        return user_data
+
 
     def on_get(self, req, resp, site_name):
         if not self.site_exists(site_name, "pirate"):

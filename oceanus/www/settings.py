@@ -42,22 +42,45 @@ FORM_TABLE_SCHEMA = [
 ]
 
 """
-used as
+site is dictionary
+
+site_name used as
 - redis list's key name,
 - part of BigQuery table name,
 - url path (/swallow/bizocean)
   default bizocean
+
+CHUNK_NUM redis resered number
 e.g.
-({name}, {table schema list}, {method})
+({name(string)}, {table schema(dict)}, {method(string)}, {CHUNK_NUM(int)})
 In oceanus-redis2bq ,
 the thread of the same number as the number of site starts
 """
 
 OCEANUS_SITES = (
-    ("bizocean",  LOG_TABLE_SCHEMA,  'swallow'),
-    ("skj",       LOG_TABLE_SCHEMA,  'swallow'),
-    ("bizpow",    LOG_TABLE_SCHEMA,  'swallow'),
-    ("moneynext", LOG_TABLE_SCHEMA,  'swallow'),
-    ("movie",     FORM_TABLE_SCHEMA, 'pirate'),
+    {"site_name": "bizocean",
+     "table_schema": LOG_TABLE_SCHEMA,
+     "method": 'swallow',
+     "chunk_num": 50
+     },
+    {"site_name": "skj",
+     "table_schema": LOG_TABLE_SCHEMA,
+     "method": 'swallow',
+     "chunk_num": 25
+     },
+    {"site_name": "bizpow",
+     "table_schema": LOG_TABLE_SCHEMA,
+     "method": 'swallow',
+     "chunk_num": 25
+     },
+    {"site_name": "moneynext",
+     "table_schema": LOG_TABLE_SCHEMA,
+     "method": 'swallow',
+     "chunk_num": 25
+     },
+    {"site_name": "movieform",
+     "table_schema": FORM_TABLE_SCHEMA,
+     "method": 'pirate',
+     "chunk_num": 1
+     },
 )
-
