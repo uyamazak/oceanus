@@ -1,11 +1,17 @@
 # oceanus common settings
+# This file is because it is used for both A and B,
+# and to recommend the use of a hard link .
+# When you git clone from repository,
+# please create a hard link to run the init.sh.
+
 import os
 
+""" Redis settings"""
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 
 """
-BigQuery's table schema
+BigQuery's table settings
 """
 LOG_TABLE_SCHEMA = [
     {'name': 'dt',  'type': 'STRING', 'mode': 'REQUIRED'},
@@ -42,7 +48,7 @@ FORM_TABLE_SCHEMA = [
 
 """
 'OCEANUS_SITES' is list of dictionaries
- contain several parameters
+ that contains several parameters
 
 'site_name' used as
  - redis list's key name,
@@ -57,10 +63,11 @@ FORM_TABLE_SCHEMA = [
 
 e.g.
 (
-    {"site_name": (string)},
-    {"table_schema": (dict)},
-    {"method": (string)},
-    {"chunk_num": (int)}
+    {"site_name": (string),
+     "table_schema": (dict),
+     "method": (string),
+     "chunk_num": (int)
+     },
 )
 
 In oceanus-redis2bq ,
@@ -71,26 +78,26 @@ OCEANUS_SITES = (
     {"site_name": "bizocean",
      "table_schema": LOG_TABLE_SCHEMA,
      "method": 'swallow',
-     "chunk_num": 50
+     "chunk_num": 50,
      },
     {"site_name": "skj",
      "table_schema": LOG_TABLE_SCHEMA,
      "method": 'swallow',
-     "chunk_num": 25
+     "chunk_num": 25,
      },
     {"site_name": "bizpow",
      "table_schema": LOG_TABLE_SCHEMA,
      "method": 'swallow',
-     "chunk_num": 25
+     "chunk_num": 25,
      },
     {"site_name": "moneynext",
      "table_schema": LOG_TABLE_SCHEMA,
      "method": 'swallow',
-     "chunk_num": 25
+     "chunk_num": 25,
      },
     {"site_name": "movieform",
      "table_schema": FORM_TABLE_SCHEMA,
      "method": 'pirate',
-     "chunk_num": 1
+     "chunk_num": 1,
      },
 )

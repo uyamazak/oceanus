@@ -1,12 +1,11 @@
 import falcon
 import json
 import settings
-import os
 from pprint import pformat
 from swallow import SwallowResource
 from cerberus import Validator
 from datetime import datetime
-from utils import oceanus_logging, beacon_gif
+from utils import oceanus_logging, resp_beacon_gif
 logger = oceanus_logging()
 
 OCEANUS_SITES = settings.OCEANUS_SITES
@@ -24,7 +23,8 @@ class PirateResource(SwallowResource):
         """
         if user_data['enc']:
             user_data['enc'] = user_data['enc'].upper()
-        user_data['sid'] = user_data['sid'].lower()
+        if user_data['sid']:
+            user_data['sid'] = user_data['sid'].lower()
         ua_max = 512
         if not user_data['ua']:
             user_data['ua'] = ''
@@ -33,7 +33,6 @@ class PirateResource(SwallowResource):
             logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
-
 
     def on_get(self, req, resp, site_name):
         if not self.site_exists(site_name, "pirate"):
@@ -44,7 +43,7 @@ class PirateResource(SwallowResource):
             return
 
         resp.set_header('Access-Control-Allow-Origin', '*')
-        rad = req.access_route[0]
+        rad = self.get_client_rad(req.access_route)
         user_data = {
             'dt':    str(datetime.utcnow()),
             'sid':   req.get_param('sid', required=True),
@@ -98,13 +97,7 @@ class PirateResource(SwallowResource):
         user_data = self.adjust_user_data(user_data)
         v = Validator(validate_schema)
         validate_result = v.validate(user_data)
-
-        resp.append_header('Cache-Control',
-                            'no-cache, no-store, must-revalidate')
-        resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
-        resp.append_header('pragma', 'no-cache')
-        resp.append_header('Content-type', 'image/gif')
-        resp.body = beacon_gif()
+        resp.status = falcon.HTTP_200
 
         if not validate_result:
             resp.status = falcon.HTTP_400
@@ -112,7 +105,6 @@ class PirateResource(SwallowResource):
 
         user_data['jsn'] = self.clean_json(user_data['jsn'])
         redis_data = json.dumps(user_data)
-        resp.status = falcon.HTTP_200
         redis_result = self.write_to_redis(redis_data, site_name)
         if not redis_result:
             resp.status = falcon.HTTP_500
@@ -125,3 +117,6 @@ class PirateResource(SwallowResource):
                         + '\n\n validate errors:\n' + pformat(v.errors) \
                         + '\n\n redis result: ' + pformat(redis_result) \
                         + '\n\n redis keys: ' + pformat(self.r.keys())
+            return
+        else:
+            resp = resp_beacon_gif(resp)

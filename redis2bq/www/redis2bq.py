@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 import datetime
-import json
 import os
+import json
 import sys
 import redis
 import time
-from settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
 from bigquery import get_client
 from utils import oceanus_logging
+from settings import (REDIS_HOST, REDIS_PORT,
+                      OCEANUS_SITES)
 logger = oceanus_logging()
 
-# BigQuery settings
+"""Google Parameters"""
 PROJECT_ID = os.environ['PROJECT_ID']
-
 DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
 TABLE_PREFIX = os.environ['TABLE_PREFIX']
@@ -35,10 +35,12 @@ class redis2bq:
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
     def connect_bigquery(self):
+        """return None """
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
                                     readonly=False)
 
     def create_table_name(self, delta_days=0):
+        """return table name"""
         if delta_days != 0:
             date_delta = datetime.datetime.now() + \
                          datetime.timedelta(days=delta_days)
@@ -61,7 +63,9 @@ class redis2bq:
         return created
 
     def prepare_table(self):
-        """create today and tommow tables"""
+        """ create today and tommow tables
+        return create result
+        """
         table_name_tomorrow = self.create_table_name(delta_days=1)
         table_name = self.create_table_name()
         self.create_table(table_name_tomorrow)
@@ -71,6 +75,9 @@ class redis2bq:
         return created
 
     def write_to_redis(self, line):
+        """ return writing Redis result
+        exsiting list num
+        """
         try:
             result = self.r.lpush(self.site_name, line)
         except Exception as e:
@@ -120,7 +127,8 @@ class redis2bq:
     def clean_up(self):
         """When the process is finished ,
         return the data to redis or BigQuery
-        so that data is not lost"""
+        so that data is not lost.
+        After that sys.exit()"""
 
         if not len(self.lines):
             sys.exit('[{}] cleaned up:no lines'.format(self.site_name))
@@ -186,6 +194,10 @@ class redis2bq:
                 res = None
                 try:
                     res = self.r.brpop(self.site_name, 0)
+                    """
+                    res[0] list key
+                    res[1] content
+                    """
                     logger.info("[{}]-CHUNK:{}/{}".format(self.site_name,
                                                           len(self.lines) + 1,
                                                           self.chunk_num))
@@ -200,11 +212,16 @@ class redis2bq:
                                         " {}:".format(redis_errors, e))
                         time.sleep(10)
                     continue
+
+                if not res[1]:
+                    continue
+
                 try:
-                    line = json.loads(res[1].decode('utf-8'),
-                                      encoding="utf-8")
+                    decoded_res = res[1].decode('utf-8')
+                    line = json.loads(decoded_res, encoding="utf-8")
                 except Exception as e:
-                    logger.error('json.loads error {}'.format(e))
+                    logger.error('json.loads error {} '
+                                 '{}'.format(e, decoded_res))
                     continue
 
                 self.lines.append(line)
