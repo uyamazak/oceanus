@@ -5,7 +5,7 @@ from settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from utils import oceanus_logging, beacon_gif
+from utils import oceanus_logging, resp_beacon_gif
 logger = oceanus_logging()
 
 
@@ -63,17 +63,17 @@ class SwallowResource(object):
         return user_data
 
     def get_client_rad(self, access_route):
-        """In most cases , the IP of the client's IP
-        and load balancer is returned ,
+        """In most cases , the client's IP and
+        load balancer's IP is returned,
         rarely contains the user side of the proxy IP ,
-        come back three IP
+        return three IP in access_route
 
         access_route e.g.
-        - local etc
+        - direct
           [192.168.1.1]
-        - GKE with Load balancer
+        - Google Load balancer
           [*.*.*.*, 130.211.0.0/22]
-        - with client's proxy etc
+        - with client's proxy
           [002512 172.16.18.111, *.*.*.*, 130.211.0.0/22]
         """
 
@@ -205,12 +205,7 @@ class SwallowResource(object):
                          + '\n\n redis keys: ' + pformat(self.r.keys())
         else:
             # response 1px gif
-            resp.append_header('Cache-Control',
-                               'no-cache, no-store, must-revalidate')
-            resp.append_header('Content-type', 'image/gif')
-            resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
-            resp.append_header('pragma', 'no-cache')
-            resp.body = beacon_gif()
+            resp = resp_beacon_gif(resp)
 
 if __name__ == "__main__":
     app = falcon.API()

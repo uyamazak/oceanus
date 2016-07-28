@@ -4,14 +4,14 @@ items:
   kind: Deployment
   metadata:
     annotations:
-      deployment.kubernetes.io/revision: "48"
+      deployment.kubernetes.io/revision: "57"
     creationTimestamp: 2016-06-09T02:52:57Z
-    generation: 99
+    generation: 119
     labels:
       run: oceanus
     name: oceanus
     namespace: default
-    resourceVersion: "617938"
+    resourceVersion: "823757"
     selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/oceanus
     uid: 4585229c-2ded-11e6-b1dc-42010af00012
   spec:
@@ -34,7 +34,7 @@ items:
         - env:
           - name: REDISMASTER_SERVICE_HOST
             value: 10.3.247.6
-          image: asia.gcr.io/oceanus-dev/oceanus-swallow:v3
+          image: asia.gcr.io/oceanus-dev/oceanus-swallow:v3.23
           imagePullPolicy: IfNotPresent
           name: oceanus
           ports:
@@ -49,7 +49,7 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     availableReplicas: 2
-    observedGeneration: 99
+    observedGeneration: 119
     replicas: 2
     updatedReplicas: 2
 - apiVersion: extensions/v1beta1
@@ -63,7 +63,7 @@ items:
       run: oceanus-redis
     name: oceanus-redis
     namespace: default
-    resourceVersion: "213627"
+    resourceVersion: "809402"
     selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/oceanus-redis
     uid: 505f9318-2de0-11e6-b1dc-42010af00012
   spec:
@@ -104,14 +104,14 @@ items:
   kind: Deployment
   metadata:
     annotations:
-      deployment.kubernetes.io/revision: "13"
+      deployment.kubernetes.io/revision: "23"
     creationTimestamp: 2016-06-20T10:25:52Z
-    generation: 26
+    generation: 46
     labels:
       run: oceanus-redis2bq
     name: oceanus-redis2bq
     namespace: default
-    resourceVersion: "617955"
+    resourceVersion: "823773"
     selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/oceanus-redis2bq
     uid: 5d4c3ab3-36d1-11e6-b1dc-42010af00012
   spec:
@@ -136,7 +136,7 @@ items:
             value: 10.3.247.6
           - name: LOG_LEVEL
             value: WARNING
-          image: asia.gcr.io/oceanus-dev/oceanus-redis2bq:v3
+          image: asia.gcr.io/oceanus-dev/oceanus-redis2bq:v3.23
           imagePullPolicy: IfNotPresent
           name: oceanus-redis2bq
           resources: {}
@@ -147,7 +147,7 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     availableReplicas: 1
-    observedGeneration: 26
+    observedGeneration: 46
     replicas: 1
     updatedReplicas: 1
 kind: List
