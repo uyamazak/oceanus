@@ -69,12 +69,14 @@ class RedisStatusResource(HealthCheckResource):
         deley_limit = 25
         if total > deley_limit:
             resp = self._create_error_resp(resp, body="over deley_limit!\n")
-        else:
+            return
+
+        info = "ok"
+        if req.get_param('debug', required=False):
             info = ("Redis status\n\n"
-                    "redis lists: {}\n"
+                    "lists: {}\n"
                     "total/limit: {}/{}\n"
-                    "redis_info : {}").format(lists,
-                                              total,
-                                              deley_limit,
+                    "Redis info : {}").format(lists,
+                                              total, deley_limit,
                                               pformat(self.r_info))
-            resp = self._create_success_resp(resp, body=info)
+        resp = self._create_success_resp(resp, body=info)
