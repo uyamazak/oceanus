@@ -8,9 +8,9 @@ import time
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
 from bigquery import get_client
-from utils import oceanus_logging
-from settings import (REDIS_HOST, REDIS_PORT,
-                      OCEANUS_SITES)
+from common.utils import oceanus_logging
+from common.settings import (REDIS_HOST, REDIS_PORT,
+                             OCEANUS_SITES)
 logger = oceanus_logging()
 
 """Google Parameters"""
@@ -60,6 +60,8 @@ class redis2bq:
             created = self.bq_client.create_table(DATA_SET,
                                                   table_name,
                                                   self.table_schema)
+        if created:
+            time.sleep(30)
         return created
 
     def prepare_table(self):
@@ -67,12 +69,10 @@ class redis2bq:
         return create result
         """
         table_name_tomorrow = self.create_table_name(delta_days=1)
-        table_name = self.create_table_name()
-        self.create_table(table_name_tomorrow)
-        created = self.create_table(table_name)
-        if created:
-            time.sleep(30)
-        return created
+        table_name_today = self.create_table_name()
+        created_tommorow = self.create_table(table_name_tomorrow)
+        created_today = self.create_table(table_name_today)
+        return created_tommorow or created_today
 
     def write_to_redis(self, line):
         """ return writing Redis result

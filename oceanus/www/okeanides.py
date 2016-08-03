@@ -29,3 +29,23 @@ class StaticResource(object):
         else:
             resp.body = raw_body.replace('{%oceanus_host%}',
                                          OCEANUS_SWALLOW_HOST)
+
+
+class RobotsTxtResource(object):
+
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+        resp.content_type = 'text/plain'
+        with open('static/robots.txt', 'r') as f:
+            raw_body = f.read()
+        resp.body = raw_body
+
+
+class FaviconIcoResource(object):
+
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+        resp.content_type = "image/x-icon"
+        with open('static/favicon.ico', 'rb') as f:
+            raw_body = f.read()
+        resp.body = raw_body

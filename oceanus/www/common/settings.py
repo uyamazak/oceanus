@@ -40,9 +40,9 @@ FORM_TABLE_SCHEMA = [
     {'name': 'cname', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'email', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'tel',   'type': 'STRING', 'mode': 'nullable'},
+    {'name': 'jsn',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'ua',    'type': 'STRING', 'mode': 'nullable'},
     {'name': 'url',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'jsn',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'enc',   'type': 'STRING', 'mode': 'nullable'},
 ]
 

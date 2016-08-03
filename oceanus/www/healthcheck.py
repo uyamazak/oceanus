@@ -2,7 +2,7 @@ import falcon
 import redis
 import os
 from pprint import pformat
-from utils import oceanus_logging
+from common.utils import oceanus_logging
 logger = oceanus_logging()
 
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
@@ -67,11 +67,6 @@ class RedisStatusResource(HealthCheckResource):
             total = total + self.r.llen(key)
 
         deley_limit = 25
-        if total > deley_limit:
-            resp = self._create_error_resp(resp, body="over deley_limit!\n")
-            return
-
-        info = "ok"
         if req.get_param('debug', required=False):
             info = ("Redis status\n\n"
                     "lists: {}\n"
@@ -79,4 +74,10 @@ class RedisStatusResource(HealthCheckResource):
                     "Redis info : {}").format(lists,
                                               total, deley_limit,
                                               pformat(self.r_info))
-        resp = self._create_success_resp(resp, body=info)
+
+            resp = self._create_success_resp(resp, body=info)
+        elif total > deley_limit:
+            resp = self._create_error_resp(resp, body="over deley_limit!\n")
+        else:
+            info = "ok"
+            resp = self._create_success_resp(resp, body=info)
