@@ -1,11 +1,11 @@
 import falcon
 import json
 import redis
-from settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from utils import oceanus_logging, resp_beacon_gif
+from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
+from common.utils import oceanus_logging, resp_beacon_gif
 logger = oceanus_logging()
 
 

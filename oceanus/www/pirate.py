@@ -1,14 +1,12 @@
 import falcon
 import json
-import settings
 from pprint import pformat
 from swallow import SwallowResource
 from cerberus import Validator
 from datetime import datetime
-from utils import oceanus_logging, resp_beacon_gif
+from common.settings import OCEANUS_SITES
+from common.utils import oceanus_logging, resp_beacon_gif
 logger = oceanus_logging()
-
-OCEANUS_SITES = settings.OCEANUS_SITES
 
 
 class PirateResource(SwallowResource):
