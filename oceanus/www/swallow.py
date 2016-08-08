@@ -18,14 +18,21 @@ class SwallowResource(object):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         self.redis_errors = 0
 
-    def write_to_redis(self, data, site_name):
+    def write_to_redis(self, site_name, data):
         try:
             result = self.r.lpush(site_name, data)
+
         except Exception as e:
             logger.critical('Problem adding data to Redis. {0}'.format(e))
             self.redis_errors += 1
 
+        try:
+            redis_publish_result = result = self.r.publish(site_name, data)
+        except Exception as e:
+            logger.critical('Problem publish to Redis. {0}'.format(e))
+
         return result
+
 
     def validate_json(self, field, value, error):
         if not value:
@@ -182,7 +189,7 @@ class SwallowResource(object):
             user_data['jsn'] = self.clean_json(user_data['jsn'])
             resp.status = falcon.HTTP_200
             redis_data = json.dumps(user_data)
-            redis_result = self.write_to_redis(redis_data, site_name)
+            redis_result = self.write_to_redis(site_name, redis_data)
         else:
             logger.error("validate error:{}"
                          "user_data:{}"

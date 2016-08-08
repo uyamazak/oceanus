@@ -103,7 +103,7 @@ class PirateResource(SwallowResource):
 
         user_data['jsn'] = self.clean_json(user_data['jsn'])
         redis_data = json.dumps(user_data)
-        redis_result = self.write_to_redis(redis_data, site_name)
+        redis_result = self.write_to_redis(site_name, redis_data)
         if not redis_result:
             resp.status = falcon.HTTP_500
 
