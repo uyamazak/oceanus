@@ -6,3 +6,6 @@ ln common/utils.py redis2bq/www/common/utils.py
 
 ln common/settings.py oceanus/www/common/settings.py
 ln common/utils.py oceanus/www/common/utils.py
+
+ln common/settings.py sub2revelation/www/common/settings.py
+ln common/utils.py sub2revelation/www/common/utils.py
