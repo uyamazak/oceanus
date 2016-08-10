@@ -17,3 +17,5 @@ sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-sub2revelation:$tag
 echo "tag: $tag complete"
 echo "please edit, to deploy"
 echo "kc edit deployment oceanus-sub2revelation"
+
+sudo kubectl edit deployment oceanus-sub2revelation

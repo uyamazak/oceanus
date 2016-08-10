@@ -4,6 +4,7 @@ from pirate import PirateResource
 from healthcheck import HealthCheckResource, RedisStatusResource
 from okeanides import StaticResource, RobotsTxtResource, FaviconIcoResource
 from dump import DumpDataResource
+from ranking import RankingResource
 
 app = falcon.API()
 app.add_route('/swallow', SwallowResource())
@@ -17,3 +18,5 @@ app.add_route('/favicon.ico', FaviconIcoResource())
 app.add_route('/robots.txt', RobotsTxtResource())
 
 app.add_route('/dump', DumpDataResource())
+
+app.add_route('/ranking/{name}', RankingResource())
