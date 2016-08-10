@@ -63,8 +63,11 @@ class RedisStatusResource(HealthCheckResource):
         lists = {}
         total = 0
         for key in r_keys:
-            lists[key] = self.r.llen(key)
-            total = total + self.r.llen(key)
+            key_type = self.r.type(key)
+            logger.debug("key_type:{}".format(key_type))
+            if key_type in ("list","set"):
+                lists[key] = self.r.llen(key)
+                total = total + self.r.llen(key)
 
         deley_limit = 25
         if req.get_param('debug', required=False):
