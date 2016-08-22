@@ -22,6 +22,20 @@ TABLE_PREFIX = os.environ['TABLE_PREFIX']
 
 class redis2bq:
 
+    def connect_redis(self):
+        """return True in success, else None"""
+        try:
+            self.r = redis.StrictRedis(host=REDIS_HOST,
+                                       port=REDIS_PORT,
+                                       db=0,
+                                       socket_connect_timeout=3)
+        except Exception as e:
+            logger.critical("connnecting Redis faild.\n"
+                            "{}".format(e))
+            return None
+
+        return True
+
     def __init__(self, site):
         """
         arg site is defined in settings.py
@@ -32,7 +46,7 @@ class redis2bq:
         self.keep_processing = True
         self.lines = []
         self.bq_client = None
-        self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+        self.connect_redis()
 
     def connect_bigquery(self):
         """return None """
@@ -78,10 +92,13 @@ class redis2bq:
         """ return writing Redis result
         exsiting list num
         """
+        self.connect_redis()
         try:
             result = self.r.lpush(self.site_name, line)
         except Exception as e:
-            logger.critical('Problem adding data to Redis. {}'.format(e))
+            logger.critical('[{}] '
+                            'Problem adding data to Redis. '
+                            '{}'.format(self.site_name, e))
 
         return result
 
@@ -102,7 +119,8 @@ class redis2bq:
                     count = count + 1
                 logger.debug("result:{}, count:{}".format(result, count))
         except Exception as e:
-            logger.error('Problem restore to Redis. {}'.format(e))
+            logger.error('[{}] Problem restore to Redis. '
+                         '{}'.format(self.site_name, e))
             return False
 
         return count
@@ -118,8 +136,10 @@ class redis2bq:
                                                 self.lines,
                                                 'dt')
         except Exception as e:
-            logger.error('Problem writing data BigQuery.')
-            logger.debug('{}'.format(e))
+            logger.error('[{}] '
+                         'Problem writing data '
+                         'BigQuery.'.format(self.site_name))
+            logger.debug('[{}] {}'.format(self.site_name, e))
             return False
 
         return inserted
@@ -157,6 +177,7 @@ class redis2bq:
                                                  len(self.lines)))
 
     def signal_exit_func(self, num, frame):
+        """called in signal()"""
         if self.keep_processing:
             self.keep_processing = False
             self.clean_up()
@@ -198,18 +219,19 @@ class redis2bq:
                     res[0] list key
                     res[1] content
                     """
-                    logger.info("[{}]-CHUNK:{}/{}".format(self.site_name,
-                                                          len(self.lines) + 1,
-                                                          self.chunk_num))
+                    logger.debug("[{}]-CHUNK:{}/{}".format(self.site_name,
+                                                           len(self.lines) + 1,
+                                                           self.chunk_num))
                     logger.debug("res:{}".format(res[1]))
                 except Exception as e:
-                    logger.error('[{}] Problem getting data from Redis.'
+                    logger.error('[{}] Problem getting data from Redis. '
                                  '{}'.format(self.site_name, e))
                     redis_errors += 1
                     time.sleep(3)
+                    self.connect_redis()
                     if redis_errors > allowed_redis_errors:
-                        logger.critical("Too many Redis errors"
-                                        " {}:".format(redis_errors, e))
+                        logger.critical("Too many Redis errors "
+                                        "{}:".format(redis_errors, e))
                         time.sleep(10)
                     continue
 
@@ -237,16 +259,20 @@ class redis2bq:
                 continue
             else:
                 """retry"""
-                logger.warning('BigQuery not inserted. retry...')
+                logger.warning('[{}] '
+                               'BigQuery not inserted. '
+                               'retry...'.format(self.site_name))
                 time.sleep(6)
                 self.connect_bigquery()
                 inserted = self.write_to_bq(self.lines)
 
             if inserted:
-                logger.warning('BigQuery retry success')
+                logger.warning('[{}] '
+                               'BigQuery retry success'.format(self.site_name))
             else:
-                logger.warning('retry failed, BigQuery not inserted. '
-                               'restore Redis...')
+                logger.warning('[{}] '
+                               'retry failed, BigQuery not inserted. '
+                               'restore Redis...'.format(self.site_name))
                 self.restore_to_redis(self.lines)
 
             self.lines = []
@@ -264,6 +290,7 @@ if __name__ == '__main__':
     plist = []
     for site in OCEANUS_SITES:
         plist.append(Process(target=multi, args=(site,)))
+        logger.info("[{}] process start".format(site["site_name"]))
 
     for p in plist:
         p.start()

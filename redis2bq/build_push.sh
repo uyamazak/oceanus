@@ -16,4 +16,5 @@ sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-redis2bq:$tag
 
 echo "tag: $tag complete"
 echo "please edit, to deploy"
+echo "sudo kubectl edit deployment oceanus-redis2bq"
 sudo kubectl edit deployment oceanus-redis2bq

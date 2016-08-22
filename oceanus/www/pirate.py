@@ -4,9 +4,6 @@ from pprint import pformat
 from swallow import SwallowResource
 from cerberus import Validator
 from datetime import datetime
-from common.settings import OCEANUS_SITES
-from common.utils import oceanus_logging, resp_beacon_gif
-logger = oceanus_logging()
 
 
 class PirateResource(SwallowResource):
@@ -28,18 +25,22 @@ class PirateResource(SwallowResource):
             user_data['ua'] = ''
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
-            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
+            self.logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
 
     def on_get(self, req, resp, site_name):
+        resp.body = "METHOD GET IS INVALID"
+        resp.status = falcon.HTTP_400
+
+    def on_post(self, req, resp, site_name):
         if not self.site_exists(site_name, "pirate"):
             resp.status = falcon.HTTP_404
             message = 'site name not found:{0}'.format(site_name)
             resp.body = message
-            logger.error(message)
+            self.logger.error(message)
             return
-
+        self.logger.debug("{}".format(req.query_string))
         resp.set_header('Access-Control-Allow-Origin', '*')
         rad = self.get_client_rad(req.access_route)
         user_data = {
@@ -105,6 +106,9 @@ class PirateResource(SwallowResource):
         redis_data = json.dumps(user_data)
         redis_result = self.write_to_redis(site_name, redis_data)
         if not redis_result:
+            self.logger.error("writing Redis failed.\n"
+                              "{}\n"
+                              "{}".format(redis_result, redis_data))
             resp.status = falcon.HTTP_500
 
         if req.get_param('debug', required=False):
@@ -117,4 +121,4 @@ class PirateResource(SwallowResource):
                         + '\n\n redis keys: ' + pformat(self.r.keys())
             return
         else:
-            resp = resp_beacon_gif(resp)
+            resp = "ok"

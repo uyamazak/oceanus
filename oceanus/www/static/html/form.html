@@ -6,7 +6,7 @@
 <title>アンケートフォーム</title>
 </head>
 <body>
-<form id="oceanus_pirate-form" method="get">
+<form id="oceanus_pirate-form" method="post">
 <dl>
     <dt>name　※必須:</dt>
     <dd><input id="oceanus_pirate-name" name="name" type="text" class="validate[required,maxSize[255]]" value="test-name" /></dd>
@@ -17,35 +17,10 @@
     <dt>email　※必須:</dt>
     <dd><input  id="oceanus_pirate-email" name="email" type="email" class="validate[required,custom[email],maxSize[255]]" value="test@test.com" /></dd>
 </dl>
-    <dt>現在の勤怠管理方法</dt>
-    <dd>
-		<label class="checkbox" style="display: inline; white-space: nowrap">
-		    <input type="radio" class="validate[required] radio" id="answer1OtherComment0" name="answer1OtherComment" value="タイムカード">タイムカード
-		</label>
-		<label class="checkbox" style="display: inline; white-space: nowrap">
-		    <input type="radio" class="validate[required] radio" id="answer1OtherComment1" name="answer1OtherComment" value="Excelや紙">Excelや紙
-		</label>
-		<label class="checkbox" style="display: inline; white-space: nowrap">
-		    <input type="radio" class="validate[required] radio" id="answer1OtherComment2" name="answer1OtherComment" value="勤怠管理システム">勤怠管理システム
-		</label>
-	</dd>
-	<dt>セレクト</dt>
-	<dd>
-	<select id="sample5_1" name="select-type-data" class="validate[required]">
-		<option value="">-select-</option>
-		<option value="select1">select1</option>
-		<option value="select2">select2</option>
-		<option value="select3">select3</option>
-	</select>
-	</dd>
-	<dt>チェックボックス</dt>
-	<dd>
-	<input type="checkbox" class="validate[] checkbox" name="checkbox1" id="checkbox1"> <label for="checkbox1">Checkbox1</label><br>
-	<input type="checkbox" class="validate[] checkbox" name="checkbox2" id="checkbox2"> <label for="checkbox2">Checkbox2</label><br>
-	<input type="checkbox" class="validate[] checkbox" name="checkbox3" id="checkbox3"> <label for="checkbox3">Checkbox3</label><br>
-	<input type="checkbox" class="validate[] checkbox" name="checkbox4" id="checkbox4"> <label for="checkbox4">Checkbox4</label><br>
-	<input type="checkbox" class="validate[] checkbox" name="checkbox5" id="checkbox5"> <label for="checkbox5">Checkbox5</label>
-	</dd>
+<input type="hidden" name="debug" value="100">
+<div class="agreement_check">
+  <label class="checkbox"><input type="checkbox" name="agreement" class="validate[required]" checked>上記内容に同意する</label>
+</div>
 <input type="submit" value="送信">
 </form>
 
@@ -82,7 +57,8 @@ jQuery(document).ready(function($){
 			jsn:jsn
 		}
 		var result = oceanus_pirate.f(args);
-		event.preventDefault();
+		return false;
+        event.preventDefault();
 	});
 });
 </script>
