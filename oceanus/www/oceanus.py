@@ -7,6 +7,7 @@ from dump import DumpDataResource
 from ranking import RankingResource
 
 app = falcon.API()
+app.req_options.auto_parse_form_urlencoded = True
 app.add_route('/swallow', SwallowResource())
 app.add_route('/swallow/{site_name}', SwallowResource())
 app.add_route('/pirate/{site_name}', PirateResource())

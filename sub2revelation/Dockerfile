@@ -14,15 +14,21 @@ google-api-python-client \
 redis \
 python-daemon \
 pyslack \
-requests
+requests \
+gspread \
+oauth2client
 
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
-ENV LOG_LEVEL INFO
+ENV LOG_LEVEL WARNING
 
 ENV SLACK_API_TOKEN xoxp-26111211698-36585627747-66573775025-5435c23de5
 ENV SLACK_CHANNEL C1Z3FFMPS
 ENV SLACK_BOT_NAME oceanus_bot
+
+ENV JSON_KEY_FILE Oceanus-dev-b083f2ce7603-sheet-api.json
+ENV SPREAD_SHEET_TITLE sub2revelation
+ENV SPREAD_SHEET_KEY 13e1g80hoJkLSOyvLX_JNoRS8LxC1hL9GL4FptKz-Ovk
 
 RUN mkdir /var/www
 

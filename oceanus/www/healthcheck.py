@@ -7,6 +7,7 @@ logger = oceanus_logging()
 
 REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
 REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
+REDIS_DELAY_LIMIT = int(os.environ['REDIS_DELAY_LIMIT'])
 
 
 class HealthCheckResource(object):
@@ -63,23 +64,22 @@ class RedisStatusResource(HealthCheckResource):
         lists = {}
         total = 0
         for key in r_keys:
-            key_type = self.r.type(key)
-            logger.debug("key_type:{}".format(key_type))
-            if key_type in ("list","set"):
+            key = key.decode('utf-8')
+            key_type = self.r.type(key).decode('utf-8')
+            logger.debug("key:{} key_type:{}".format(key, key_type))
+            if key_type in ("list", "set"):
                 lists[key] = self.r.llen(key)
                 total = total + self.r.llen(key)
 
-        deley_limit = 25
         if req.get_param('debug', required=False):
             info = ("Redis status\n\n"
                     "lists: {}\n"
                     "total/limit: {}/{}\n"
                     "Redis info : {}").format(lists,
-                                              total, deley_limit,
+                                              total, REDIS_DELAY_LIMIT,
                                               pformat(self.r_info))
-
             resp = self._create_success_resp(resp, body=info)
-        elif total > deley_limit:
+        elif total > REDIS_DELAY_LIMIT:
             resp = self._create_error_resp(resp, body="over deley_limit!\n")
         else:
             info = "ok"

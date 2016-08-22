@@ -6,7 +6,6 @@ from cerberus import Validator
 from datetime import datetime
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from common.utils import oceanus_logging, resp_beacon_gif
-logger = oceanus_logging()
 
 
 class SwallowResource(object):
@@ -17,22 +16,25 @@ class SwallowResource(object):
     def __init__(self):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         self.redis_errors = 0
+        self.logger = oceanus_logging()
 
     def write_to_redis(self, site_name, data):
+        result = None
         try:
             result = self.r.lpush(site_name, data)
 
         except Exception as e:
-            logger.critical('Problem adding data to Redis. {0}'.format(e))
+            self.logger.critical('Problem adding data to Redis. {0}'.format(e))
             self.redis_errors += 1
 
+        redis_publish_result = None
         try:
-            redis_publish_result = result = self.r.publish(site_name, data)
+            redis_publish_result = self.r.publish(site_name, data)
         except Exception as e:
-            logger.critical('Problem publish to Redis. {0}'.format(e))
+            self.logger.critical('Problem publish to Redis. '
+                                 '{} {}'.format(e, redis_publish_result))
 
         return result
-
 
     def validate_json(self, field, value, error):
         if not value:
@@ -65,7 +67,7 @@ class SwallowResource(object):
             user_data['ua'] = ''
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
-            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
+            self.logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
 
@@ -106,7 +108,7 @@ class SwallowResource(object):
             resp.status = falcon.HTTP_404
             message = 'site name not found:{0}'.format(site_name)
             resp.body = message
-            logger.error(message)
+            self.logger.error(message)
             return
 
         resp.set_header('Access-Control-Allow-Origin', '*')
@@ -191,11 +193,11 @@ class SwallowResource(object):
             redis_data = json.dumps(user_data)
             redis_result = self.write_to_redis(site_name, redis_data)
         else:
-            logger.error("validate error:{}"
-                         "user_data:{}"
-                         "access_route:{}".format(v.errors,
-                                                  user_data,
-                                                  req.access_route))
+            self.logger.error("validate error:{}"
+                              "user_data:{}"
+                              "access_route:{}".format(v.errors,
+                                                       user_data,
+                                                       req.access_route))
             resp.status = falcon.HTTP_400
 
         if req.get_param('debug', required=False):
