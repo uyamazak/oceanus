@@ -71,11 +71,18 @@ class redis2bq:
         exists = self.bq_client.check_table(DATA_SET, table_name)
         created = False
         if not exists:
+            logger.error("table not exists."
+                         "table_name:{}".format(table_name))
+            self.connect_bigquery()
             created = self.bq_client.create_table(DATA_SET,
                                                   table_name,
                                                   self.table_schema)
-        if created:
-            time.sleep(30)
+            if created:
+                time.sleep(30)
+            else:
+                logger.error("create table fail."
+                             "table_name:{}".format(table_name))
+                self.connect_bigquery()
         return created
 
     def prepare_table(self):
@@ -196,7 +203,6 @@ class redis2bq:
         if table_created:
             logger.info('table {0} created:{1}'.format(table_name,
                                                        table_created))
-            time.sleep(6)
 
         while self.keep_processing:
             logger.info("PROJECT_ID:{}, "
@@ -290,16 +296,28 @@ if __name__ == '__main__':
     plist = []
     for site in OCEANUS_SITES:
         plist.append(Process(target=multi, args=(site,)))
-        logger.info("[{}] process start".format(site["site_name"]))
 
     for p in plist:
         p.start()
+        logger.info("[{}] process start "
+                    "name:{}".format(site["site_name"], p.name))
 
-    def graceful_exit(num, frame):
+    def graceful_exit(num=None, frame=None):
         for p in plist:
-            logger.info('graceful_exit')
+            logger.info('graceful_exit:'.format(p.name))
             p.terminate()
             p.join()
 
     for s in (SIGINT, SIGTERM):
         signal(s, graceful_exit)
+
+    keep_main_process = True
+    while keep_main_process:
+        for p in plist:
+            if not p.is_alive():
+                logger.error("not is_alive:{}".format(p.name))
+                graceful_exit()
+                keep_main_process = False
+                break
+            else:
+                time.sleep(3)
