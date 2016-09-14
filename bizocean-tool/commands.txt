@@ -1,0 +1,15 @@
+sudo docker build -t bizocean-tool:latest .
+
+sudo docker run -it \
+    -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/script:/data/script \
+    -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/file:/data/file \
+    -v /etc/localtime:/etc/localtime:ro \
+    bizocean-tool:latest
+
+gsutil cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/file/*.csv.gz gs://bizocean_member_data/
+
+gsutil ls gs://bizocean_member_data/
+
+
+bq load temp_tables.member_20160906 gs://bizocean_member_data/2016-09-06-190023.csv.gz script/schema.json
+bq load temp_tables.member_del_20160906 gs://bizocean_member_data/ script/schema_del.json

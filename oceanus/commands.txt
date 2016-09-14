@@ -22,4 +22,8 @@ kubectl run oceanus --image=asia.gcr.io/oceanus-dev/oceanus-swallow:v1 --port=80
 kubectl expose deployment oceanus --type=NodePort
 
 cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www/settings.py /home/BIZOCEAN/yu_yamazaki/project-oceanus/redis2bq/www/settings.py
-docker run -p 80:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-swallow:latest
+
+docker run -p 8080:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-swallow:latest
+
+sudo docker build -t asia.gcr.io/oceanus-dev/oceanus-swallow:latest /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
+

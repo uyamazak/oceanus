@@ -13,8 +13,7 @@ python3-pip \
 RUN pip3 install --upgrade -q \
 cython \
 bigquery-python \
-google-api-python-client \
-redis
+google-api-python-client
 
 ENV PROJECT_ID oceanus-dev
 ENV GOOGLE_APPLICATION_CREDENTIALS /var/www/Oceanus-dev-784c5c9ec4b7.json
@@ -29,6 +28,7 @@ ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
 ENV CHUNK_NUM 50
 ENV LOG_LEVEL WARNING
+ENV INTERVAL_SECOND 300
 
 RUN mkdir /var/www
 
@@ -36,4 +36,4 @@ WORKDIR /var/www
 
 COPY www /var/www
 
-CMD ["python3.5","redis2bq.py"]
+CMD ["python3.5","table-manager.py"]

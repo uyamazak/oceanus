@@ -1,5 +1,5 @@
 #!/bin/zsh
-sudo docker images | grep sub2revelation | head -5
+sudo docker images | grep sub2revelation | head -6
 echo "enter tag"
 
 read tag
@@ -18,4 +18,4 @@ echo "tag: $tag complete"
 echo "please edit, to deploy"
 echo "kc edit deployment oceanus-sub2revelation"
 
-sudo kubectl edit deployment oceanus-sub2revelation
+#sudo kubectl edit deployment oceanus-sub2revelation

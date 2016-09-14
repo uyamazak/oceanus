@@ -2,7 +2,7 @@ docker build -t asia.gcr.io/oceanus-dev/oceanus-sub2revelation:latest /home/BIZO
 
 docker images | grep sub2revelation | head -5
 
-kubectl run oceanus-sub2revelation --image=asia.gcr.io/oceanus-dev/oceanus-sub2revelation:v20160808-01  --env="REDISMASTER_SERVICE_HOST=10.3.247.6"
+kubectl run oceanus-sub2revelation --image=asia.gcr.io/oceanus-dev/oceanus-sub2revelation:  --env="REDISMASTER_SERVICE_HOST=10.3.240.126"
 
 docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/sub2revelation/www:/var/www -it --rm --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test asia.gcr.io/oceanus-dev/oceanus-sub2revelation:v1
 

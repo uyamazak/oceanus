@@ -23,7 +23,7 @@ TABLE_PREFIX = os.environ['TABLE_PREFIX']
 class redis2bq:
 
     def connect_redis(self):
-        """return True in success, else None"""
+        """return True in success, else False"""
         try:
             self.r = redis.StrictRedis(host=REDIS_HOST,
                                        port=REDIS_PORT,
@@ -32,7 +32,7 @@ class redis2bq:
         except Exception as e:
             logger.critical("connnecting Redis faild.\n"
                             "{}".format(e))
-            return None
+            return False
 
         return True
 
@@ -71,8 +71,8 @@ class redis2bq:
         exists = self.bq_client.check_table(DATA_SET, table_name)
         created = False
         if not exists:
-            logger.error("table not exists."
-                         "table_name:{}".format(table_name))
+            logger.info("table not exists."
+                        "table_name:{}".format(table_name))
             self.connect_bigquery()
             created = self.bq_client.create_table(DATA_SET,
                                                   table_name,
@@ -179,9 +179,10 @@ class redis2bq:
             sys.exit('[{}] Redis pushed and exit'.format(self.site_name))
             return
 
-        sys.exit('[{}] cleaned up failed: '
-                 'lost {} lines and exit'.format(self.site_name,
-                                                 len(self.lines)))
+        logger.critical('[{}] cleaned up failed: '
+                        'lost {} lines and exit'.format(self.site_name,
+                                                        len(self.lines)))
+        sys.exit("exit with losting data")
 
     def signal_exit_func(self, num, frame):
         """called in signal()"""
@@ -205,17 +206,17 @@ class redis2bq:
                                                        table_created))
 
         while self.keep_processing:
-            logger.info("PROJECT_ID:{}, "
-                        "DATA_SET:{}, "
-                        "table_name:{}, "
-                        "REDIS_HOST:{}, "
-                        "REDIS_PORT:{}, "
-                        "REDIS_LIST:{}".format(PROJECT_ID,
-                                               DATA_SET,
-                                               table_name,
-                                               REDIS_HOST,
-                                               REDIS_PORT,
-                                               self.site_name))
+            logger.debug("PROJECT_ID:{}, "
+                         "DATA_SET:{}, "
+                         "table_name:{}, "
+                         "REDIS_HOST:{}, "
+                         "REDIS_PORT:{}, "
+                         "REDIS_LIST:{}".format(PROJECT_ID,
+                                                DATA_SET,
+                                                table_name,
+                                                REDIS_HOST,
+                                                REDIS_PORT,
+                                                self.site_name))
 
             while len(self.lines) < self.chunk_num:
                 res = None
@@ -259,8 +260,8 @@ class redis2bq:
             # insert the self.lines into BigQuery
             inserted = self.write_to_bq(self.lines)
             if inserted:
-                logger.info('[{}] BigQuery inserted:{}'.format(self.site_name,
-                                                               inserted))
+                logger.debug('[{}] BigQuery inserted:{}'.format(self.site_name,
+                                                                inserted))
                 self.lines = []
                 continue
             else:
@@ -273,8 +274,8 @@ class redis2bq:
                 inserted = self.write_to_bq(self.lines)
 
             if inserted:
-                logger.warning('[{}] '
-                               'BigQuery retry success'.format(self.site_name))
+                logger.info('[{}] '
+                            'BigQuery retry success'.format(self.site_name))
             else:
                 logger.warning('[{}] '
                                'retry failed, BigQuery not inserted. '
@@ -302,22 +303,28 @@ if __name__ == '__main__':
         logger.info("[{}] process start "
                     "name:{}".format(site["site_name"], p.name))
 
+    graceful_exit_done = False
+
     def graceful_exit(num=None, frame=None):
         for p in plist:
             logger.info('graceful_exit:'.format(p.name))
             p.terminate()
             p.join()
+        global graceful_exit_done
+        graceful_exit_done = True
 
     for s in (SIGINT, SIGTERM):
         signal(s, graceful_exit)
 
-    keep_main_process = True
-    while keep_main_process:
+    """if is_alive is false, exit this script.
+    restart is left to kubernetes"""
+    keep_monitoring = True
+    while keep_monitoring:
         for p in plist:
             if not p.is_alive():
-                logger.error("not is_alive:{}".format(p.name))
-                graceful_exit()
-                keep_main_process = False
+                logger.critical("not alive:{}".format(p.name))
+                if graceful_exit_done is False:
+                    graceful_exit()
+                keep_monitoring = False
                 break
-            else:
-                time.sleep(3)
+            time.sleep(10)

@@ -1,6 +1,7 @@
 import falcon
 import json
 import redis
+from user_agents import parse as parse_ua
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
@@ -93,6 +94,28 @@ class SwallowResource(object):
             """local or Google Load balancer"""
             return access_route[0]
 
+    def get_client_device(self, ua):
+        device = ""
+
+        if not ua:
+            return device
+        try:
+            parse_result = parse_ua(ua)
+        except Exception as e:
+            self.logger.warning("parse_ua error: {}".format(e))
+            return device
+
+        if parse_result.is_pc:
+            device = "pc"
+        elif parse_result.is_mobile:
+            device = "mobile"
+        elif parse_result.is_tablet:
+            device = "tablet"
+        elif parse_result.is_bot:
+            device = "bot"
+
+        return device
+
     def site_exists(self, site_name, method_label):
         sites = [site["site_name"] for site in OCEANUS_SITES
                  if site["method"] == method_label]
@@ -114,7 +137,7 @@ class SwallowResource(object):
         resp.set_header('Access-Control-Allow-Origin', '*')
 
         rad = self.get_client_rad(req.access_route)
-
+        device = self. get_client_device(req.user_agent)
         user_data = {
             # date and time
             'dt':  str(datetime.utcnow()),
@@ -126,6 +149,8 @@ class SwallowResource(object):
             'evt': req.get_param('evt', required=True),
             # user agent
             'ua':  req.user_agent,
+            # device detecting from user agent
+            'dev': device,
             # oceanus id
             'oid': req.get_param('oid', required=True),
             # user uniq id ex. bizocean id
@@ -171,6 +196,8 @@ class SwallowResource(object):
                     'nullable': True, 'empty': True, 'maxlength': 1024},
             'ua':  {'type': 'string',
                     'nullable': True, 'empty': True, 'maxlength': 512},
+            'dev': {'type': 'string',
+                    'nullable': True, 'empty': True, 'maxlength': 16},
             'enc': {'type': 'string',
                     'nullable': True,
                     'empty': True,
@@ -204,6 +231,7 @@ class SwallowResource(object):
             resp.body = "oceanus swallow debug" \
                          + "\n\n site_name:" + site_name \
                          + "\n\n user_data:\n" + pformat(user_data) \
+                         + "\n\n device:" + pformat(device) \
                          + '\n\n validate: ' + pformat(validate_result) \
                          + '\n\n validate errors:\n' + pformat(v.errors) \
                          + '\n\n access_route: ' + pformat(req.access_route) \
