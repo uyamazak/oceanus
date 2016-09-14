@@ -14,7 +14,8 @@ gunicorn \
 bigquery-python \
 google-api-python-client \
 cerberus \
-redis
+redis \
+user-agents
 
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
@@ -32,7 +33,7 @@ WORKDIR /var/www
 
 COPY www /var/www
 
-CMD ["gunicorn", "-c", "gunicorn_conf.py", "oceanus:app"]
-
 EXPOSE 80
 EXPOSE 443
+
+CMD ["gunicorn", "-c", "gunicorn_conf.py", "oceanus:app"]

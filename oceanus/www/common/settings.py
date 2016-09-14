@@ -25,6 +25,7 @@ LOG_TABLE_SCHEMA = [
     {'name': 'ref', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'jsn', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'ua',  'type': 'STRING', 'mode': 'nullable'},
+    {'name': 'dev', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'enc', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'scr', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'vie', 'type': 'STRING', 'mode': 'nullable'},
@@ -42,6 +43,7 @@ FORM_TABLE_SCHEMA = [
     {'name': 'tel',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'jsn',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'ua',    'type': 'STRING', 'mode': 'nullable'},
+    {'name': 'dev',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'url',   'type': 'STRING', 'mode': 'nullable'},
     {'name': 'enc',   'type': 'STRING', 'mode': 'nullable'},
 ]

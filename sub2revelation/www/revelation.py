@@ -6,8 +6,8 @@ import sys
 import io
 import redis
 import time
-import slack
-import slack.chat
+# import slack
+# import slack.chat
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
@@ -23,19 +23,16 @@ SLACK_CHANNEL = os.environ["SLACK_CHANNEL"]
 SLACK_BOT_NAME = os.environ["SLACK_BOT_NAME"]
 
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
-SPREAD_SHEET_TITLE = os.environ['SPREAD_SHEET_TITLE']
 SPREAD_SHEET_KEY = os.environ['SPREAD_SHEET_KEY']
 
 
-class revelation:
+class Revelation:
 
     def connect_redis(self):
-        self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0,
+        self.r = redis.StrictRedis(host=REDIS_HOST,
+                                   port=REDIS_PORT,
+                                   db=0,
                                    socket_connect_timeout=3)
-
-    def create_ws_title(self):
-        d = datetime.now()
-        return d.strftime("%Y-%U")
 
     def open_gspread_sheet(self):
         scope = ['https://spreadsheets.google.com/feeds']
@@ -48,41 +45,72 @@ class revelation:
         logger.debug("ws_title:{}".format(ws_title))
         self.gsheet = gc.open_by_key(SPREAD_SHEET_KEY)
 
-    def get_gworksheet(self):
-        self.open_gspread_sheet()
-        ws_title = self.create_ws_title()
-        sheet_title_list = [ws.title for ws in self.gsheet.worksheets()]
-        logger.debug("worksheets{}".format(sheet_title_list))
-        if ws_title not in sheet_title_list:
-            self.gsheet.add_worksheet(ws_title, 1, 20)
-            logger.info("create worksheet:{}".format(ws_title))
-        self.worksheet = self.gsheet.worksheet(ws_title)
-
     def __init__(self, site_name_list):
         """
         arg site is defined in settings.py
         """
         self.site_name_list = site_name_list
         self.keep_processing = True
-        self.get_gworksheet()
         self.connect_redis()
         self.pubsub = self.r.pubsub()
-        self.messages = []
+        self.open_gspread_sheet()
 
-    def append_gs_row(self, message_list):
-        logger.debug("message_list len():{}".format(len(message_list)))
-        self.get_gworksheet()
-        for mess in message_list:
-            logger.debug("mess:{}".format(mess))
+    def create_ws_title(self, prefix="", suffix="", date_format="%Y-%m"):
+        d = datetime.now()
+        return "{}{}{}".format(prefix,
+                               d.strftime(date_format),
+                               suffix)
+
+    def get_ws(self, ws_title=None):
+        if not ws_title:
+            ws_title = self.create_ws_title()
+        sheet_title_list = [ws.title for ws in self.gsheet.worksheets()]
+        logger.debug("worksheets{}".format(sheet_title_list))
+        if ws_title not in sheet_title_list:
+            self.gsheet.add_worksheet(ws_title, 1, 20)
+            logger.info("create worksheet:{}".format(ws_title))
+        self.worksheet = self.gsheet.worksheet(ws_title)
+        return self.worksheet
+
+    def format_ws_row(self, args):
+        row = []
+        for a in args:
+            logger.debug("a: {}".format(a))
+            if isinstance(a, tuple):
+                row.append(":".join(str(i) for i in a))
+            elif isinstance(a, str):
+                row.append(a)
+            elif a is None:
+                row.append("")
+            else:
+                try:
+                    row.append(str(a))
+                except Exception as e:
+                    logger.error("row format error {} "
+                                 "type:{}".format(e, a))
+        return row
+
+    def send2ws(self, ws_title, message):
+        logger.debug("messsage:{}".format(message))
+        row = self.format_ws_row(message)
+        logger.debug("row:{}".format(row))
+        ws = self.get_ws(ws_title)
+        result = False
+        try:
+            result = ws.append_row(row)
+        except Exception as e:
+            # retry
+            logger.error("gsheet.append_row error:{}".format(e))
+            self.open_gspread_sheet()
+            ws = self.get_ws(ws_title)
+            time.sleep(10)
             try:
-                result = self.worksheet.append_row(mess)
+                result = ws.append_row(row)
             except Exception as e:
-                logger.error("gsheet.append_row error:{}".format(e))
-                result = self.worksheet.append_row(mess)
+                logger.error("retry gsheet.append_row error:{}".format(e))
 
-            logger.debug("result:{}".format(result))
-        else:
-            return True
+        logger.debug("result:{}".format(result))
+        return result
 
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
@@ -104,7 +132,11 @@ class revelation:
 
     def convert2jst(self, dt_str):
         JST = timezone(timedelta(hours=+9), 'JST')
-        obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S.%f')
+        try:
+            obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            # if microseconds is not set
+            obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
         utc_ts = obj_dt.replace(tzinfo=timezone.utc).timestamp()
         dt = datetime.fromtimestamp(utc_ts, JST)
         return dt
@@ -128,8 +160,8 @@ class revelation:
                         }
         return exteded_item
 
-    def add_ranking(self, ranking_name, value):
-        logger.debug("add_ranking"
+    def send2ranking(self, ranking_name, value):
+        logger.debug("send2ranking "
                      "name:{} value:{}".format(ranking_name, value))
         try:
             result = self.r.zincrby(ranking_name, value, amount=int(1))
@@ -140,70 +172,68 @@ class revelation:
         sort = self.r.zrevrange(ranking_name, 0, 100)
         logger.debug("result:{}\n sort:{}".format(result, sort))
 
-    def add_mess(self, dt, *args, **kwargs):
-        line = ["{}".format(dt)]
-        for a in args:
-            if not a:
-                continue
-            line.append("{}".format(a))
-        for k, v in kwargs.items():
-            if not v:
-                continue
-            line.append("{}:{}".format(k, v))
-        self.messages.append(line)
-        return self.messages
-
-    def create_messages(self, item):
+    def make_revelation(self, item):
         ex_item = self.prepare_item(item)
         data = ex_item.get("data")
         channel = ex_item.get("channel")
         dt = ex_item.get("dt")
         jsn = ex_item.get("jsn")
         jsn_text = ex_item.get("jsn_text")
-
+        revelation_count = 0
         if channel == "movieform":
-            self.add_mess(dt,
-                          "動画MAのコンバージョン",
-                          "cname",
-                          data["cname"],
-                          "uid",
+            ws_title = self.create_ws_title(prefix="movie_")
+            self.send2ws(ws_title,
+                         (dt,
+                          data.get("cname"),
                           data.get("uid"),
-                          )
+                          data.get("url"),
+                          ))
+            revelation_count = revelation_count + 1
 
         if channel == "bizocean":
             if data["evt"] == "search_not_found":
+                ws_title = self.create_ws_title(prefix="not_found_")
                 if not jsn:
                     logger.error("jsn is None. {}".format(data))
                 else:
-                    self.add_mess(dt,
-                                  "書式見つからない",
-                                  "kwd",
-                                  jsn.get("kwd"),
-                                  )
-                    self.add_ranking("search_not_found", jsn_text)
+                    self.send2ws(ws_title,
+                                 (dt,
+                                  jsn.get("kwd", ""),
+                                  jsn.get("cat", ""),
+                                  data.get("uid", ""),
+                                  data.get("sid", ""),
+                                  data.get("url", ""),
+                                  ))
+                    self.send2ranking("search_not_found", jsn_text)
+                revelation_count = revelation_count + 1
 
             if data["evt"] == "paid":
-                self.add_mess(dt,
+                ws_title = self.create_ws_title(prefix="paid_")
+                self.send2ws(ws_title,
+                             (dt,
                               "有料書式売れた!",
-                              "price",
                               jsn.get("price"),
-                              "title",
-                              jsn.get("title"),
-                              "id",
-                              jsn.get("id"),
-                              "uid",
-                              data.get("uid"),
-                              )
+                              ("title", jsn.get("title")),
+                              data.get("url"),
+                              ("id", jsn.get("id")),
+                              ("uid", data.get("uid")),
+                              ))
+                revelation_count = revelation_count + 1
 
-            if data["tit"] == "bizocean/500":
-                self.add_mess(dt,
-                              "bizoceanで500エラー！",
-                              "url",
-                              data["url"],
-                              )
+            if "error" in data["evt"]:
+                ws_title = self.create_ws_title(prefix="error_")
+                self.send2ws(ws_title,
+                             (dt,
+                              data.get("evt", ""),
+                              data.get("url", ""),
+                              data.get("ref", ""),
+                              ("sid", data.get("sid")),
+                              ("uid", data.get("uid")),
+                              ("ua", data.get("ua")),
+                              ))
+                revelation_count = revelation_count + 1
 
-        message_list = self.messages
-        return message_list
+        return revelation_count
 
     def main(self):
         for s in (SIGINT, SIGTERM):
@@ -226,19 +256,14 @@ class revelation:
                 logger.debug("type subscribe")
                 continue
 
-            message_list = self.create_messages(item)
-            if message_list:
-                self.append_gs_row(message_list)
-
-                logger.debug("message:{}".format(message_list))
-
-                # slack.api_token = SLACK_API_TOKEN
-                # slack_result = slack.chat.post_message(SLACK_CHANNEL,
-                #                                        message,
-                #                                        username=SLACK_BOT_NAME)
-                # logger.debug("slack_result:{}".format(slack_result))
-            self.messages = []
-            time.sleep(0.05)
+            revelation_count = self.make_revelation(item)
+            # slack.api_token = SLACK_API_TOKEN
+            # slack_result = slack.chat.post_message(SLACK_CHANNEL,
+            #                                        message,
+            #                                        username=SLACK_BOT_NAME)
+            # logger.debug("slack_result:{}".format(slack_result))
+            logger.debug("revelation_count:{}".format(revelation_count))
+            time.sleep(0.1)
 
             if not self.keep_processing:
                 logger.debug("unsubscribe()")
@@ -248,5 +273,5 @@ class revelation:
 
 if __name__ == '__main__':
     logger.info("starting revelation...")
-    reve = revelation([site["site_name"] for site in OCEANUS_SITES])
+    reve = Revelation([site["site_name"] for site in OCEANUS_SITES])
     reve.main()

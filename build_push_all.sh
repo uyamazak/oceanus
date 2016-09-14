@@ -23,13 +23,19 @@ sudo docker build \
         -t asia.gcr.io/oceanus-dev/oceanus-sub2revelation:latest \
         /home/BIZOCEAN/yu_yamazaki/project-oceanus/sub2revelation
 
+sudo docker build \
+        -t asia.gcr.io/oceanus-dev/oceanus-table-manager:$tag \
+        -t asia.gcr.io/oceanus-dev/oceanus-table-manager:latest \
+        /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager
+
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-swallow:$tag
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-redis2bq:$tag
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-sub2revelation:$tag
-
+sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-table-manager:$tag
 
 echo "tag: $tag complete"
 echo "please edit, to deploy"
 echo "kc edit deployment oceanus"
 echo "kc edit deployment oceanus-redis2bq"
 echo "kc edit deployment oceanus-sub2revelation"
+echo "kc edit deployment oceanus-table-manager"

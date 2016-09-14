@@ -43,6 +43,7 @@ class PirateResource(SwallowResource):
         self.logger.debug("{}".format(req.query_string))
         resp.set_header('Access-Control-Allow-Origin', '*')
         rad = self.get_client_rad(req.access_route)
+        device = self. get_client_device(req.user_agent)
         user_data = {
             'dt':    str(datetime.utcnow()),
             'sid':   req.get_param('sid', required=True),
@@ -50,6 +51,7 @@ class PirateResource(SwallowResource):
             'oid':   req.get_param('oid', required=False, default=""),
             'rad':   rad,
             'ua':    req.user_agent,
+            'dev':   device,
             'url':   req.get_param('url', required=False),
             'name':  req.get_param('name',  required=True),
             'cname': req.get_param('cname', required=False),
@@ -74,6 +76,8 @@ class PirateResource(SwallowResource):
                     '2[0-4][0-9]|25[0-5])$'},
             'ua':  {'type': 'string',
                     'nullable': True, 'empty': True, 'maxlength': 512},
+            'dev': {'type': 'string',
+                    'nullable': True, 'empty': True, 'maxlength': 16},
             'url': {'type': 'string', 'nullable': True,
                     'empty': True, 'maxlength': 1024},
             'jsn': {'validator': self.validate_json,

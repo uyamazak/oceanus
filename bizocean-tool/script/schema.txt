@@ -1,0 +1,11 @@
+member_id:STRING,
+employee_scale:STRING,
+prefecture:STRING,
+job_spec1:STRING,
+industry:STRING,
+annual_profit:STRING,
+gender:STRING,
+mail_magazine_status:STRING,
+age:STRING,
+last_login_date:STRING,
+create_date:STRING
