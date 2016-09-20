@@ -33,5 +33,5 @@ COPY script script
 
 VOLUME file
 
-CMD ["zsh"]
-#CMD ["python3.5", "staging_db.py"]
+#CMD ["zsh"]
+CMD ["python3.5", "prod08_db.py"]

@@ -1,12 +1,12 @@
 import falcon
 import json
+from execution import ExecutionResource
 from pprint import pformat
-from swallow import SwallowResource
 from cerberus import Validator
 from datetime import datetime
 
 
-class PirateResource(SwallowResource):
+class PirateResource(ExecutionResource):
     """
     The oceanus pirate receives form data
     in JSON format, save the BigQuery

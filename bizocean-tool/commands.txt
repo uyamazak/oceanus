@@ -6,6 +6,22 @@ sudo docker run -it \
     -v /etc/localtime:/etc/localtime:ro \
     bizocean-tool:latest
 
+sudo gsutil rsync /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/file/ gs://bizocean_member_data/
+
+sudo bq rm -f bizocean.member
+
+sudo bq load bizocean.member \
+             gs://bizocean_member_data/member.csv.gz \
+             /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/script/schema.json
+
+sudo bq rm -f bizocean.member_del
+
+sudo bq load bizocean.member_del \
+             gs://bizocean_member_data/member_del.csv.gz \
+             /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/script/schema_del.json
+
+
+
 gsutil cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/file/*.csv.gz gs://bizocean_member_data/
 
 gsutil ls gs://bizocean_member_data/

@@ -86,14 +86,12 @@ class redis2bq:
         return created
 
     def prepare_table(self):
-        """ create today and tommow tables
+        """ create today's table
         return create result
         """
-        table_name_tomorrow = self.create_table_name(delta_days=1)
         table_name_today = self.create_table_name()
-        created_tommorow = self.create_table(table_name_tomorrow)
         created_today = self.create_table(table_name_today)
-        return created_tommorow or created_today
+        return created_today
 
     def write_to_redis(self, line):
         """ return writing Redis result
@@ -297,12 +295,15 @@ if __name__ == '__main__':
     plist = []
     for site in OCEANUS_SITES:
         plist.append(Process(target=multi, args=(site,)))
+        logger.info("process append "
+                    "site_name:{}".format(site["site_name"]))
 
     for p in plist:
         p.start()
-        logger.info("[{}] process start "
-                    "name:{}".format(site["site_name"], p.name))
+        logger.info("process start "
+                    "p.name:{}".format(p.name))
 
+    # for only once execute
     graceful_exit_done = False
 
     def graceful_exit(num=None, frame=None):
