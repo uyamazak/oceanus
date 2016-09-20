@@ -14,7 +14,7 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 FILE_DIR = os.environ["FILE_DIR"]
 
-db = postgresql.open("pq://select_only:hogehoge@192.168.87.8/sf2_bizocean")
+db = postgresql.open("pq://select_only:4v|Jsxb7u!6VJ4auBba)PZ%pm+htw7*nDtqPhiv@192.168.87.8/sf2_bizocean")
 #db = postgresql.open("pq://select_only:Ny6dSb7JEBiv@192.168.87.1/sf2_bizocean")
 
 
@@ -69,7 +69,7 @@ def export_csv_gzip(table_name):
     result = get_query_result(table_name)
     JST = timezone(timedelta(hours=+9), 'JST')
     now = datetime.now()
-    csv_fname = os.path.join(FILE_DIR, now.strftime(table_name + '_%Y-%m-%d-%H%M%S.csv'))
+    csv_fname = os.path.join(FILE_DIR, now.strftime(table_name + '.csv'))
     gzip_fname = csv_fname + ".gz"
 
     with open(csv_fname, "wb") as f:

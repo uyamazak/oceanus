@@ -26,14 +26,13 @@ ENV TABLE_PREFIX oceanus_v3_
 
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
-ENV CHUNK_NUM 50
 ENV LOG_LEVEL WARNING
 ENV INTERVAL_SECOND 300
 
 RUN mkdir /var/www
 
-WORKDIR /var/www
-
 COPY www /var/www
+
+WORKDIR /var/www
 
 CMD ["python3.5","table-manager.py"]

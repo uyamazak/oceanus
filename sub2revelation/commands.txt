@@ -6,4 +6,7 @@ kubectl run oceanus-sub2revelation --image=asia.gcr.io/oceanus-dev/oceanus-sub2r
 
 docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/sub2revelation/www:/var/www -it --rm --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test asia.gcr.io/oceanus-dev/oceanus-sub2revelation:v1
 
+#daemon
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/sub2revelation/www:/var/www -it -d --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-sub2revelation:latest
+
 docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/sub2revelation/www:/var/www -it --rm --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-sub2revelation:latest
