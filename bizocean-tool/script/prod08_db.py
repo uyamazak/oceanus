@@ -15,7 +15,6 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 FILE_DIR = os.environ["FILE_DIR"]
 
 db = postgresql.open("pq://select_only:4v|Jsxb7u!6VJ4auBba)PZ%pm+htw7*nDtqPhiv@192.168.87.8/sf2_bizocean")
-#db = postgresql.open("pq://select_only:Ny6dSb7JEBiv@192.168.87.1/sf2_bizocean")
 
 
 def get_query_result(table_name):
@@ -71,7 +70,8 @@ def export_csv_gzip(table_name):
     now = datetime.now()
     csv_fname = os.path.join(FILE_DIR, now.strftime(table_name + '.csv'))
     gzip_fname = csv_fname + ".gz"
-
+    if os.path.isfile(gzip_fname):
+        os.remove(gzip_fname)
     with open(csv_fname, "wb") as f:
         print("export csv start")
         writer = csv.writer(f, lineterminator='\n', encoding="utf8")
@@ -88,8 +88,10 @@ def export_csv_gzip(table_name):
 
     except Exception as e:
         print("gzip error:{}".format(e))
-        os.remove(gzip_fname)
-    os.remove(csv_fname)
+        if os.path.isfile(gzip_fname):
+            os.remove(gzip_fname)
+    if os.path.isfile(csv_fname):
+        os.remove(csv_fname)
 
 for table_name in ("member", "member_del"):
     export_csv_gzip(table_name)

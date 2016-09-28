@@ -1,4 +1,4 @@
-sudo docker run -it \
+sudo docker run \
     -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/script:/data/script \
     -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/bizocean-tool/file:/data/file \
     -v /etc/localtime:/etc/localtime:ro \

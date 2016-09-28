@@ -71,9 +71,14 @@ class TableManager:
         """ create today and tommow tables
         return create result
         """
-        table_name_tomorrow = self.create_table_name(delta_days=1)
+        created_tommorow = False
+        now = datetime.datetime.now()
+        logger.debug("now.hour:{}".format(now.hour))
+        if now.hour >= 12:
+            table_name_tomorrow = self.create_table_name(delta_days=1)
+            created_tommorow = self.create_table(table_name_tomorrow)
+
         table_name_today = self.create_table_name()
-        created_tommorow = self.create_table(table_name_tomorrow)
         created_today = self.create_table(table_name_today)
         return created_tommorow or created_today
 
