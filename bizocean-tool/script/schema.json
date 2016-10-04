@@ -1,6 +1,7 @@
 [{"name":"member_id", "type":"STRING", "mode":"nullable"},
   {"name":"employee_scale", "type":"STRING", "mode":"nullable"},
   {"name":"prefecture", "type":"STRING", "mode":"nullable"},
+  {"name":"managerial_position", "type":"STRING", "mode":"nullable"},
   {"name":"job_spec1", "type":"STRING", "mode":"nullable"},
   {"name":"industry", "type":"STRING", "mode":"nullable"},
   {"name":"annual_profit", "type":"STRING", "mode":"nullable"},
