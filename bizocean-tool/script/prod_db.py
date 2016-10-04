@@ -29,6 +29,7 @@ def get_query_result(table_name):
     	m.member_id,
         (SELECT name FROM employee_scale as es WHERE m.employee_scale_id = es.employee_scale_id LIMIT 1) as employee_scale,
     	(SELECT name FROM prefecture as p WHERE m.company_prefecture_id = p.prefecture_id LIMIT 1) as prefecture,
+        (SELECT name FROM managerial_position as mp WHERE m.managerial_position_id = mp.managerial_position_id LIMIT 1) as managerial_position,
         (SELECT name FROM job_specification as js WHERE m.job_specification_id1 = js.job_specification_id LIMIT 1) as job_spec1,
     	(SELECT name FROM industry as i WHERE m.industry_id = i.industry_id LIMIT 1) as industry,
         (SELECT name FROM annual_profit as ap WHERE m.annual_profit_id = ap.annual_profit_id LIMIT 1) as annual_profit,

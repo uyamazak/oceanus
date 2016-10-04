@@ -1,0 +1,5 @@
+[
+ {"name":"product_category_id", "type":"INTEGER", "mode":"nullable"},
+ {"name":"product_id",          "type":"INTEGER", "mode":"nullable"},
+ {"name":"category_id",         "type":"INTEGER", "mode":"nullable"}
+]

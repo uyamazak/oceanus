@@ -24,14 +24,17 @@ py-postgresql
 RUN mkdir /data
 RUN mkdir /data/script
 RUN mkdir /data/file
+RUN mkdir /data/schema
 
 WORKDIR data/script
 
 ENV FILE_DIR /data/file
 
 COPY script script
+COPY schema schema
 
 VOLUME file
 
 #CMD ["zsh"]
-CMD ["python3.5", "prod08_db.py"]
+#CMD ["python3.5", "prod_db.py"]
+CMD ["python3.5", "sql2csv.py"]

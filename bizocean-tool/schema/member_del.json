@@ -1,5 +1,5 @@
 [
-  {"name":"member_id", "type":"STRING", "mode":"nullable"},
+  {"name":"member_id", "type":"INTEGER", "mode":"nullable"},
   {"name":"employee_scale", "type":"STRING", "mode":"nullable"},
   {"name":"prefecture", "type":"STRING", "mode":"nullable"},
   {"name":"managerial_position", "type":"STRING", "mode":"nullable"},
@@ -8,7 +8,7 @@
   {"name":"annual_profit", "type":"STRING", "mode":"nullable"},
   {"name":"gender", "type":"STRING", "mode":"nullable"},
   {"name":"mail_magazine_status", "type":"STRING", "mode":"nullable"},
-  {"name":"age", "type":"STRING", "mode":"nullable"},
+  {"name":"age", "type":"INTEGER", "mode":"nullable"},
   {"name":"last_login_date", "type":"STRING", "mode":"nullable"},
   {"name":"create_date", "type":"STRING", "mode":"nullable"},
   {"name":"delete_reason", "type":"STRING", "mode":"nullable"},
