@@ -1,5 +1,6 @@
 import json
 import redis
+import falcon
 from user_agents import parse as parse_ua
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from common.utils import oceanus_logging
@@ -8,8 +9,8 @@ from common.utils import oceanus_logging
 class ExecutionResource(object):
     """
     Execution is oceanus's base Class.
-    Gets access log, event log with json data.
-    Instead BigQuery it to quick response, save to redis on local network.
+    Gets access log, event log, and etc with json format.
+    Fot quick response, save to redis on local network instead BigQuery direct.
     """
     def __init__(self):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
@@ -58,10 +59,10 @@ class ExecutionResource(object):
         rarely contains the user side of the proxy IP ,
         return three IP in access_route
 
-        access_route e.g.
+        access_route e.g. [*.*.*.*] is real clieant ip
 
         - Direct Access
-          [192.168.1.1]
+          [*.*.*.*]
 
         - via Google Load balancer
           [*.*.*.*, 130.211.0.0/22]
@@ -108,6 +109,9 @@ class ExecutionResource(object):
         else:
             return False
 
+    """
+    Default both method is disabled.
+    """
     def on_get(self, req, resp, site_name):
             resp.body = "METHOD GET IS INVALID"
             resp.status = falcon.HTTP_400
