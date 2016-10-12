@@ -41,81 +41,133 @@ class SwallowResource(ExecutionResource):
 
         resp.set_header('Access-Control-Allow-Origin', '*')
 
-        rad = self.get_client_rad(req.access_route)
-        device = self. get_client_device(req.user_agent)
-        user_data = {
+        """
+        item_dict = { key: (
+                            user_data,
+                            validate_schema
+                            ),
+                    }
+        key is BigQuery's column name
+        """
+
+        item_dict = {
             # date and time
-            'dt':  str(datetime.utcnow()),
+            'dt': (
+                   str(datetime.utcnow()),
+                   {'type': 'string'}
+                  ),
             # client id in user cookie
-            'sid': req.get_param('sid', required=True),
+            'sid': (
+                    req.get_param('sid', required=True),
+                    {'type': 'string',
+                     'regex': '^[0-9a-f]{1,32}$'}
+                   ),
             # remote address ip
-            'rad': rad,
+            'rad': (
+                    self.get_client_rad(req.access_route),
+                    {'type': 'string',
+                     'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
+                              '2[0-4][0-9]|25[0-5])\.){3}'
+                              '([1-9]?[0-9]|1[0-9]{2}|'
+                              '2[0-4][0-9]|25[0-5])$'}
+                  ),
             # event name
-            'evt': req.get_param('evt', required=True),
+            'evt': (
+                    req.get_param('evt', required=True),
+                    {'type': 'string',
+                     'maxlength': 16}
+                   ),
             # user agent
-            'ua':  req.user_agent,
+            'ua':  (
+                    req.user_agent,
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 512}
+                    ),
             # device detecting from user agent
-            'dev': device,
+            'dev': (
+                    self. get_client_device(req.user_agent),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 16}
+                   ),
             # oceanus id
-            'oid': req.get_param('oid', required=True),
+            'oid': (
+                    req.get_param('oid', required=True),
+                    {'type': 'string',
+                     'maxlength': 16}
+                   ),
             # user uniq id ex. bizocean id
-            'uid': req.get_param('uid', required=False),
+            'uid': (
+                    req.get_param('uid', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 64}
+                    ),
             # encode
-            'enc': req.get_param('enc', required=False),
-            'url': req.get_param('url', required=True),
+            'enc': (
+                    req.get_param('enc', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
+                     'maxlength': 16}
+                   ),
+            'url': (
+                    req.get_param('url', required=True),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 1024},
+                   ),
             # referer
-            'ref': req.get_param('ref', required=False),
+            'ref': (
+                    req.get_param('ref', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 1024},
+                   ),
             # urlencoded json text
-            'jsn': req.get_param('jsn', required=False),
+            'jsn': (
+                    req.get_param('jsn', required=False),
+                    {'validator': self.validate_json,
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 1024}
+                   ),
             # page title
-            'tit': req.get_param('tit', required=False),
+            'tit': (
+                    req.get_param('tit', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 512}
+                   ),
             # screen size
-            'scr': req.get_param('scr', required=False),
+            'scr': (
+                    req.get_param('scr', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 16}
+                   ),
             # view size
-            'vie': req.get_param('vie', required=False),
+            'vie': (
+                    req.get_param('vie', required=False),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 16}
+                   ),
         }
-
-        validate_schema = {
-            'dt':  {'type': 'string'},
-            'oid': {'type': 'string',
-                    'maxlength': 16},
-            'sid': {'type': 'string',
-                    'regex': '^[0-9a-f]{1,32}$'},
-            'uid': {'type': 'string',
-                    'nullable': True,
-                    'empty': True,
-                    'maxlength': 64},
-            'rad': {'type': 'string',
-                    'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
-                             '2[0-4][0-9]|25[0-5])\.){3}'
-                             '([1-9]?[0-9]|1[0-9]{2}|'
-                             '2[0-4][0-9]|25[0-5])$'},
-            'evt': {'type': 'string', 'maxlength': 16},
-            'tit': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 512},
-            'url': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 1024},
-            'ref': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 1024},
-            'jsn': {'validator': self.validate_json,
-                    'nullable': True, 'empty': True, 'maxlength': 1024},
-            'ua':  {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 512},
-            'dev': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 16},
-            'enc': {'type': 'string',
-                    'nullable': True,
-                    'empty': True,
-                    'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
-                    'maxlength': 16},
-            'scr': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 16},
-            'vie': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 16},
-        }
-
-        user_data = self.adjust_user_data(user_data)
-        v = Validator(validate_schema)
+        user_data = self.adjust_user_data({k: v[0]
+                                           for k, v in item_dict.items()})
+        v = Validator({k: v[1]
+                       for k, v in item_dict.items()})
         validate_result = v.validate(user_data)
 
         redis_result = False
@@ -136,7 +188,6 @@ class SwallowResource(ExecutionResource):
             resp.body = "oceanus swallow debug" \
                          + "\n\n site_name:" + site_name \
                          + "\n\n user_data:\n" + pformat(user_data) \
-                         + "\n\n device:" + pformat(device) \
                          + '\n\n validate: ' + pformat(validate_result) \
                          + '\n\n validate errors:\n' + pformat(v.errors) \
                          + '\n\n access_route: ' + pformat(req.access_route) \

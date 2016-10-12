@@ -44,65 +44,114 @@ class PirateResource(ExecutionResource):
         resp.set_header('Access-Control-Allow-Origin', '*')
         rad = self.get_client_rad(req.access_route)
         device = self. get_client_device(req.user_agent)
-        user_data = {
-            'dt':    str(datetime.utcnow()),
-            'sid':   req.get_param('sid', required=True),
-            'uid':   req.get_param('uid', required=False, default=""),
-            'oid':   req.get_param('oid', required=False, default=""),
-            'rad':   rad,
-            'ua':    req.user_agent,
-            'dev':   device,
-            'url':   req.get_param('url', required=False),
-            'name':  req.get_param('name',  required=True),
-            'cname': req.get_param('cname', required=False),
-            'email': req.get_param('email', required=False),
-            'tel':   req.get_param('tel',   required=False),
-            'jsn':   req.get_param('jsn',  required=False),
-            'enc':   req.get_param('enc',  required=False, default=""),
-        }
-        validate_schema = {
-            'dt':  {'type': 'string'},
-            'oid': {'type': 'string',
-                    'maxlength': 16},
-            'sid': {'type': 'string',
-                    'regex': '^[0-9a-f]{1,32}$'},
-            'uid': {'type': 'string',
-                    'nullable': True,
-                    'empty': True},
-            'rad': {'type': 'string',
-                    'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
-                    '2[0-4][0-9]|25[0-5])\.){3}'
-                    '([1-9]?[0-9]|1[0-9]{2}|'
-                    '2[0-4][0-9]|25[0-5])$'},
-            'ua':  {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 512},
-            'dev': {'type': 'string',
-                    'nullable': True, 'empty': True, 'maxlength': 16},
-            'url': {'type': 'string', 'nullable': True,
-                    'empty': True, 'maxlength': 1024},
-            'jsn': {'validator': self.validate_json,
-                    'nullable': True, 'empty': True, 'maxlength': 10000},
-            'enc': {'type': 'string',
-                    'empty': True,
-                    'nullable': True,
-                    'regex': '^[0-9a-zA-Z\-(\)_\s]*$',
-                    'maxlength': 16},
-            'name':  {'type': 'string', 'nullable': True,
-                      'empty': True, 'maxlength': 1024},
-            'cname': {'type': 'string', 'nullable': True,
-                      'empty': True, 'maxlength': 1024},
-            'email': {'type': 'string', 'nullable': True,
-                      'empty': True, 'maxlength': 1024},
-            'tel':   {'type': 'string', 'nullable': True,
-                      'empty': True, 'maxlength': 1024},
-        }
+        """
+        item_dict = { key: (
+                            user_data,
+                            validate_schema
+                           ),
+                    }
+        key is BigQuery's column name
+        """
+        item_dict = {
+            'dt':  (
+                    str(datetime.utcnow()),
+                    {'type': 'string'}
+                   ),
+            'sid': (
+                    req.get_param('sid', required=True),
+                    {'type': 'string',
+                     'regex': '^[0-9a-f]{1,32}$'}
+                   ),
+            'uid': (
+                    req.get_param('uid', required=False, default=""),
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 64}
+                   ),
+            'oid': (
+                    req.get_param('oid', required=False, default=""),
+                    {'type': 'string',
+                     'maxlength': 16}
+                   ),
+            'rad': (
+                    rad,
+                    {'type': 'string',
+                     'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
+                             '2[0-4][0-9]|25[0-5])\.){3}'
+                             '([1-9]?[0-9]|1[0-9]{2}|'
+                             '2[0-4][0-9]|25[0-5])$'}
+                   ),
+            'ua':  (
+                    req.user_agent,
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 512}
+                   ),
+            'dev': (
+                    device,
+                    {'type': 'string',
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 16}
+                    ),
+            'url':  (
+                     req.get_param('url', required=False),
+                     {'type': 'string',
+                      'nullable': True,
+                      'empty': True,
+                      'maxlength': 1024},
+                    ),
+            'name': (
+                      req.get_param('name',  required=True),
+                      {'type': 'string',
+                       'nullable': True,
+                       'empty': True,
+                       'maxlength': 1024},
 
-        user_data = self.adjust_user_data(user_data)
-        v = Validator(validate_schema)
+                    ),
+            'cname': (
+                      req.get_param('cname', required=False),
+                      {'type': 'string',
+                       'nullable': True,
+                       'empty': True,
+                       'maxlength': 1024},
+                     ),
+            'email': (
+                      req.get_param('email', required=False),
+                      {'type': 'string', 'nullable': True,
+                       'empty': True, 'maxlength': 1024},
+                     ),
+            'tel':  (
+                     req.get_param('tel',   required=False),
+                     {'type': 'string', 'nullable': True,
+                      'empty': True, 'maxlength': 1024},
+                    ),
+            'jsn': (
+                    req.get_param('jsn',  required=False),
+                    {'validator': self.validate_json,
+                     'nullable': True,
+                     'empty': True,
+                     'maxlength': 10000},
+                   ),
+            'enc': (
+                    req.get_param('enc',  required=False, default=""),
+                    {'type': 'string',
+                     'empty': True,
+                     'nullable': True,
+                     'regex': '^[0-9a-zA-Z\-(\)_\s]*$',
+                     'maxlength': 16}
+                   )
+        }
+        user_data = self.adjust_user_data({k: v[0]
+                                           for k, v in item_dict.items()})
+        v = Validator({k: v[1] for k, v in item_dict.items()})
         validate_result = v.validate(user_data)
-        resp.status = falcon.HTTP_200
 
-        if not validate_result:
+        if validate_result:
+            resp.status = falcon.HTTP_200
+        else:
             resp.status = falcon.HTTP_400
             return
 

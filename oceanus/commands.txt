@@ -2,12 +2,15 @@
 
 docker images | grep swallow | head -10
 
-docker build -t asia.gcr.io/oceanus-dev/oceanus-swallow:v1 /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
+docker build -t asia.gcr.io/oceanus-dev/oceanus-swallow: /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
 
-docker run -p 80:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e asia.gcr.io/oceanus-dev/oceanus-swallow:v1
+docker run -p 80:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e asia.gcr.io/oceanus-dev/oceanus-web:
 
 #daemon
-docker run -p 8080:80 -d -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it -e OCEANUS_SWALLOW_HOST=http://ml30gen9:8080 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-swallow:latest
+docker run -p 8080:80 -d -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www:/var/www -it -e OCEANUS_SWALLOW_HOST=http://ml30gen9:8080 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-web:latest
+
+#stop
+docker stop `docker ps -f ancestor=asia.gcr.io/oceanus-dev/oceanus-swallow:latest -q`
 
 ### Kubernetes
 
@@ -15,7 +18,7 @@ docker run -p 8080:80 -d -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/w
 gcloud container clusters get-credentials oceanus-asia
 
 # push
-gcloud docker push asia.gcr.io/oceanus-dev/oceanus-swallow:v1
+gcloud docker push asia.gcr.io/oceanus-dev/oceanus-swallow:
 
 # deployment
 
