@@ -9,7 +9,7 @@ from datetime import datetime
 class PirateResource(ExecutionResource):
     """
     The oceanus pirate receives form data
-    in JSON format, save the BigQuery
+    in JSON format, save to Redis
     """
     def adjust_user_data(self, user_data):
         """
@@ -29,10 +29,6 @@ class PirateResource(ExecutionResource):
 
         return user_data
 
-    def on_get(self, req, resp, site_name):
-        resp.body = "METHOD GET IS INVALID"
-        resp.status = falcon.HTTP_400
-
     def on_post(self, req, resp, site_name):
         if not self.site_exists(site_name, "pirate"):
             resp.status = falcon.HTTP_404
@@ -42,8 +38,6 @@ class PirateResource(ExecutionResource):
             return
         self.logger.debug("{}".format(req.query_string))
         resp.set_header('Access-Control-Allow-Origin', '*')
-        rad = self.get_client_rad(req.access_route)
-        device = self. get_client_device(req.user_agent)
         """
         item_dict = { key: (
                             user_data,
@@ -75,7 +69,7 @@ class PirateResource(ExecutionResource):
                      'maxlength': 16}
                    ),
             'rad': (
-                    rad,
+                    self.get_client_rad(req.access_route),
                     {'type': 'string',
                      'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
                              '2[0-4][0-9]|25[0-5])\.){3}'
@@ -90,7 +84,7 @@ class PirateResource(ExecutionResource):
                      'maxlength': 512}
                    ),
             'dev': (
-                    device,
+                    self. get_client_device(req.user_agent),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
@@ -103,6 +97,7 @@ class PirateResource(ExecutionResource):
                       'empty': True,
                       'maxlength': 1024},
                     ),
+            # user name
             'name': (
                       req.get_param('name',  required=True),
                       {'type': 'string',
@@ -111,6 +106,7 @@ class PirateResource(ExecutionResource):
                        'maxlength': 1024},
 
                     ),
+            # company name
             'cname': (
                       req.get_param('cname', required=False),
                       {'type': 'string',
