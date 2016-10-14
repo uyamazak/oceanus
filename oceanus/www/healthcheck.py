@@ -32,6 +32,7 @@ class HealthCheckResource(object):
         if not body:
             body = resp.body + "503 server error\n"
         resp.body = resp.body + body
+        logger.critical('{}'.format(resp.body))
         return resp
 
     def _create_success_resp(self, resp, body=None):
