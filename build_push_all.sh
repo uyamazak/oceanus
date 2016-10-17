@@ -9,8 +9,8 @@ read tag
 echo "tag:  $tag start"
 
 sudo docker build \
-        -t asia.gcr.io/oceanus-dev/oceanus-swallow:$tag \
-        -t asia.gcr.io/oceanus-dev/oceanus-swallow:latest \
+        -t asia.gcr.io/oceanus-dev/oceanus-web:$tag \
+        -t asia.gcr.io/oceanus-dev/oceanus-web:latest \
         /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus
 
 sudo docker build \
@@ -28,7 +28,7 @@ sudo docker build \
         -t asia.gcr.io/oceanus-dev/oceanus-table-manager:latest \
         /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager
 
-sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-swallow:$tag
+sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-web:$tag
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-redis2bq:$tag
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-sub2revelation:$tag
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-table-manager:$tag

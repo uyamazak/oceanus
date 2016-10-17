@@ -13,7 +13,6 @@ sudo docker build \
 
 sudo gcloud docker push asia.gcr.io/oceanus-dev/oceanus-table-manager:$tag
 
-
 echo "tag: $tag complete"
 echo "please edit, to deploy"
 echo "sudo kubectl edit deployment oceanus-table-manager"
