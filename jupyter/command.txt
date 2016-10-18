@@ -1,2 +1,0 @@
-docker build -t myjupyter .
-docker run -p 8888:8888 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/jupyter/work:/home/jovyan/work myjupyter
