@@ -3,5 +3,5 @@ git push --all backlog
 
 # back up kc settings in yaml
 
-kc get services -o yaml > /home/BIZOCEAN/yu_yamazaki/project-oceanus/kubectl_back/kc_get_services_`date '+%Y-%m-%d'`.yaml
-kc get deployment -o yaml > /home/BIZOCEAN/yu_yamazaki/project-oceanus/kubectl_back/kc_get_deployment_`date '+%Y-%m-%d'`.yaml
+kc get services -o yaml > /home/BIZOCEAN/yu_yamazaki/project-oceanus/management/kubectl_back/kc_get_services_`date '+%Y-%m-%d'`.yaml
+kc get deployment -o yaml > /home/BIZOCEAN/yu_yamazaki/project-oceanus/management/kubectl_back/kc_get_deployment_`date '+%Y-%m-%d'`.yaml
