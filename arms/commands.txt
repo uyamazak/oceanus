@@ -14,8 +14,9 @@ gcloud container clusters get-credentials oceanus-asia
 # push
 gcloud docker push asia.gcr.io/oceanus-dev/arms:
 # deployment
-kubectl run oceanus --image=asia.gcr.io/oceanus-dev/arms: --port=80 --replicas=2 --env=REDISMASTER_SERVICE_HOST=10.3.247.6
-kubectl expose deployment oceanus --type=NodePort
+kubectl run arms --image=asia.gcr.io/oceanus-dev/arms:v20161018-04 --port=80 --replicas=2 --env=REDISMASTER_SERVICE_HOST=10.3.240.126
+kubectl expose deployment arms --type=NodePort
+
 cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/arms/www/settings.py /home/BIZOCEAN/yu_yamazaki/project-oceanus/redis2bq/www/settings.py
 docker run -p 8080:80 -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/arms/www:/var/www -it --rm -e OCEANUS_SWALLOW_HOST=http://ml30gen9 -e REDISMASTER_SERVICE_HOST=ml30gen9 -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-swallow:latest
 sudo docker build -t asia.gcr.io/oceanus-dev/arms:latest /home/BIZOCEAN/yu_yamazaki/project-oceanus/arms

@@ -16,3 +16,32 @@ oceanus            10.3.253.176   nodes         80/TCP     70d
 oceanus-redis      10.3.247.6     <none>        6379/TCP   70d
 oceanus-redis-pd   10.3.240.126   <none>        6379/TCP   5s
 
+#新規作成時
+kc edit deploymentで
+volumes:
+を追加、一旦保存
+volumeMounts:
+を追加、保存する
+
+ 30     spec:
+ 31       containers:
+ 32       - image: asia.gcr.io/oceanus-dev/oceanus-redis:v3.2.3
+ 33         imagePullPolicy: IfNotPresent
+ 34         name: redis323
+ 35         ports:
+ 36         - containerPort: 6379
+ 37           protocol: TCP
+ 38         resources: {}
+ 39         terminationMessagePath: /dev/termination-log
+ 40         volumeMounts:
+ 41         - mountPath: /data
+ 42           name: redis-data
+ 43       dnsPolicy: ClusterFirst
+ 44       restartPolicy: Always
+ 45       securityContext: {}
+ 46       terminationGracePeriodSeconds: 30
+ 47       volumes:
+ 48       - gcePersistentDisk:
+ 49           fsType: ext4
+ 50           pdName: redis-data
+ 51         name: redis-data

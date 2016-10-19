@@ -102,4 +102,9 @@ OCEANUS_SITES = (
      "method": 'pirate',
      "chunk_num": 1,
      },
+    {"site_name": "namecard",
+     "table_schema": FORM_TABLE_SCHEMA,
+     "method": 'pirate',
+     "chunk_num": 1,
+     },
 )

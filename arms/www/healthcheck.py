@@ -80,8 +80,15 @@ class RedisStatusResource(HealthCheckResource):
                                               total, REDIS_DELAY_LIMIT,
                                               pformat(self.r_info))
             resp = self._create_success_resp(resp, body=info)
+
         elif total > REDIS_DELAY_LIMIT:
-            resp = self._create_error_resp(resp, body="over deley_limit!\n")
+            log_body = ("over deley_limit!\n"
+                        "lists: {}\n"
+                        "total/limit:"
+                        "{}/{}".format(lists,
+                                       total,
+                                       REDIS_DELAY_LIMIT))
+            resp = self._create_error_resp(resp, body=log_body)
         else:
             info = "ok"
             resp = self._create_success_resp(resp, body=info)
