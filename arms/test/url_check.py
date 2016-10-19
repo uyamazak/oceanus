@@ -11,7 +11,8 @@ get_list = [
 ]
 
 post_list = [
-    ("{}/pirate/movieform", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D")
+    ("{}/pirate/movieform", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D"),
+    ("{}/pirate/namecard", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D"),
 ]
 
 error_count = 0
