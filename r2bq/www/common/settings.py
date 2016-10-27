@@ -37,7 +37,7 @@ FORM_TABLE_SCHEMA = [
     {'name': 'sid',   'type': 'STRING', 'mode': 'REQUIRED'},
     {'name': 'rad',   'type': 'STRING', 'mode': 'REQUIRED'},
     {'name': 'uid',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'name',  'type': 'STRING', 'mode': 'REQUIRED'},
+    {'name': 'name',  'type': 'STRING', 'mode': 'nullable'},
     {'name': 'cname', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'email', 'type': 'STRING', 'mode': 'nullable'},
     {'name': 'tel',   'type': 'STRING', 'mode': 'nullable'},

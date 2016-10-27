@@ -72,9 +72,9 @@ class PirateResource(ExecutionResource):
                     self.get_client_rad(req.access_route),
                     {'type': 'string',
                      'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
-                             '2[0-4][0-9]|25[0-5])\.){3}'
-                             '([1-9]?[0-9]|1[0-9]{2}|'
-                             '2[0-4][0-9]|25[0-5])$'}
+                              '2[0-4][0-9]|25[0-5])\.){3}'
+                              '([1-9]?[0-9]|1[0-9]{2}|'
+                              '2[0-4][0-9]|25[0-5])$'}
                    ),
             'ua':  (
                     req.user_agent,
@@ -99,12 +99,11 @@ class PirateResource(ExecutionResource):
                     ),
             # user name
             'name': (
-                      req.get_param('name',  required=True),
-                      {'type': 'string',
-                       'nullable': True,
-                       'empty': True,
-                       'maxlength': 1024},
-
+                     req.get_param('name',  required=False),
+                     {'type': 'string',
+                      'nullable': True,
+                      'empty': True,
+                      'maxlength': 1024},
                     ),
             # company name
             'cname': (
@@ -116,13 +115,17 @@ class PirateResource(ExecutionResource):
                      ),
             'email': (
                       req.get_param('email', required=False),
-                      {'type': 'string', 'nullable': True,
-                       'empty': True, 'maxlength': 1024},
+                      {'type': 'string',
+                       'nullable': True,
+                       'empty': True,
+                       'maxlength': 1024},
                      ),
             'tel':  (
                      req.get_param('tel',   required=False),
-                     {'type': 'string', 'nullable': True,
-                      'empty': True, 'maxlength': 1024},
+                     {'type': 'string',
+                      'nullable': True,
+                      'empty': True,
+                      'maxlength': 1024},
                     ),
             'jsn': (
                     req.get_param('jsn',  required=False),
