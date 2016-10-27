@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import datetime
 import os
 import json
 import sys
@@ -8,7 +7,7 @@ import time
 from signal import signal, SIGINT, SIGTERM
 from multiprocessing import Process
 from bigquery import get_client
-from common.utils import oceanus_logging
+from common.utils import oceanus_logging, create_bq_table_name
 from common.settings import (REDIS_HOST, REDIS_PORT,
                              OCEANUS_SITES)
 logger = oceanus_logging()
@@ -17,7 +16,6 @@ logger = oceanus_logging()
 PROJECT_ID = os.environ['PROJECT_ID']
 DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
-TABLE_PREFIX = os.environ['TABLE_PREFIX']
 
 
 class redis2bq:
@@ -52,46 +50,6 @@ class redis2bq:
         """return None """
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
                                     readonly=False)
-
-    def create_table_name(self, delta_days=0):
-        """return table name"""
-        if delta_days != 0:
-            date_delta = datetime.datetime.now() + \
-                         datetime.timedelta(days=delta_days)
-
-            return TABLE_PREFIX + self.site_name + \
-                date_delta.strftime('_%Y%m%d')
-
-        else:
-            return TABLE_PREFIX + self.site_name + \
-                    datetime.datetime.now().strftime('_%Y%m%d')
-
-    def create_table(self, table_name):
-        """ create today's table in BigQuery"""
-        exists = self.bq_client.check_table(DATA_SET, table_name)
-        created = False
-        if not exists:
-            logger.info("table not exists."
-                        "table_name:{}".format(table_name))
-            self.connect_bigquery()
-            created = self.bq_client.create_table(DATA_SET,
-                                                  table_name,
-                                                  self.table_schema)
-            if created:
-                time.sleep(30)
-            else:
-                logger.error("create table fail."
-                             "table_name:{}".format(table_name))
-                self.connect_bigquery()
-        return created
-
-    def prepare_table(self):
-        """ create today's table
-        return create result
-        """
-        table_name_today = self.create_table_name()
-        created_today = self.create_table(table_name_today)
-        return created_today
 
     def write_to_redis(self, line):
         """ return writing Redis result
@@ -134,7 +92,7 @@ class redis2bq:
         if not len(lines):
             return None
 
-        table_name = self.create_table_name()
+        table_name = create_bq_table_name(self.site_name)
         try:
             inserted = self.bq_client.push_rows(DATA_SET,
                                                 table_name,
@@ -197,11 +155,7 @@ class redis2bq:
         redis_errors = 0
         allowed_redis_errors = 10
         self.connect_bigquery()
-        table_name = self.create_table_name()
-        table_created = self.create_table(table_name)
-        if table_created:
-            logger.info('table {0} created:{1}'.format(table_name,
-                                                       table_created))
+        table_name = create_bq_table_name(self.site_name)
 
         while self.keep_processing:
             logger.debug("PROJECT_ID:{}, "
@@ -221,7 +175,7 @@ class redis2bq:
                 try:
                     res = self.r.brpop(self.site_name, 0)
                     """
-                    res[0] list key
+                    res[0] list's key
                     res[1] content
                     """
                     logger.debug("[{}]-CHUNK:{}/{}".format(self.site_name,
@@ -254,7 +208,6 @@ class redis2bq:
                 self.lines.append(line)
 
             redis_errors = 0
-            self.prepare_table()
             # insert the self.lines into BigQuery
             inserted = self.write_to_bq(self.lines)
             if inserted:

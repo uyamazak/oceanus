@@ -137,7 +137,7 @@ class SwallowResource(ExecutionResource):
                     {'validator': self.validate_json,
                      'nullable': True,
                      'empty': True,
-                     'maxlength': 1024}
+                     'maxlength': 4096}
                    ),
             # page title
             'tit': (
@@ -145,7 +145,7 @@ class SwallowResource(ExecutionResource):
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
-                     'maxlength': 512}
+                     'maxlength': 1024}
                    ),
             # screen size
             'scr': (
@@ -169,7 +169,6 @@ class SwallowResource(ExecutionResource):
         v = Validator({k: v[1]
                        for k, v in item_dict.items()})
         validate_result = v.validate(user_data)
-
         redis_result = False
         if validate_result:
             user_data['jsn'] = self.clean_json(user_data['jsn'])

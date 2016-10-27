@@ -3,7 +3,7 @@ import datetime
 import os
 import time
 from bigquery import get_client
-from common.utils import oceanus_logging
+from common.utils import oceanus_logging, create_bq_table_name
 from common.settings import OCEANUS_SITES
 logger = oceanus_logging()
 
@@ -11,7 +11,7 @@ logger = oceanus_logging()
 PROJECT_ID = os.environ['PROJECT_ID']
 DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
-TABLE_PREFIX = os.environ['TABLE_PREFIX']
+BQ_TABLE_PREFIX = os.environ['BQ_TABLE_PREFIX']
 INTERVAL_SECOND = int(os.environ['INTERVAL_SECOND'])
 
 
@@ -33,19 +33,6 @@ class TableManager:
         self.lines = []
         self.bq_client = None
         self.connect_bigquery()
-
-    def create_table_name(self, delta_days=0):
-        """return table name"""
-        if delta_days != 0:
-            date_delta = datetime.datetime.now() + \
-                         datetime.timedelta(days=delta_days)
-
-            return TABLE_PREFIX + self.site_name + \
-                date_delta.strftime('_%Y%m%d')
-
-        else:
-            return TABLE_PREFIX + self.site_name + \
-                    datetime.datetime.now().strftime('_%Y%m%d')
 
     def create_table(self, table_name):
         """ create today's table in BigQuery"""
@@ -75,10 +62,11 @@ class TableManager:
         now = datetime.datetime.now()
         logger.debug("now.hour:{}".format(now.hour))
         if now.hour >= 12:
-            table_name_tomorrow = self.create_table_name(delta_days=1)
+            table_name_tomorrow = create_bq_table_name(self.site_name,
+                                                       delta_days=1)
             created_tommorow = self.create_table(table_name_tomorrow)
 
-        table_name_today = self.create_table_name()
+        table_name_today = create_bq_table_name(self.site_name)
         created_today = self.create_table(table_name_today)
         return created_tommorow or created_today
 
@@ -88,9 +76,9 @@ if __name__ == '__main__':
     logger.info("start managing BigQuery tables...")
     logger.info("PROJECT_ID:{} "
                 "DATA_SET:{} "
-                "TABLE_PREFIX:{}".format(PROJECT_ID,
-                                         DATA_SET,
-                                         TABLE_PREFIX))
+                "BQ_TABLE_PREFIX:{}".format(PROJECT_ID,
+                                            DATA_SET,
+                                            BQ_TABLE_PREFIX))
 
     while True:
         for site in OCEANUS_SITES:

@@ -178,6 +178,7 @@ class Revelation:
         jsn = ex_item.get("jsn")
         jsn_text = ex_item.get("jsn_text")
         revelation_count = 0
+        # 動画広告フォーム
         if channel == "movieform":
             ws_title = self.create_ws_title(prefix="movie_")
             self.send2ws(ws_title,
@@ -187,8 +188,9 @@ class Revelation:
                           data.get("url"),
                           ))
             revelation_count = revelation_count + 1
-
+        # bizocean内
         if channel == "bizocean":
+            # 検索見つからない
             if data["evt"] == "search_not_found":
                 ws_title = self.create_ws_title(prefix="not_found_")
                 if not jsn:
@@ -205,6 +207,7 @@ class Revelation:
                     self.send2ranking("search_not_found", jsn_text)
                 revelation_count = revelation_count + 1
 
+            # 有料書式DL完了
             if data["evt"] == "paid":
                 ws_title = self.create_ws_title(prefix="paid_")
                 self.send2ws(ws_title,
@@ -217,7 +220,7 @@ class Revelation:
                               ("uid", data.get("uid")),
                               ))
                 revelation_count = revelation_count + 1
-
+            # エラー
             if "error" in data["evt"]:
                 ws_title = self.create_ws_title(prefix="error_")
                 self.send2ws(ws_title,
@@ -227,7 +230,8 @@ class Revelation:
                               data.get("ref", ""),
                               ("sid", data.get("sid")),
                               ("uid", data.get("uid")),
-                              ("ua", data.get("ua")),
+                              data.get("ua"),
+                              data.get("rad"),
                               ))
                 revelation_count = revelation_count + 1
 
@@ -258,7 +262,7 @@ class Revelation:
             # slack.api_token = SLACK_API_TOKEN
             # slack_result = slack.chat.post_message(SLACK_CHANNEL,
             #                                        message,
-            #                                        username=SLACK_BOT_NAME)
+        :q    #                                        username=SLACK_BOT_NAME)
             # logger.debug("slack_result:{}".format(slack_result))
             logger.debug("revelation_count:{}".format(revelation_count))
             time.sleep(0.1)
