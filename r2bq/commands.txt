@@ -9,6 +9,8 @@ docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/r2bq/www:/var/www -it -
 #daemon
 docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/r2bq/www:/var/www -it -d --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-r2bq:latest
 
-cp /home/BIZOCEAN/yu_yamazaki/project-oceanus/r2bq/www/settings.py /home/BIZOCEAN/yu_yamazaki/project-oceanus/oceanus/www/settings.py
+#stop
+docker stop `docker ps -f ancestor=asia.gcr.io/oceanus-dev/r2bq:latest -q`
+
 
 docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/r2bq/www:/var/www -it --rm --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-r2bq:latest

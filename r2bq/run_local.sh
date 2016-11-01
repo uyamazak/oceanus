@@ -1,5 +1,5 @@
 #!/bin/zsh
-sudo docker run -d -it \
+sudo docker run -it \
         -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/r2bq/www:/var/www \
         -e DATA_SET=oceanus_test \
         -e REDISMASTER_SERVICE_HOST=ml30gen9 \
