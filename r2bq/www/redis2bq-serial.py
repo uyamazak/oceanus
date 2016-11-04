@@ -16,12 +16,25 @@ PROJECT_ID = os.environ['PROJECT_ID']
 DATA_SET = os.environ['DATA_SET']
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
 
-"""serial Parameters"""
-BRPOP_TIMEOUT = os.environ.get('BRPOP_TIMEOUT', 1)
-SERIAL_INTERVAL_SECOND = os.environ.get('SERIAL_INTERVAL_SECOND', 0.5)
+"""Serial Parameters"""
+BRPOP_TIMEOUT = int(os.environ.get('BRPOP_TIMEOUT', 1))
+SERIAL_INTERVAL_SECOND = float(os.environ.get('SERIAL_INTERVAL_SECOND', 0.5))
+MAX_CHUNK_NUM = int(os.environ.get('MAX_CHUNK_NUM', 100))
 
 
 class redis2bqSerial:
+
+    def __init__(self, site):
+        """
+        arg site is defined in settings.py
+        """
+        self.site_name = site["site_name"]
+        self.table_schema = site["table_schema"]
+        self.chunk_num = site["chunk_num"]
+        self.keep_processing = True
+        self.lines = []
+        self.bq_client = None
+        self.llen = None
 
     def connect_redis(self):
         """return True in success, else False"""
@@ -30,36 +43,32 @@ class redis2bqSerial:
                                        port=REDIS_PORT,
                                        db=0,
                                        socket_connect_timeout=3)
+            self.llen = self.r.llen(self.site_name)
         except Exception as e:
             logger.critical("connnecting Redis faild.\n"
                             "{}".format(e))
+            time.sleep(3)
             return False
-
-        return True
-
-    def __init__(self, site, llen):
-        """
-        arg site is defined in settings.py
-        """
-        self.site_name = site["site_name"]
-        self.table_schema = site["table_schema"]
-        self.chunk_num = site["chunk_num"]
-        self.llen = llen
-        self.keep_processing = True
-        self.lines = []
-        self.bq_client = None
-        self.connect_redis()
+        else:
+            return True
 
     def connect_bigquery(self):
-        """return None """
-        self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                    readonly=False)
+        """return True in success, else False"""
+        try:
+            self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                        readonly=False)
+        except Exception as e:
+            logger.critical('[{}] '
+                            'Problem connecting BigQuery.'
+                            '{}'.format(self.site_name, e))
+            return False
+        else:
+            return True
 
     def write_to_redis(self, line):
         """ return writing Redis result
         exsiting list num
         """
-        self.connect_redis()
         try:
             result = self.r.lpush(self.site_name, line)
         except Exception as e:
@@ -151,6 +160,17 @@ class redis2bqSerial:
             self.keep_processing = False
             self.clean_up()
 
+    def needs_writing_bq(self):
+        logger.debug("site_name:{} "
+                     "chunk_num:{} "
+                     "llen:{}".format(self.site_name,
+                                      self.chunk_num,
+                                      self.llen))
+        if self.llen >= self.chunk_num:
+            return True
+        else:
+            return False
+
     def main(self):
         for s in (SIGINT, SIGTERM):
             signal(s, self.signal_exit_func)
@@ -159,25 +179,42 @@ class redis2bqSerial:
         line = None
         redis_errors = 0
         allowed_redis_errors = 10
-        self.connect_bigquery()
+
+        connect_redis_result = self.connect_redis()
+        if not connect_redis_result:
+            logger.critical("Connecting Redis faild."
+                            "site_name:{} ".format(self.site_name))
+            return
+
+        if not self.needs_writing_bq():
+            logger.debug("no need writing BigQuery.")
+            return
+
+        connect_bq_result = self.connect_bigquery()
+        if not connect_bq_result:
+            logger.critical("Connecting BigQuery faild."
+                            "site_name:{}".format(self.site_name))
+            return
+
         table_name = create_bq_table_name(self.site_name)
+        CHUNK_NUM = min(self.llen, MAX_CHUNK_NUM)
 
         logger.debug("PROJECT_ID:{}, "
                      "DATA_SET:{}, "
                      "table_name:{}, "
+                     "llen:{}"
+                     "CHUNK_NUM:{} "
                      "REDIS_HOST:{}, "
                      "REDIS_PORT:{}, "
                      "REDIS_LIST:{}".format(PROJECT_ID,
                                             DATA_SET,
                                             table_name,
+                                            self.llen,
+                                            CHUNK_NUM,
                                             REDIS_HOST,
                                             REDIS_PORT,
                                             self.site_name))
-
-        MAX_CHUNK_NUM = 100
-        if self.llen > MAX_CHUNK_NUM:
-            self.llen = MAX_CHUNK_NUM
-        while len(self.lines) < self.llen:
+        while len(self.lines) < CHUNK_NUM:
             res = None
             logger.debug("len(self.lines):{}".format(len(self.lines)))
             try:
@@ -217,7 +254,8 @@ class redis2bqSerial:
                              '{}'.format(e, decoded_res))
                 continue
 
-            self.lines.append(line)
+
+self.lines.append(line)
 
         if len(self.lines) == 0:
             logger.debug("len(self.lines) == 0 return")
@@ -268,11 +306,6 @@ if __name__ == '__main__':
 
     while keep_processing:
         for site in OCEANUS_SITES:
-            llen = r.llen(site["site_name"])
-            logger.debug("{}:{}".format(site["site_name"], llen))
-            if llen >= site["chunk_num"]:
-                logger.debug("over chunk_num:{}\n"
-                             "llen:{}".format(site["site_name"], llen))
-                r2bq = redis2bqSerial(site, llen)
-                r2bq.main()
+            r2bq = redis2bqSerial(site)
+            r2bq.main()
         time.sleep(SERIAL_INTERVAL_SECOND)
