@@ -11,9 +11,9 @@ python3-pip \
 && apt-get autoremove
 
 RUN pip3 install --upgrade -q \
-cython \
 bigquery-python \
 google-api-python-client \
+requests \
 redis
 
 ENV PROJECT_ID oceanus-dev

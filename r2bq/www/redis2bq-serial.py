@@ -9,6 +9,7 @@ from bigquery import get_client
 from common.utils import oceanus_logging, create_bq_table_name
 from common.settings import (REDIS_HOST, REDIS_PORT,
                              OCEANUS_SITES)
+from common.errors import RedisConnectionError, BigQueryConnectionError
 logger = oceanus_logging()
 
 """Google Parameters"""
@@ -18,7 +19,7 @@ JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
 
 """Serial Parameters"""
 BRPOP_TIMEOUT = int(os.environ.get('BRPOP_TIMEOUT', 1))
-SERIAL_INTERVAL_SECOND = float(os.environ.get('SERIAL_INTERVAL_SECOND', 0.5))
+SERIAL_INTERVAL_SECOND = float(os.environ.get('SERIAL_INTERVAL_SECOND', 1.0))
 MAX_CHUNK_NUM = int(os.environ.get('MAX_CHUNK_NUM', 100))
 
 
@@ -37,7 +38,7 @@ class redis2bqSerial:
         self.llen = None
 
     def connect_redis(self):
-        """return True in success, else False"""
+        """return True in success, else raise error"""
         try:
             self.r = redis.StrictRedis(host=REDIS_HOST,
                                        port=REDIS_PORT,
@@ -47,13 +48,12 @@ class redis2bqSerial:
         except Exception as e:
             logger.critical("connnecting Redis faild.\n"
                             "{}".format(e))
-            time.sleep(3)
-            return False
+            raise RedisConnectionError
         else:
             return True
 
     def connect_bigquery(self):
-        """return True in success, else False"""
+        """return True in success, else raise error"""
         try:
             self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
                                         readonly=False)
@@ -61,7 +61,7 @@ class redis2bqSerial:
             logger.critical('[{}] '
                             'Problem connecting BigQuery.'
                             '{}'.format(self.site_name, e))
-            return False
+            raise BigQueryConnectionError
         else:
             return True
 
@@ -93,7 +93,7 @@ class redis2bqSerial:
                 line = json.dumps(l)
                 result = self.write_to_redis(line)
                 if result:
-                    count = count + 1
+                    count += 1
                 logger.debug("result:{}, count:{}".format(result, count))
         except Exception as e:
             logger.error('[{}] Problem restore to Redis. '
@@ -122,7 +122,7 @@ class redis2bqSerial:
         return inserted
 
     def clean_up(self):
-        """When the process is finished ,
+        """When the process is killed ,
         return the data to redis or BigQuery
         so that data is not lost.
         After that sys.exit()"""
@@ -177,23 +177,18 @@ class redis2bqSerial:
 
         """Write the data to BigQuery in small chunks."""
         line = None
-        redis_errors = 0
-        allowed_redis_errors = 10
 
-        connect_redis_result = self.connect_redis()
-        if not connect_redis_result:
-            logger.critical("Connecting Redis faild."
-                            "site_name:{} ".format(self.site_name))
+        try:
+            self.connect_redis()
+        except RedisConnectionError:
             return
 
         if not self.needs_writing_bq():
-            logger.debug("no need writing BigQuery.")
             return
 
-        connect_bq_result = self.connect_bigquery()
-        if not connect_bq_result:
-            logger.critical("Connecting BigQuery faild."
-                            "site_name:{}".format(self.site_name))
+        try:
+            self.connect_bigquery()
+        except BigQueryConnectionError:
             return
 
         table_name = create_bq_table_name(self.site_name)
@@ -214,29 +209,31 @@ class redis2bqSerial:
                                             REDIS_HOST,
                                             REDIS_PORT,
                                             self.site_name))
+        redis_writing_errors = 0
+        allowed_redis_writing_errors = 5
         while len(self.lines) < CHUNK_NUM:
             res = None
             logger.debug("len(self.lines):{}".format(len(self.lines)))
             try:
                 res = self.r.brpop(self.site_name, BRPOP_TIMEOUT)
                 """
-                res[0] list's key
+                res[0] list's key (same as self.site_name)
                 res[1] content
                 """
                 logger.debug("[{}]-CHUNK:{}/{}".format(self.site_name,
                                                        len(self.lines) + 1,
                                                        self.chunk_num))
                 logger.debug("res:{}".format(res))
+
             except Exception as e:
                 logger.error('[{}] Problem getting data from Redis. '
                              '{}'.format(self.site_name, e))
-                redis_errors += 1
-                time.sleep(3)
-                self.connect_redis()
-                if redis_errors > allowed_redis_errors:
-                    logger.critical("Too many Redis errors "
-                                    "{}:".format(redis_errors, e))
-                    time.sleep(10)
+
+                redis_writing_errors += 1
+                if redis_writing_errors > allowed_redis_writing_errors:
+                    logger.critical("Too many writing redis errors.")
+                    break
+
                 continue
 
             if not res:
@@ -254,14 +251,12 @@ class redis2bqSerial:
                              '{}'.format(e, decoded_res))
                 continue
 
-
-self.lines.append(line)
+            self.lines.append(line)
 
         if len(self.lines) == 0:
             logger.debug("len(self.lines) == 0 return")
             return
 
-        redis_errors = 0
         # insert the self.lines into BigQuery
         inserted = self.write_to_bq(self.lines)
         if inserted:
