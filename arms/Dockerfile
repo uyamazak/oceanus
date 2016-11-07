@@ -20,12 +20,12 @@ user-agents
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
 
-ENV OCEANUS_SWALLOW_HOST https://oceanus.bizocean.co.jp
+ENV OCEANUS_ARMS_HOST https://o.bizocean.jp
 ENV LOG_LEVEL WARNING
 
 ENV WEB_CONCURRENCY 2
 
-ENV REDIS_DELAY_LIMIT 200
+ENV REDIS_DELAY_LIMIT_RATE 2
 
 RUN mkdir /var/www
 
@@ -36,4 +36,4 @@ COPY www /var/www
 EXPOSE 80
 EXPOSE 443
 
-CMD ["gunicorn", "-c", "gunicorn_conf.py", "oceanus:app"]
+CMD ["gunicorn", "-c", "gunicorn_conf.py", "arms:app"]

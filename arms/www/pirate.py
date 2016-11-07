@@ -38,6 +38,10 @@ class PirateResource(ExecutionResource):
             return
         self.logger.debug("{}".format(req.query_string))
         resp.set_header('Access-Control-Allow-Origin', '*')
+        # resp.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        # resp.set_header('Access-Control-Allow-Headers', '*')
+        # resp.set_header('X-Content-Type-Options', 'nosniff')
+        resp.content_type = 'text/plain; charset=UTF-8'
         """
         item_dict = { key: (
                             user_data,
@@ -151,6 +155,9 @@ class PirateResource(ExecutionResource):
         if validate_result:
             resp.status = falcon.HTTP_200
         else:
+            if req.get_param('debug', required=False):
+                resp.body = "{}".format(v.errors)
+                self.logger.error(resp.body)
             resp.status = falcon.HTTP_400
             return
 
@@ -173,4 +180,4 @@ class PirateResource(ExecutionResource):
                         + '\n\n redis keys: ' + pformat(self.r.keys())
             return
         else:
-            resp = "ok"
+            resp.body = ""

@@ -8,9 +8,10 @@ from common.utils import oceanus_logging
 
 class ExecutionResource(object):
     """
-    Execution is oceanus's base Class.
+    Execution is oceanus arm's base Class.
     Gets access log, event log, and etc with json format.
-    Fot quick response, save to redis on local network instead BigQuery direct.
+    For quick response, save to redis on local network,
+    instead BigQuery direct.
     """
     def __init__(self):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
@@ -54,9 +55,9 @@ class ExecutionResource(object):
         return user_data
 
     def get_client_rad(self, access_route):
-        """In most cases , the client's IP and
-        load balancer's IP is returned,
-        rarely contains the user side of the proxy IP ,
+        """In most cases, the client's IP and
+        load balancer's IP are returned.
+        But rarely contains the user side of proxy IP,
         return three IP in access_route
 
         access_route e.g. [*.*.*.*] is real clieant ip
