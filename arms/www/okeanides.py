@@ -1,6 +1,6 @@
 import os
 import falcon
-OCEANUS_SWALLOW_HOST = os.environ['OCEANUS_SWALLOW_HOST']
+OCEANUS_ARMS_HOST = os.environ['OCEANUS_ARMS_HOST']
 
 
 class StaticResource(object):
@@ -28,7 +28,7 @@ class StaticResource(object):
             return
         else:
             resp.body = raw_body.replace('{%oceanus_host%}',
-                                         OCEANUS_SWALLOW_HOST)
+                                         OCEANUS_ARMS_HOST)
 
 
 class RobotsTxtResource(object):
