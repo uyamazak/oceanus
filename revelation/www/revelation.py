@@ -158,25 +158,12 @@ class Revelation:
                         }
         return exteded_item
 
-    def send2ranking(self, ranking_name, value):
-        logger.debug("send2ranking "
-                     "name:{} value:{}".format(ranking_name, value))
-        try:
-            result = self.r.zincrby(ranking_name, value, amount=int(1))
-        except Exception as e:
-            logger.error("Problem adding ranking."
-                         "name:{} value:{} e:{}".format(ranking_name,
-                                                        value, e))
-        sort = self.r.zrevrange(ranking_name, 0, 100)
-        logger.debug("result:{}\n sort:{}".format(result, sort))
-
     def make_revelation(self, item):
         ex_item = self.prepare_item(item)
         data = ex_item.get("data")
         channel = ex_item.get("channel")
         dt = ex_item.get("dt")
         jsn = ex_item.get("jsn")
-        jsn_text = ex_item.get("jsn_text")
         revelation_count = 0
         # 動画広告フォーム
         if channel == "movieform":
@@ -204,7 +191,6 @@ class Revelation:
                                   data.get("sid", ""),
                                   data.get("url", ""),
                                   ))
-                    self.send2ranking("search_not_found", jsn_text)
                 revelation_count = revelation_count + 1
 
             # 有料書式DL完了
@@ -262,7 +248,7 @@ class Revelation:
             # slack.api_token = SLACK_API_TOKEN
             # slack_result = slack.chat.post_message(SLACK_CHANNEL,
             #                                        message,
-        :q    #                                        username=SLACK_BOT_NAME)
+            #                                        username=SLACK_BOT_NAME)
             # logger.debug("slack_result:{}".format(slack_result))
             logger.debug("revelation_count:{}".format(revelation_count))
             time.sleep(0.1)

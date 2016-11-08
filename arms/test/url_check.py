@@ -18,6 +18,8 @@ get_list = [
     "{}/swallow?oid=test&evt=movie&uid=1000000&ref=https%3A%2F%2Fverify.bizocean.jp%2Fdoc%2Fdownload%2Fcomplete%2F100532%2F&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fplayer%2F&enc=UTF-8&scr=1920x1080&vie=655x1519&jsn=%7B%22memberId%22%3A%221084205%22%2C%22viewingTime%22%3A95.481%2C%22videoCode%22%3A%22Mo2neRfrsjE%22%2C%22status%22%3A%22ENDED%22%2C%22url%22%3A%22https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fdownload%2Fcomplete%2F100532%2F%22%2C%22playDatetime%22%3A%222016-09-20%2011%3A25%3A56%22%7D&sid=ffffffffffffffff",
     "{}/robots.txt",
     "{}/favicon.ico",
+    "{}/lb",
+    "{}/rstatus",
 ]
 
 post_list = [
