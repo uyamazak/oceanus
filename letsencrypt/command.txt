@@ -1,0 +1,40 @@
+#git clone
+https://github.com/lukas2511/dehydrated
+
+#.hookを準備
+
+#!/usr/bin/env bash
+
+function deploy_challenge {
+    local DOMAIN="${1}" TOKEN_FILENAME="${2}" TOKEN_VALUE="${3}"
+
+    echo "Set TXT record of _acme-challenge.$DOMAIN to $TOKEN_VALUE"
+    read
+}
+
+function clean_challenge {
+    local DOMAIN="${1}" TOKEN_FILENAME="${2}" TOKEN_VALUE="${3}"
+}
+
+function deploy_cert {
+    local DOMAIN="${1}" KEYFILE="${2}" CERTFILE="${3}" FULLCHAINFILE="${4}" CHAINFILE="${5}" TIMESTAMP="${6}"
+}
+
+function unchanged_cert {
+    local DOMAIN="${1}" KEYFILE="${2}" CERTFILE="${3}" FULLCHAINFILE="${4}" CHAINFILE="${5}"
+}
+
+HANDLER=$1; shift; $HANDLER $@
+
+
+#下記コマンドを実行
+./dehydrated -c -d oceanus.bizocean.co.jp -d o.bizocean.jp --challenge dns-01 -k ./hook.sh -a prime256v1 -x
+
+#通らなかったら指示通りにDNSのTXTレコード変更
+
+#コマンドで証明書追加
+gcloud beta compute --project "oceanus-dev" ssl-certificates create "letsencrypt`date "+%Y%m%d"`" --certificate=certs/oceanus.bizocean.co.jp/fullchain.pem --private-key=certs/oceanus.bizocean.co.jp/privkey.pem
+
+HTTP(S) ロードバランサの編集
+フロントエンドの設定
+で切り替える
