@@ -1,8 +1,18 @@
-from requests.exceptions import ConnectionError
-
-class RedisConnectionError(ConnectionError):
+class RedisConnectionError(Exception):
     pass
 
 
-class BigQueryConnectionError(ConnectionError):
+class RedisWritingError(Exception):
+    pass
+
+
+class RedisReadingError(Exception):
+    pass
+
+
+class BigQueryConnectionError(Exception):
+    pass
+
+
+class BigQueryWritingError(Exception):
     pass
