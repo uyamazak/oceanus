@@ -7,8 +7,8 @@
 import os
 
 """ Redis settings"""
-REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
-REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
+REDIS_HOST = os.environ.get('REDISMASTER_SERVICE_HOST', "localhost")
+REDIS_PORT = os.environ.get('REDISMASTER_SERVICE_PORT', 6379)
 
 """
 BigQuery's table settings
