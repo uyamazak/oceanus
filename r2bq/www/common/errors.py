@@ -16,3 +16,7 @@ class BigQueryConnectionError(Exception):
 
 class BigQueryWritingError(Exception):
     pass
+
+
+class BigQueryTableNotExists(Exception):
+    pass
