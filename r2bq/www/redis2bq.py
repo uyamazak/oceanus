@@ -12,7 +12,8 @@ from common.settings import (REDIS_HOST, REDIS_PORT,
 from common.errors import (RedisConnectionError,
                            RedisWritingError,
                            BigQueryConnectionError,
-                           BigQueryWritingError)
+                           BigQueryWritingError,
+                           BigQueryTableNotExists)
 logger = oceanus_logging()
 
 """Google Parameters"""
@@ -36,6 +37,7 @@ class redis2bqSerial:
         """
         self.site_name = site["site_name"]
         self.table_schema = site["table_schema"]
+        self.table_name = create_bq_table_name(self.site_name)
         self.chunk_num = site["chunk_num"]
         self.keep_processing = True
         self.lines = []
@@ -85,6 +87,16 @@ class redis2bqSerial:
                         '{}'.format(self.site_name, e))
         raise BigQueryConnectionError
 
+    def ensure_table_exists(self):
+        exists = self.bq_client.check_table(DATA_SET, self.table_name)
+        if exists:
+            logger.debug("table [{}] exists".format(self.table_name))
+            return True
+        else:
+            logger.critical("table [{}] not exists".format(self.table_name))
+            raise BigQueryTableNotExists
+            return False
+
     def write_to_redis(self, line):
         """ return writing Redis result
         exsiting list num
@@ -117,7 +129,8 @@ class redis2bqSerial:
             return None
         count = 0
         try:
-            # release blocking
+            """release blocking with
+            pushing empty data"""
             self.r.lpush(self.site_name, "")
             for l in lines:
                 line = json.dumps(l)
@@ -136,14 +149,14 @@ class redis2bqSerial:
         if not len(lines):
             return None
 
-        table_name = create_bq_table_name(self.site_name)
         for i in range(1, WRITING_RETRY + 1):
-            """can't get HttpError unknown reason
-            so use 'inserted' to distinguish between success and not
+            """self.bq_client.push_rows never raise errors,
+               but show error logs.
+                so use 'inserted' to distinguish between success and not
             """
             try:
                 inserted = self.bq_client.push_rows(DATA_SET,
-                                                    table_name,
+                                                    self.table_name,
                                                     lines,
                                                     'dt')
             except Exception as e:
@@ -158,6 +171,10 @@ class redis2bqSerial:
             logger.debug("inserted:{}".format(inserted))
 
             if inserted:
+                if i > 1:
+                    logger.info("[{}] "
+                                "BigQuery retry "
+                                "success".format(self.site_name))
                 return
             else:
                 logger.error('[{}] '
@@ -182,7 +199,7 @@ class redis2bqSerial:
         if not len(self.lines):
             sys.exit('[{}] cleaned up:no lines'.format(self.site_name))
             return
-        # to BigQuery
+        # save to BigQuery
         try:
             inserted = self.write_to_bq(self.lines)
         except BigQueryWritingError:
@@ -197,7 +214,7 @@ class redis2bqSerial:
             sys.exit('[{}] BigQuery inserted and exit'.format(self.site_name))
             return
 
-        # to Redis if BigQuery faild
+        # save to Redis if BigQuery failed
         try:
             self.restore_to_redis(self.lines)
         except RedisWritingError:
@@ -233,49 +250,61 @@ class redis2bqSerial:
         else:
             return False
 
-    def main(self):
-        for s in (SIGINT, SIGTERM):
-            signal(s, self.signal_exit_func)
-
-        """Write the data to BigQuery in small chunks."""
-        line = None
-
+    def ensure_dependencies(self):
         try:
             self.connect_redis()
         except RedisConnectionError:
-            sleep(10)
-            return
+            sleep(5)
+            return False
 
         if not self.needs_writing_bq():
             logger.debug("[{}] there is no need "
                          "writing to BigQuery".format(self.site_name))
-            return
+            return False
 
         try:
             self.connect_bigquery()
         except BigQueryConnectionError:
-            sleep(15)
+            logger.info("[{}]"
+                        "llen:{} pendding".format(self.site_name, self.llen))
+            sleep(5)
+            return False
+
+        try:
+            self.ensure_table_exists()
+        except BigQueryTableNotExists:
+            logger.info("[{}]"
+                        "llen:{} pendding".format(self.site_name, self.llen))
+            return False
+
+        return True
+
+    def main(self):
+        for s in (SIGINT, SIGTERM):
+            signal(s, self.signal_exit_func)
+
+        if not self.ensure_dependencies():
             return
 
-        table_name = create_bq_table_name(self.site_name)
+        """Write the data to BigQuery in small chunks."""
         CHUNK_NUM = min(self.llen, MAX_CHUNK_NUM)
-
         logger.debug("PROJECT_ID:{}, "
                      "DATA_SET:{}, "
-                     "table_name:{}, "
-                     "llen:{}"
+                     "table_name:{} "
+                     "llen:{} "
                      "CHUNK_NUM:{} "
                      "REDIS_HOST:{}, "
                      "REDIS_PORT:{}, "
                      "REDIS_LIST:{}".format(PROJECT_ID,
                                             DATA_SET,
-                                            table_name,
+                                            self.table_name,
                                             self.llen,
                                             CHUNK_NUM,
                                             REDIS_HOST,
                                             REDIS_PORT,
                                             self.site_name))
         redis_writing_errors = 0
+
         while len(self.lines) < CHUNK_NUM:
             res = None
             logger.debug("len(self.lines):{}".format(len(self.lines)))

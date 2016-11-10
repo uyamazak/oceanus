@@ -1,24 +1,19 @@
-FROM python:3.5-alpine
+FROM ubuntu:16.04
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
-#RUN apk add --no-cache \
-#python3.5 \
-#python3-pip
+RUN apt-get update && apt-get -y upgrade
 
-#RUN apt-get update && apt-get -y upgrade
-#
-#RUN apt-get install -y \
-#lsof \
-#python3.5 \
-#python3-pip \
-#&& apt-get autoclean \
-#&& apt-get autoremove
-#
+RUN apt-get install -y \
+lsof \
+python3.5 \
+python3-pip \
+&& apt-get autoclean \
+&& apt-get autoremove
 
 RUN pip3 install --upgrade -q \
 bigquery-python \
 google-api-python-client \
-#requests \
+requests \
 redis
 
 ENV PROJECT_ID oceanus-dev
@@ -39,4 +34,5 @@ WORKDIR /var/www
 
 COPY www /var/www
 
-CMD ["python3.5","redis2bq.py"]
+#CMD ["python3.5","redis2bq-parallel.py"]
+CMD ["python3.5","redis2bq-serial.py"]
