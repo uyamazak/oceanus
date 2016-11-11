@@ -1,7 +1,0 @@
-[
- {"name":"product_id",        "type":"INTEGER", "mode":"nullable"},
- {"name":"name",              "type":"STRING",  "mode":"nullable"},
- {"name":"price",             "type":"INTEGER", "mode":"nullable"},
- {"name":"original_maker_id", "type":"INTEGER", "mode":"nullable"},
- {"name":"create_date",       "type":"STRING",  "mode":"nullable"}
-]

@@ -1,8 +1,0 @@
-[
- {"name":"category_id",        "type":"INTEGER", "mode":"nullable"},
- {"name":"parent_category_id", "type":"INTEGER", "mode":"nullable"},
- {"name":"category_name",      "type":"STRING",  "mode":"nullable"},
- {"name":"level",              "type":"INTEGER", "mode":"nullable"},
- {"name":"rank",               "type":"INTEGER", "mode":"nullable"},
- {"name":"del_flg",            "type":"BOOLEAN", "mode":"nullable"}
-]
