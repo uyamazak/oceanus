@@ -1,3 +1,3 @@
 # oceanus
 Open Source Data collecter. HTTP Request to Google BigQuery. 
-Run Docker and Google Container Engine.
+You can run oceanus on Docker and Google Container Engine.
