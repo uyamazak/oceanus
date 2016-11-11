@@ -1,0 +1,50 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><title>bizocean リダイレクト</title><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"></head><body>
+<p id="message" style="padding:20px"></p>
+<script>
+var oceanus=[];
+oceanus.autosend=false;
+</script>
+<script src="./okeanides.js"></script>
+<script>
+function getParameterByName(name, url){
+	if (!url) url=window.location.href;
+	name=name.replace(/[\[\]]/g, "\\$&");
+	var regex=new RegExp("[?&]"+name+"(=([^&#]*)|&|#|$)");
+	results=regex.exec(url);
+	if (!results) return null;
+	if (!results[2]) return '';
+	return decodeURIComponent(results[2].replace(/\+/g," "));
+}
+((function(){
+var url=getParameterByName('url');
+var message=document.getElementById("message");
+if(!url){
+	message.innerHTML="urlが指定されていません"
+	return;
+}
+if(!url.match(/^http:\/\/|^https:\/\//)){
+	message.innerHTML="urlが不正です"
+	return;
+}
+var delay=1;
+if(getParameterByName('debug')) delay=30000;
+var redirect_func=function(){
+	setTimeout(function(){
+		location.href=url;
+	},delay);
+}
+var jsn=getParameterByName('jsn');
+if(jsn&&window.JSON) jsn=JSON.parse(jsn);
+oceanus.f({
+	"evt":getParameterByName('evt')||"redirect",
+	"oid":getParameterByName('oid')||2,
+	"uid":getParameterByName('uid')||null,
+	"url":url||null,
+	"ref":getParameterByName('ref')||null,
+	"tit":getParameterByName('tit')||null,
+	"jsn":jsn,
+	"onload":redirect_func,
+	"onerror":redirect_func
+});
+}))();
+</script></body></html>
