@@ -32,23 +32,32 @@ error_count = 0
 for i in range(13):
     for url in get_list:
         url = url.format(HOST)
-        with urllib.request.urlopen(url) as page:
-            if page.getcode() != 200:
-                print("error")
-                error_count = error_count + 1
-            else:
-                print("ok {}".format(url))
+        try:
+            with urllib.request.urlopen(url) as page:
+                if page.getcode() != 200:
+                    print("error")
+                else:
+                    pass
+                    #print("ok")
+        except Exception as e:
+            print("error:{}\n{}".format(url, e))
+            error_count = error_count + 1
 
     for url, data in post_list:
         url = url.format(HOST)
         data = data.encode('utf-8')
-
-        with urllib.request.urlopen(url=url, data=data) as page:
-            if page.getcode() != 200:
-                print("error")
-                error_count = error_count + 1
-            else:
-                print("ok {} {}".format(url, data))
-
+        try:
+            with urllib.request.urlopen(url=url, data=data) as page:
+                if page.getcode() != 200:
+                    print("error")
+                    error_count = error_count + 1
+                else:
+                    pass
+                    #print("ok")
+        except Exception as e:
+            print("error:{}\n{}".format(url, e))
+            error_count = error_count + 1
 if error_count == 0:
     print("ok! no errors found")
+else:
+    print("NG! {} errors found".format(error_count))

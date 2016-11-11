@@ -1,11 +1,15 @@
-FROM ubuntu:16.04
+#FROM ubuntu:16.04
+FROM python:3.5-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
-RUN apt-get update && apt-get -y upgrade
-RUN apt-get install -y \
-python3.5 \
-python3-pip\
-&& apt-get clean
+#RUN apk add --force --update python python-dev gfortran py-pip build-base
+RUN apk add --force --update build-base
+
+#RUN apt-get update && apt-get -y upgrade
+#RUN apt-get install -y \
+#python3.5 \
+#python3-pip\
+#&& apt-get clean
 
 RUN pip3 install --upgrade -q \
 cython \
@@ -27,11 +31,9 @@ ENV WEB_CONCURRENCY 2
 
 ENV REDIS_DELAY_LIMIT_RATE 2
 
-RUN mkdir /var/www
-
-WORKDIR /var/www
-
-COPY www /var/www
+RUN mkdir /oceanus/
+COPY app /oceanus/app/
+WORKDIR /oceanus/app/
 
 EXPOSE 80
 EXPOSE 443

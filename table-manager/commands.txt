@@ -4,7 +4,7 @@ docker images | grep redis2bq | head -5
 
 kubectl run table-manager --image=asia.gcr.io/oceanus-dev/oceanus-table-manager: --env="LOG_LEVEL=DEBUG"
 
-docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager/www:/var/www  \
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager/app:/oceanus/app  \
     -it \
     --rm \
     --env DATA_SET=oceanus_test \
@@ -12,7 +12,7 @@ docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager/www:/var/
     asia.gcr.io/oceanus-dev/oceanus-table-manager:latest
 
 #daemon
-docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager/www:/var/www  \
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/table-manager/app:/oceanus/app  \
     -it \
     -d \
     --env DATA_SET=oceanus_test \

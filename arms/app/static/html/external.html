@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><meta http-equiv="X-UA-Compatible" content="IE=edge"><title>oceanus-external</title><meta charset="utf-8">
+<script>
+function getParameterByName(name,url){
+	if (!url) url=window.location.href;
+	name=name.replace(/[\[\]]/g,"\\$&");
+	var regex=new RegExp("[?&]"+name+"(=([^&#]*)|&|#|$)");
+	results=regex.exec(url);
+	if (!results) return null;
+	if (!results[2]) return '';
+	return decodeURIComponent(results[2].replace(/\+/g," "));
+}
+var oceanus=[];
+oceanus.q=[];
+oceanus.autosend=false;
+var jsn=getParameterByName('jsn');
+if(jsn&&window.JSON) jsn=JSON.parse(jsn);
+if(getParameterByName('oid')&&getParameterByName('evt')){
+ 	oceanus.q.push({
+	"evt":getParameterByName('evt'),
+	"oid":getParameterByName('oid'),
+	"jsn":jsn,
+	"url":getParameterByName('url')||null,
+	"ref":getParameterByName('ref')||null,
+	"tit":getParameterByName('tit')||null,
+	"enc":getParameterByName('enc')||null,
+	"vie":getParameterByName('vie')||null
+	});
+}
+</script>
+<script src="./okeanides.js"></script>
+</html>
