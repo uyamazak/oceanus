@@ -6,8 +6,8 @@ bigquery-python \
 google-api-python-client \
 redis
 
-ENV PROJECT_ID oceanus-dev
-ENV DATA_SET oceanus_prod
+ENV PROJECT_ID your_project
+ENV DATA_SET your_dataset
 ENV JSON_KEY_FILE keys/your_google_key_file.json
 ENV BQ_TABLE_PREFIX oceanus_v3_
 
