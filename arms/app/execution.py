@@ -5,18 +5,20 @@ from user_agents import parse as parse_ua
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from common.utils import oceanus_logging
 from common.errors import RedisWritingError
+logger = oceanus_logging()
 
 
 class ExecutionResource(object):
     """
     Execution is oceanus arm's base Class.
-    Gets access log, event log, and etc with json format.
-    For quick response, save to redis on local network,
+    So GET and POST is disabled.
+
+    For quick response, save to Redis,
     instead BigQuery direct.
     """
+
     def __init__(self):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-        self.logger = oceanus_logging()
 
     def write_to_redis(self, site_name, data):
         result = None
@@ -24,7 +26,7 @@ class ExecutionResource(object):
             result = self.r.lpush(site_name, data)
 
         except Exception as e:
-            self.logger.critical('Problem adding data to Redis. {0}'.format(e))
+            logger.critical('Problem adding data to Redis. {0}'.format(e))
             raise RedisWritingError
 
         return result
@@ -34,8 +36,8 @@ class ExecutionResource(object):
         try:
             redis_publish_result = self.r.publish(site_name, data)
         except Exception as e:
-            self.logger.error('Problem publish to Redis. '
-                              '{} {}'.format(e, redis_publish_result))
+            logger.error('Problem publish to Redis. '
+                         '{} {}'.format(e, redis_publish_result))
             raise RedisWritingError
 
         return redis_publish_result
@@ -64,7 +66,9 @@ class ExecutionResource(object):
         But rarely contains the user side of proxy IP,
         return three IP in access_route
 
-        access_route e.g. [*.*.*.*] is real clieant ip
+        access_route
+        e.g.
+        [*.*.*.*] is example of real clieant ip.
 
         - Direct Access
           [*.*.*.*]
@@ -92,7 +96,7 @@ class ExecutionResource(object):
         try:
             parse_result = parse_ua(ua)
         except Exception as e:
-            self.logger.warning("parse_ua error: {}".format(e))
+            logger.warning("parse_ua error: {}".format(e))
             return device
 
         if parse_result.is_pc:
@@ -106,13 +110,21 @@ class ExecutionResource(object):
 
         return device
 
-    def site_exists(self, site_name, method_label):
+    def get_default_site_name(self, method_label):
+        "return first site_name from OCEANUS_SITES"
         sites = [site["site_name"] for site in OCEANUS_SITES
                  if site["method"] == method_label]
-        if site_name in sites:
-            return True
-        else:
-            return False
+        try:
+            return sites[0]
+        except IndexError:
+            logger.error("method {} "
+                         "site not found".format(method_label))
+            raise
+
+    def site_exists(self, site_name, method_label):
+        return site_name in \
+            [site["site_name"] for site in OCEANUS_SITES
+             if site["method"] == method_label]
 
     """
     Default both method is disabled.

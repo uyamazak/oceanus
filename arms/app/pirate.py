@@ -5,9 +5,13 @@ from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
 from common.errors import RedisWritingError
+from common.utils import oceanus_logging
+
+logger = oceanus_logging()
 
 
 class PirateResource(ExecutionResource):
+    method_label = "pirate"
     """
     The oceanus pirate receives form data
     in JSON format, save to Redis
@@ -26,18 +30,22 @@ class PirateResource(ExecutionResource):
             user_data['ua'] = ''
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
-            self.logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
+            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
 
     def on_post(self, req, resp, site_name):
-        if not self.site_exists(site_name, "pirate"):
+        if site_name is None:
+            site_name = self.get_default_site_name(self.method_label)
+            logger.debug("use defaule site_name "
+                         "{} {}".format(site_name, self.method_label))
+        if not self.site_exists(site_name, self.method_label):
             resp.status = falcon.HTTP_404
             message = 'site name not found:{0}'.format(site_name)
             resp.body = message
-            self.logger.error(message)
+            logger.error(message)
             return
-        self.logger.debug("{}".format(req.query_string))
+        logger.debug("{}".format(req.query_string))
         resp.set_header('Access-Control-Allow-Origin', '*')
         # resp.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         # resp.set_header('Access-Control-Allow-Headers', '*')
@@ -158,7 +166,7 @@ class PirateResource(ExecutionResource):
         else:
             if req.get_param('debug', required=False):
                 resp.body = "{}".format(v.errors)
-                self.logger.error(resp.body)
+                logger.error(resp.body)
             resp.status = falcon.HTTP_400
             return
 

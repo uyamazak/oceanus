@@ -4,10 +4,14 @@ import json
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from common.utils import resp_beacon_gif
+from common.utils import resp_beacon_gif, oceanus_logging
 from common.errors import RedisWritingError
 
+logger = oceanus_logging()
+
+
 class SwallowResource(ExecutionResource):
+    method_label = "swallow"
 
     def adjust_user_data(self, user_data):
         """
@@ -25,18 +29,21 @@ class SwallowResource(ExecutionResource):
             user_data['ua'] = ''
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
-            self.logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
+            logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
 
         return user_data
 
     def on_get(self, req, resp, site_name=None):
         if site_name is None:
-            site_name = 'bizocean'
-        elif not self.site_exists(site_name, "swallow"):
+            site_name = self.get_default_site_name(self.method_label)
+            logger.debug("use default site_name "
+                         "{} {}".format(site_name, self.method_label))
+
+        if not self.site_exists(site_name, self.method_label):
             resp.status = falcon.HTTP_404
             message = 'site name not found:{0}'.format(site_name)
             resp.body = message
-            self.logger.error(message)
+            logger.error(message)
             return
 
         resp.set_header('Access-Control-Allow-Origin', '*')
@@ -47,7 +54,7 @@ class SwallowResource(ExecutionResource):
                             validate_schema
                             ),
                     }
-        key is BigQuery's column name
+        key is used as BigQuery's column name
         """
 
         item_dict = {
@@ -70,7 +77,7 @@ class SwallowResource(ExecutionResource):
                               '2[0-4][0-9]|25[0-5])\.){3}'
                               '([1-9]?[0-9]|1[0-9]{2}|'
                               '2[0-4][0-9]|25[0-5])$'}
-                  ),
+                   ),
             # event name
             'evt': (
                     req.get_param('evt', required=True),
@@ -84,7 +91,7 @@ class SwallowResource(ExecutionResource):
                      'nullable': True,
                      'empty': True,
                      'maxlength': 512}
-                    ),
+                   ),
             # device detecting from user agent
             'dev': (
                     self. get_client_device(req.user_agent),
@@ -106,7 +113,7 @@ class SwallowResource(ExecutionResource):
                      'nullable': True,
                      'empty': True,
                      'maxlength': 64}
-                    ),
+                   ),
             # encode
             'enc': (
                     req.get_param('enc', required=False),
@@ -185,11 +192,11 @@ class SwallowResource(ExecutionResource):
             except RedisWritingError:
                 logger.error("redis publish failed")
         else:
-            self.logger.error("validate error:{}"
-                              "user_data:{}"
-                              "access_route:{}".format(v.errors,
-                                                       user_data,
-                                                       req.access_route))
+            logger.error("validate error:{}"
+                         "user_data:{}"
+                         "access_route:{}".format(v.errors,
+                                                  user_data,
+                                                  req.access_route))
             resp.status = falcon.HTTP_400
 
         if req.get_param('debug', required=False):
