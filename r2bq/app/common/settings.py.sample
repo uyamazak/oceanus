@@ -57,7 +57,7 @@ FORM_TABLE_SCHEMA = [
  - redis list's key name,
  - part of BigQuery table name,
  - url path (/swallow/bizocean)
-   default: fisrt one
+    default: fisrt one
 'table_schema' table schema of BigQuery
 'method' method_name in SwallowResorce or PirateResource
 'chunk_num'
@@ -66,7 +66,7 @@ FORM_TABLE_SCHEMA = [
 
 e.g.
 (
-    {"site_name": (string),
+    {"site_name": (string) [a-z0-9_]+,
      "table_schema": (dict),
      "method": (string),
      "chunk_num": (int)
@@ -75,32 +75,12 @@ e.g.
 """
 
 OCEANUS_SITES = (
-    {"site_name": "bizocean",
+    {"site_name": "samplesite",
      "table_schema": LOG_TABLE_SCHEMA,
      "method": 'swallow',
      "chunk_num": 50,
      },
-    {"site_name": "skj",
-     "table_schema": LOG_TABLE_SCHEMA,
-     "method": 'swallow',
-     "chunk_num": 25,
-     },
-    {"site_name": "bizpow",
-     "table_schema": LOG_TABLE_SCHEMA,
-     "method": 'swallow',
-     "chunk_num": 25,
-     },
-    {"site_name": "moneynext",
-     "table_schema": LOG_TABLE_SCHEMA,
-     "method": 'swallow',
-     "chunk_num": 25,
-     },
-    {"site_name": "movieform",
-     "table_schema": FORM_TABLE_SCHEMA,
-     "method": 'pirate',
-     "chunk_num": 1,
-     },
-    {"site_name": "namecard",
+    {"site_name": "sampleform",
      "table_schema": FORM_TABLE_SCHEMA,
      "method": 'pirate',
      "chunk_num": 1,

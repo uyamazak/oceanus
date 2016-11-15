@@ -15,7 +15,7 @@ from common.errors import (RedisConnectionError,
                            BigQueryConnectionError,
                            BigQueryWritingError,
                            BigQueryTableNotExists)
-logger = oceanus_logging()
+logger = oceanus_logging(__name__)
 
 """Google Parameters"""
 PROJECT_ID = os.environ['PROJECT_ID']
@@ -377,8 +377,8 @@ if __name__ == '__main__':
     def graceful_exit(num=None, frame=None):
         global keep_processing
         logger.info("graceful_exit")
-        sleep(1)
         keep_processing = False
+        sleep(3)
 
     for s in (SIGINT, SIGTERM):
         signal(s, graceful_exit)
@@ -387,4 +387,5 @@ if __name__ == '__main__':
         for site in OCEANUS_SITES:
             r2bq = redis2bqSerial(site)
             r2bq.main()
+            del r2bq
         sleep(SERIAL_INTERVAL_SECOND)

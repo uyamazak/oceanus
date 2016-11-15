@@ -57,9 +57,9 @@ FORM_TABLE_SCHEMA = [
  - redis list's key name,
  - part of BigQuery table name,
  - url path (/swallow/bizocean)
-   default bizocean
+   default: fisrt one
 'table_schema' table schema of BigQuery
-'method' swallow or pirate
+'method' method_name in SwallowResorce or PirateResource
 'chunk_num'
  When writing to the BigQuery, divided into small chunks
  1 is every time, default 50
@@ -72,9 +72,6 @@ e.g.
      "chunk_num": (int)
      },
 )
-
-In oceanus-redis2bq ,
-the thread of the same number as the number of site starts
 """
 
 OCEANUS_SITES = (

@@ -21,10 +21,9 @@ def oceanus_logging(name=None):
 
     LOG_LEVEL = environ['LOG_LEVEL']
     handler = logging.StreamHandler()
-    formatter = logging.Formatter("name:{}"
-                                  '%(asctime)s- '
+    formatter = logging.Formatter('%(asctime)s - '
                                   '%(levelname)s - '
-                                  '%(message)s'.format(name))
+                                  '%(message)s')
     handler.setFormatter(formatter)
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, LOG_LEVEL))
@@ -53,7 +52,6 @@ def create_bq_table_name(site_name, delta_days=0):
 
         return TABLE_PREFIX + site_name + \
             date_delta.strftime('_%Y%m%d')
-
     else:
         return TABLE_PREFIX + site_name + \
-                datetime.now().strftime('_%Y%m%d')
+            datetime.now().strftime('_%Y%m%d')

@@ -1,8 +1,9 @@
 FROM python:3.5-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
-RUN pip3 install --upgrade -q \
+RUN pip3 install -q \
 bigquery-python \
+memory_profiler \
 google-api-python-client
 
 ENV PROJECT_ID oceanus-dev
@@ -11,7 +12,8 @@ ENV BQ_TABLE_PREFIX oceanus_v3_
 ENV JSON_KEY_FILE keys/Oceanus-dev-784c5c9ec4b7.json
 
 RUN mkdir /oceanus/
-COPY app /oceanus/
+COPY app /oceanus/app
+
 WORKDIR /oceanus/app/
 
 CMD ["python3.5","table-manager.py"]

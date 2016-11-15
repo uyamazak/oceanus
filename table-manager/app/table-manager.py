@@ -7,14 +7,14 @@ from common.utils import (oceanus_logging,
                           create_bq_table_name)
 from common.settings import OCEANUS_SITES
 from common.errors import BigQueryConnectionError
-logger = oceanus_logging()
+logger = oceanus_logging(__name__)
 
 """Google Parameters"""
 PROJECT_ID = environ['PROJECT_ID']
 DATA_SET = environ['DATA_SET']
 JSON_KEY_FILE = environ['JSON_KEY_FILE']
 BQ_TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
-INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 15))
+INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 30))
 BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
 
 
@@ -87,7 +87,6 @@ class TableManager:
         self.prepare_table()
 
 if __name__ == '__main__':
-    plist = []
     logger.info("start managing BigQuery tables...\n"
                 "PROJECT_ID:{} "
                 "DATA_SET:{} "
@@ -100,5 +99,5 @@ if __name__ == '__main__':
             logger.debug("check:{}".format(site["site_name"]))
             tm = TableManager(site)
             tm.main()
-
+            del tm
         sleep(INTERVAL_SECOND)
