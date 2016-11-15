@@ -6,10 +6,10 @@ bigquery-python \
 memory_profiler \
 google-api-python-client
 
-ENV PROJECT_ID oceanus-dev
-ENV DATA_SET oceanus_prod
+ENV PROJECT_ID your_project
+ENV DATA_SET your_dataset
 ENV BQ_TABLE_PREFIX oceanus_v3_
-ENV JSON_KEY_FILE keys/Oceanus-dev-54d7b816553a.json
+ENV JSON_KEY_FILE keys/your_google_key_file.json
 
 RUN mkdir /oceanus/
 COPY app /oceanus/app
