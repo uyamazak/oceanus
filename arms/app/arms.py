@@ -6,6 +6,7 @@ from okeanides import StaticResource, RobotsTxtResource, FaviconIcoResource
 
 app = falcon.API()
 app.req_options.auto_parse_form_urlencoded = True
+
 app.add_route('/swallow', SwallowResource())
 app.add_route('/swallow/{site_name}', SwallowResource())
 app.add_route('/pirate/{site_name}', PirateResource())
