@@ -2,13 +2,11 @@ FROM python:3.5-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
 RUN pip3 install --upgrade -q \
-#cython \
 google-api-python-client \
 redis \
-#python-daemon \
 pyslack \
 requests \
-gspread
+gspread \
 oauth2client
 
 ENV REDISMASTER_SERVICE_HOST localhost
@@ -23,7 +21,7 @@ ENV JSON_KEY_FILE keys/Oceanus-dev-ce1631fa9cd6.json
 ENV SPREAD_SHEET_KEY 13e1g80hoJkLSOyvLX_JNoRS8LxC1hL9GL4FptKz-Ovk
 
 RUN mkdir /oceanus/
-COPY app /oceanus/
+COPY app /oceanus/app
 WORKDIR /oceanus/app/
 
 CMD ["python3.5","revelation.py"]

@@ -16,7 +16,7 @@ ENV REDISMASTER_SERVICE_PORT 6379
 ENV LOG_LEVEL WARNING
 
 RUN mkdir /oceanus/
-COPY app /oceanus/
+COPY app /oceanus/app
 WORKDIR /oceanus/app/
 
 CMD ["python3.5","redis2bq.py"]
