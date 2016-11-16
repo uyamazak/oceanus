@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import os
 import json
-import sys
 import redis
+from timeout_decorator import timeout, TimeoutError
+from sys import exit
+from os import environ
 from time import sleep
 from signal import signal, SIGINT, SIGTERM
 from bigquery import get_client
@@ -14,20 +15,21 @@ from common.errors import (RedisConnectionError,
                            RedisWritingError,
                            BigQueryConnectionError,
                            BigQueryWritingError,
-                           BigQueryTableNotExists)
+                           BigQueryTableNotExistsError)
 logger = oceanus_logging(__name__)
 
 """Google Parameters"""
-PROJECT_ID = os.environ['PROJECT_ID']
-DATA_SET = os.environ['DATA_SET']
-JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
+PROJECT_ID = environ['PROJECT_ID']
+DATA_SET = environ['DATA_SET']
+JSON_KEY_FILE = environ['JSON_KEY_FILE']
 
 """Serial Parameters"""
-BRPOP_TIMEOUT = int(os.environ.get('BRPOP_TIMEOUT', 1))
-SERIAL_INTERVAL_SECOND = float(os.environ.get('SERIAL_INTERVAL_SECOND', 1.0))
-MAX_CHUNK_NUM = int(os.environ.get('MAX_CHUNK_NUM', 100))
-CONNECTION_RETRY = int(os.environ.get('CONNECTION_RETRY', 3))
-WRITING_RETRY = int(os.environ.get('WRITING_RETRY', 3))
+BRPOP_TIMEOUT = int(environ.get('BRPOP_TIMEOUT', 1))
+SERIAL_INTERVAL_SECOND = float(environ.get('SERIAL_INTERVAL_SECOND', 1.0))
+MAX_CHUNK_NUM = int(environ.get('MAX_CHUNK_NUM', 100))
+CONNECTION_RETRY = int(environ.get('CONNECTION_RETRY', 3))
+WRITING_RETRY = int(environ.get('WRITING_RETRY', 3))
+MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 30))
 
 
 class redis2bqSerial:
@@ -95,7 +97,7 @@ class redis2bqSerial:
             return True
         else:
             logger.critical("table [{}] not exists".format(self.table_name))
-            raise BigQueryTableNotExists
+            raise BigQueryTableNotExistsError
             return False
 
     def write_to_redis(self, line):
@@ -150,10 +152,11 @@ class redis2bqSerial:
         if not len(lines):
             return None
 
+        inserted = False
         for i in range(1, WRITING_RETRY + 1):
             """self.bq_client.push_rows never raise errors,
                but show error logs.
-                so use 'inserted' to distinguish between success and not
+               so use 'inserted' to distinguish between success and not
             """
             try:
                 inserted = self.bq_client.push_rows(DATA_SET,
@@ -168,28 +171,25 @@ class redis2bqSerial:
                                            i, WRITING_RETRY,
                                            e))
                 sleep(5)
+                continue
 
             logger.debug("inserted:{}".format(inserted))
-
             if inserted:
-                if i > 1:
-                    logger.info("[{}] "
-                                "BigQuery retry "
-                                "success".format(self.site_name))
-                return
-            else:
-                logger.error('[{}] '
-                             'Problem writing data BigQuery.'
-                             'retry:{}/{}'.format(self.site_name,
-                                                  i, WRITING_RETRY))
-                sleep(1)
+                break
 
-        if not inserted:
+        if inserted:
+            if i > 1:
+                logger.info("[{}] "
+                            "BigQuery retry "
+                            "success".format(self.site_name))
+
+            return True
+        else:
+            logger.critical("[{}] "
+                            "BigQuery {} retrys "
+                            "failed.".format(self.site_name, i))
             raise BigQueryWritingError
-            logger.critical('[{}] '
-                            'Problem writing data '
-                            'BigQuery.'.format(self.site_name))
-        return inserted
+            return False
 
     def clean_up(self):
         """When the process is killed ,
@@ -198,7 +198,7 @@ class redis2bqSerial:
         """
 
         if not len(self.lines):
-            sys.exit('[{}] cleaned up:no lines'.format(self.site_name))
+            exit('[{}] cleaned up:no lines'.format(self.site_name))
             return
         # save to BigQuery
         try:
@@ -211,7 +211,7 @@ class redis2bqSerial:
                         "BigQuery inserted:{} lines".format(self.site_name,
                                                             len(self.lines)))
             self.lines = []
-            sys.exit('[{}] BigQuery inserted and exit'.format(self.site_name))
+            exit('[{}] BigQuery inserted and exit'.format(self.site_name))
             return
 
         # save to Redis if BigQuery failed
@@ -224,14 +224,14 @@ class redis2bqSerial:
                         "Redis restore:{} lines".format(self.site_name,
                                                         len(self.lines)))
             self.lines = []
-            sys.exit('[{}] Redis pushed and exit'.format(self.site_name))
+            exit('[{}] Redis pushed and exit'.format(self.site_name))
             return
 
         # Both failed
         logger.critical('[{}] cleaned up failed: '
                         'lost {} lines and exit'.format(self.site_name,
                                                         len(self.lines)))
-        sys.exit("exit with losting data")
+        exit("exit with losting data")
 
     def signal_exit_func(self, num, frame):
         """called in signal()"""
@@ -254,7 +254,6 @@ class redis2bqSerial:
         try:
             self.connect_redis()
         except RedisConnectionError:
-            sleep(5)
             return False
 
         if not self.needs_writing_bq():
@@ -267,18 +266,18 @@ class redis2bqSerial:
         except BigQueryConnectionError:
             logger.info("[{}]"
                         "llen:{} pendding".format(self.site_name, self.llen))
-            sleep(5)
             return False
 
         try:
             self.ensure_table_exists()
-        except BigQueryTableNotExists:
+        except BigQueryTableNotExistsError:
             logger.info("[{}]"
                         "llen:{} pendding".format(self.site_name, self.llen))
             return False
 
         return True
 
+    @timeout(MAIN_PROCESS_TIMEOUT)
     def main(self):
         for s in (SIGINT, SIGTERM):
             signal(s, self.signal_exit_func)
@@ -336,11 +335,12 @@ class redis2bqSerial:
                 It happens if you're running multiple r2bq processes.
                 When another process has taken the data first,
                 this res is None."""
-                logger.debug("not res break")
+                logger.debug("res is None. break")
                 break
 
             if not res[1]:
                 "if body is empty, proceed to the next"
+                logger.debug("res[1] is empty. break")
                 continue
 
             try:
@@ -357,6 +357,7 @@ class redis2bqSerial:
             return
 
         # insert the self.lines into BigQuery
+        bq_inserted = False
         try:
             bq_inserted = self.write_to_bq(self.lines)
         except BigQueryWritingError:
@@ -366,9 +367,11 @@ class redis2bqSerial:
             self.restore_to_redis(self.lines)
             return
 
-        if bq_inserted:
-            logger.debug('[{}] BigQuery inserted'.format(self.site_name))
-            return
+        logger.info("[{}] BigQuery "
+                    "inserted {} "
+                    "{} lines".format(self.site_name,
+                                      bq_inserted,
+                                      len(self.lines)))
 
 
 if __name__ == '__main__':
@@ -378,14 +381,18 @@ if __name__ == '__main__':
         global keep_processing
         logger.info("graceful_exit")
         keep_processing = False
-        sleep(3)
 
     for s in (SIGINT, SIGTERM):
         signal(s, graceful_exit)
-
+    logger.info("site_name start:" +
+                ",".join([site["site_name"] for site in OCEANUS_SITES]))
     while keep_processing:
         for site in OCEANUS_SITES:
             r2bq = redis2bqSerial(site)
-            r2bq.main()
-            del r2bq
+            try:
+                r2bq.main()
+            except TimeoutError:
+                logger.critical("timeout error exit")
+                r2bq.clean_up()
+
         sleep(SERIAL_INTERVAL_SECOND)
