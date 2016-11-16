@@ -1,2 +1,0 @@
-Header set P3P "CP=\"ALL DSP COR CUR ADM TAI OUR IND COM NAV INT\""
-Header always unset X-Frame-Options

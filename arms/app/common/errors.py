@@ -18,5 +18,5 @@ class BigQueryWritingError(Exception):
     pass
 
 
-class BigQueryTableNotExists(Exception):
+class BigQueryTableNotExistsError(Exception):
     pass
