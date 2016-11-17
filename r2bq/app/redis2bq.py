@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import json
 import redis
+import random
 from timeout_decorator import timeout, TimeoutError
 from sys import exit
 from os import environ
@@ -26,10 +27,11 @@ JSON_KEY_FILE = environ['JSON_KEY_FILE']
 """Serial Parameters"""
 BRPOP_TIMEOUT = int(environ.get('BRPOP_TIMEOUT', 1))
 SERIAL_INTERVAL_SECOND = float(environ.get('SERIAL_INTERVAL_SECOND', 1.0))
-MAX_CHUNK_NUM = int(environ.get('MAX_CHUNK_NUM', 100))
+MAX_CHUNK_NUM = int(environ.get('MAX_CHUNK_NUM', 150))
 CONNECTION_RETRY = int(environ.get('CONNECTION_RETRY', 3))
 WRITING_RETRY = int(environ.get('WRITING_RETRY', 3))
-MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 30))
+RETRY_INTERVAL_BASE = int(environ.get('RETRY_INTERVAL_BASE', 5))
+MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 45))
 
 
 class redis2bqSerial:
@@ -47,6 +49,30 @@ class redis2bqSerial:
         self.bq_client = None
         self.llen = None
 
+    def retry_wait(self, retry_num,
+                   base_seconds=RETRY_INTERVAL_BASE,
+                   jitter=0.1,
+                   wait_seconds_limit=MAIN_PROCESS_TIMEOUT):
+        """
+        http://googlecloudplatform-japan.blogspot.jp/2016/11/ddos-cre.html
+        """
+        if retry_num <= 0:
+            retry_num = 1
+        jitter_rate = random.uniform(1 - jitter, 1 + jitter)
+        wait_seconds = base_seconds * retry_num * jitter_rate
+        if wait_seconds > wait_seconds_limit:
+            wait_seconds = wait_seconds_limit
+            logger.error("wait_seconds over wait_seconds_limit "
+                         "{}/{}".format(wait_seconds, wait_seconds_limit))
+        logger.info("retry wait {} seconds.".format(wait_seconds))
+        logger.debug("base_second:{} "
+                     "retry_num:{} "
+                     "jitter_rate:{} "
+                     "".format(base_seconds,
+                               retry_num,
+                               jitter_rate))
+        sleep(wait_seconds)
+
     def connect_redis(self):
         for i in range(1, CONNECTION_RETRY + 1):
             """return True in success, else raise error"""
@@ -60,7 +86,7 @@ class redis2bqSerial:
                 logger.error("connnecting Redis failed. "
                              "retry:{}/{}"
                              "\n{}".format(i, CONNECTION_RETRY, e))
-                sleep(5)
+                self.retry_wait(i)
             else:
                 return True
 
@@ -81,13 +107,13 @@ class redis2bqSerial:
                              '\n{}'.format(self.site_name,
                                            i, CONNECTION_RETRY,
                                            e))
-                sleep(5)
+                self.retry_wait(i)
             else:
                 return True
 
         logger.critical('[{}] '
-                        'connecting BigQuery retry failed.'
-                        '{}'.format(self.site_name, e))
+                        'connecting BigQuery '
+                        'retry failed.'.format(self.site_name))
         raise BigQueryConnectionError
 
     def ensure_table_exists(self):
@@ -114,7 +140,7 @@ class redis2bqSerial:
                              "\n{}".format(self.site_name,
                                            i, WRITING_RETRY,
                                            e))
-                sleep(5)
+                self.retry_wait(i)
             else:
                 return result
 
@@ -170,7 +196,7 @@ class redis2bqSerial:
                              '\n{}'.format(self.site_name,
                                            i, WRITING_RETRY,
                                            e))
-                sleep(5)
+                self.retry_wait(i)
                 continue
 
             logger.debug("inserted:{}".format(inserted))
@@ -200,7 +226,7 @@ class redis2bqSerial:
         if not len(self.lines):
             exit('[{}] cleaned up:no lines'.format(self.site_name))
             return
-        # save to BigQuery
+        # Save to BigQuery
         try:
             inserted = self.write_to_bq(self.lines)
         except BigQueryWritingError:
@@ -208,13 +234,14 @@ class redis2bqSerial:
 
         if inserted:
             logger.info("[{}] cleaned up "
-                        "BigQuery inserted:{} lines".format(self.site_name,
-                                                            len(self.lines)))
+                        "BigQuery inserted:"
+                        "{} lines".format(self.site_name,
+                                          len(self.lines)))
             self.lines = []
             exit('[{}] BigQuery inserted and exit'.format(self.site_name))
             return
 
-        # save to Redis if BigQuery failed
+        # Save to Redis if BigQuery failed
         try:
             self.restore_to_redis(self.lines)
         except RedisWritingError:
@@ -333,8 +360,7 @@ class redis2bqSerial:
             if res is None:
                 """
                 It happens if you're running multiple r2bq processes.
-                When another process has taken the data first,
-                this res is None."""
+                When another process has taken the data first"""
                 logger.debug("res is None. break")
                 break
 
@@ -367,11 +393,11 @@ class redis2bqSerial:
             self.restore_to_redis(self.lines)
             return
 
-        logger.info("[{}] BigQuery "
-                    "inserted {} "
-                    "{} lines".format(self.site_name,
-                                      bq_inserted,
-                                      len(self.lines)))
+        logger.debug("[{}] BigQuery "
+                     "inserted {} "
+                     "{} lines".format(self.site_name,
+                                       bq_inserted,
+                                       len(self.lines)))
 
 
 if __name__ == '__main__':
