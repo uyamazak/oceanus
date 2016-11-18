@@ -35,36 +35,37 @@ WEBリクエストから直接BigQueryに保存するのではなく、Redisを�
 ### リアルタイム
 BigQueryへ書き込むタイミングを頻度の多いアクセスログは50件に一回、フォームデータは1件に1回などパフォーマンスと合わせて調整できます。
 
-そのため、ほぼリアルタイムにBigQueryからデータを確認することができます。
+たとえばbizoceanでは約5秒ごとにBigQueryへ書き込みが行われています。
+
+そのためほぼリアルタイムにBigQueryからデータを確認することができます。
 
 
 ### 低コスト
-bizoceanでは月間1000万PV、1日200MBを超えるデータを送り続けていますが、GCPのコストは1万円/月程度（2016年10月時点）で収まっています。
+bizoceanでは月間1000万PV、1日70万レコード計250MBを超えるデータを送り続けていますが、GCPのコストは1万円/月程度（2016年10月時点）で収まっています。
 
-そのうちサーバー代（GKE）は5000円程度のため、国レベルで冗長化するマルチリージョンにしても、+5000円程度で可能なことを意味します。
+そのうちサーバー代（GKE）は5000円程度のため、国レベルで冗長化するマルチリージョン構成にしても、+5000円程度で可能なことを意味します。
 
-またGCPに合わせたクラウドネイティブな設計のため、サーバーの構築や死活監視などを簡単に行えて、メンテナンスコストも削減できます。
+またGCPに合わせたクラウドネイティブな設計のため、サーバーの追加や死活監視などをWEBの管理画面から簡単に行えて、メンテナンスコストも削減できます。
 
-BigQueryも使った分だけの課金なので初期費用もありません。
+自前でビッグデータのためのインフラを準備しようと思ったらよくて数十万、データ量によっては数千万レベルも珍しくはありません。またそれを維持するための人件費も莫大です。BigQueryは使った分だけの課金なので初期費用もなく、bizoceanの規模であれば今のところ月1000円もかかっていません。
 
-### 耐障害性
+### データを失わない耐障害設計
 BigQueryのストリーミングインサートは便利ですが、ときおりエラーとなり書き込めないことがあります。また過去には3時間以上に渡る完全なダウンも発生しました。
 
 そのため、oceanusではリトライを行うのはもちろん、それでもBigQueryへ書き込みができない場合Redisにデータが戻されるため、データを失うことがありません。
 
 RedisにはGCEの永続ディスクを接続することで、Redisの再起動時のデータ消失も防げます。
 
-コンテナの更新時なども、終了シグナルを受けとりメモリ内のデータをBigQuery、もしくはRedisに保存してから安全に終了します。
+アップデート時も終了シグナルを受けとりメモリ内のデータをBigQuery、もしくはRedisに保存してから安全に終了します。
 
 また、GKEがダウンした時に備えるには、GKEとGoogle HTTP Load Balancerを組み合わせることで、マルチリージョンでの展開も容易に可能です。
 
 ### カスタマイズ性
-
 arms/swallowは単純な1pxGIFビーコンとしてレスポンスするので、JavaScript等でクエリを組み立てれば自由にデータを送ることができます。
 
 例えば、bizoceanでは、クッキーに保存したセッションキーと、会員の場合はユーザー識別子を渡すことで、特定のユーザーが何時何分にどんなページを見たかなどをほぼリアルタイムに確認できるためユーザーサポートに役立っています。
 
-BigQueryはJSON形式にも対応しており、新しいデータを追加するときも、特にソースコードを変更することなくそのまま保存できます。
+BigQueryはJSON形式にも対応しており（SELECTのJSON_EXTRACT等）、oceanusももちろん対応しています。新しいデータを追加するときも、特にソースコードを変更することなくJSON形式そのままで保存できます。
 
 単純なHTTPリクエストを、バリデーション、変換などを行った後に、Redisサーバーに保存します。
 
@@ -75,24 +76,24 @@ BigQueryはJSON形式にも対応しており、新しいデータを追加す�
 
 GCPには、Google内部で使われているGoogle Cloud Datalab（ベータ）が無料で公開されており、これを使えばBigQueryの料金だけで、データの分析、可視化、機械学習などが可能です。
 
-### arms
+### arms/
 web server
 Get parameters and save to Redis list and PubSub.
 
-### r2bq
+### r2bq/
 Remove the data from Redis list and save to BigQuery.
 
-### redis-pd
+### redis-pd/
 Docker image of most official of Redis With Persistent Disc on GCP.
 
-### table-manager
+### table-manager/
 To see if there is a table required on the BigQuery, creating one if there is none
 
-### revelation
+### revelation/
 Using the PubPub of Redis, perform a streaming process.
 It can be write to the slack and Google spread sheets depending on the conditions.
 
-### management
+### management/
 management tools. docker build, push etc.
 
 ## Demo
