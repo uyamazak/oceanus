@@ -54,6 +54,9 @@ class redis2bqSerial:
                    jitter=0.1,
                    wait_seconds_limit=MAIN_PROCESS_TIMEOUT):
         """
+        When doing this process several times,
+        it prevents retry timing from overlapping
+
         http://googlecloudplatform-japan.blogspot.jp/2016/11/ddos-cre.html
         """
         if retry_num <= 0:
@@ -200,8 +203,14 @@ class redis2bqSerial:
                 continue
 
             logger.debug("inserted:{}".format(inserted))
+
             if inserted:
                 break
+            else:
+                logger.warning('[{}] '
+                               'Problem writing data BigQuery.'
+                               'retry:{}/{}'.format(self.site_name,
+                                                    i, WRITING_RETRY))
 
         if inserted:
             if i > 1:
@@ -237,7 +246,6 @@ class redis2bqSerial:
                         "BigQuery inserted:"
                         "{} lines".format(self.site_name,
                                           len(self.lines)))
-            self.lines = []
             exit('[{}] BigQuery inserted and exit'.format(self.site_name))
             return
 
@@ -250,7 +258,6 @@ class redis2bqSerial:
             logger.info("[{}] cleaned up "
                         "Redis restore:{} lines".format(self.site_name,
                                                         len(self.lines)))
-            self.lines = []
             exit('[{}] Redis pushed and exit'.format(self.site_name))
             return
 
@@ -412,7 +419,10 @@ if __name__ == '__main__':
         signal(s, graceful_exit)
     logger.info("site_name start:" +
                 ",".join([site["site_name"] for site in OCEANUS_SITES]))
+
+    import gc
     while keep_processing:
+
         for site in OCEANUS_SITES:
             r2bq = redis2bqSerial(site)
             try:
@@ -421,4 +431,7 @@ if __name__ == '__main__':
                 logger.critical("timeout error exit")
                 r2bq.clean_up()
 
+            del site
+            del r2bq
+            gc.collect()
         sleep(SERIAL_INTERVAL_SECOND)

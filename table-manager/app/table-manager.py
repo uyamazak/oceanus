@@ -14,7 +14,7 @@ PROJECT_ID = environ['PROJECT_ID']
 DATA_SET = environ['DATA_SET']
 JSON_KEY_FILE = environ['JSON_KEY_FILE']
 BQ_TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
-INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 30))
+INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 5))
 BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
 
 
@@ -45,22 +45,26 @@ class TableManager:
                         "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
         raise BigQueryConnectionError
 
+    def table_exsits(self, table_name):
+        return self.bq_client.check_table(DATA_SET, table_name)
+
     def create_table(self, table_name):
         """ create table in BigQuery"""
-        exists = self.bq_client.check_table(DATA_SET, table_name)
-        created = False
-        if not exists:
-            logger.info("table not exists."
-                        "table_name:{}".format(table_name))
-            created = self.bq_client.create_table(DATA_SET,
-                                                  table_name,
-                                                  self.table_schema)
-            if created:
-                logger.info("table:{} created".format(table_name))
-                sleep(1)
-            else:
-                logger.error("create table fail."
-                             "table_name:{}".format(table_name))
+        if self.table_exsits(table_name):
+            logger.debug("table {} already exists."
+                         "".format(table_name))
+            return False
+
+        logger.info("table not exists."
+                    "table_name:{}".format(table_name))
+        created = self.bq_client.create_table(DATA_SET,
+                                              table_name,
+                                              self.table_schema)
+        if created:
+            logger.info("table:{} created".format(table_name))
+        else:
+            logger.critical("create table fail."
+                            "table_name:{}".format(table_name))
         return created
 
     def prepare_table(self):
@@ -94,10 +98,13 @@ if __name__ == '__main__':
                                             DATA_SET,
                                             BQ_TABLE_PREFIX))
 
+    import gc
     while True:
         for site in OCEANUS_SITES:
             logger.debug("check:{}".format(site["site_name"]))
             tm = TableManager(site)
             tm.main()
             del tm
+            del site
+            gc.collect()
         sleep(INTERVAL_SECOND)
