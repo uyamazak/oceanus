@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import gc
 from datetime import datetime
 from os import environ
 from time import sleep
@@ -6,7 +7,6 @@ from bigquery import get_client
 from common.utils import (oceanus_logging,
                           create_bq_table_name)
 from common.settings import OCEANUS_SITES
-from common.errors import BigQueryConnectionError
 logger = oceanus_logging(__name__)
 
 """Google Parameters"""
@@ -20,33 +20,17 @@ BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
 
 class TableManager:
 
-    def __init__(self, site):
+    def __init__(self, site, bq_client):
         """
         arg site is defined in settings.py
         TableManager"""
         self.site_name = site["site_name"]
         self.table_schema = site["table_schema"]
-        self.bq_client = None
-
-    def connect_bigquery(self):
-        for i in range(1, BQ_CONNECTION_RETRY+1):
-            try:
-                self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                            readonly=False)
-            except Exception as e:
-                logger.error("connecting BigQuery failed."
-                             "count:{}/{}"
-                             "\n{}".format(i, BQ_CONNECTION_RETRY, e))
-                sleep(3)
-            else:
-                return True
-
-        logger.critical("connnecting BigQuery retry failed."
-                        "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
-        raise BigQueryConnectionError
+        self.bq_client = bq_client
 
     def table_exsits(self, table_name):
-        return self.bq_client.check_table(DATA_SET, table_name)
+        return self.bq_client.check_table(DATA_SET,
+                                          table_name)
 
     def create_table(self, table_name):
         """ create table in BigQuery"""
@@ -83,12 +67,19 @@ class TableManager:
         created_today = self.create_table(table_name_today)
         return created_tommorow or created_today
 
+    def clean_up_memory(self):
+        self.bq_client = None
+        self.site_name = None
+        self.table_schema = None
+        del self.bq_client
+        del self.site_name
+        del self.table_schema
+        gc.collect()
+
     def main(self):
-        try:
-            self.connect_bigquery()
-        except BigQueryConnectionError:
-            return
         self.prepare_table()
+        self.clean_up_memory()
+        return
 
 if __name__ == '__main__':
     logger.info("start managing BigQuery tables...\n"
@@ -97,13 +88,32 @@ if __name__ == '__main__':
                 "BQ_TABLE_PREFIX:{}".format(PROJECT_ID,
                                             DATA_SET,
                                             BQ_TABLE_PREFIX))
+    bq_result = False
+    for i in range(1, BQ_CONNECTION_RETRY+1):
+        try:
+            bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                   readonly=False)
+        except Exception as e:
+            logger.error("connecting BigQuery failed."
+                         "count:{}/{}"
+                         "\n{}".format(i, BQ_CONNECTION_RETRY, e))
+            sleep(i*10)
+        else:
+            bq_result = True
+            break
 
-    import gc
+    if bq_result is False:
+        logger.critical("connnecting BigQuery retry failed."
+                        "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
+        exit()
+
     while True:
         for site in OCEANUS_SITES:
-            logger.debug("check:{}".format(site["site_name"]))
-            tm = TableManager(site)
+            # logger.debug("check:{}".format(site["site_name"]))
+            tm = TableManager(site, bq_client)
             tm.main()
+            tm = None
+            site = None
             del tm
             del site
             gc.collect()
