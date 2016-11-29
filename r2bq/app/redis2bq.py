@@ -2,6 +2,7 @@
 import json
 import redis
 import random
+import gc
 from timeout_decorator import timeout, TimeoutError
 from sys import exit
 from os import environ
@@ -14,7 +15,6 @@ from common.settings import (REDIS_HOST, REDIS_PORT,
                              OCEANUS_SITES)
 from common.errors import (RedisConnectionError,
                            RedisWritingError,
-                           BigQueryConnectionError,
                            BigQueryWritingError,
                            BigQueryTableNotExistsError)
 logger = oceanus_logging(__name__)
@@ -46,7 +46,6 @@ class redis2bqSerial:
         self.chunk_num = site["chunk_num"]
         self.keep_processing = True
         self.lines = []
-        self.bq_client = None
         self.llen = None
 
     def retry_wait(self, retry_num,
@@ -97,30 +96,8 @@ class redis2bqSerial:
                         "{}/{}".format(i, CONNECTION_RETRY))
         raise RedisConnectionError
 
-    def connect_bigquery(self):
-        """return True in success, else raise error"""
-        for i in range(1, CONNECTION_RETRY + 1):
-            try:
-                self.bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                            readonly=False)
-            except Exception as e:
-                logger.error('[{}] '
-                             'connecting BigQuery.failed.'
-                             "retry:{}/{}"
-                             '\n{}'.format(self.site_name,
-                                           i, CONNECTION_RETRY,
-                                           e))
-                self.retry_wait(i)
-            else:
-                return True
-
-        logger.critical('[{}] '
-                        'connecting BigQuery '
-                        'retry failed.'.format(self.site_name))
-        raise BigQueryConnectionError
-
     def ensure_table_exists(self):
-        exists = self.bq_client.check_table(DATA_SET, self.table_name)
+        exists = bq_client.check_table(DATA_SET, self.table_name)
         if exists:
             logger.debug("table [{}] exists".format(self.table_name))
             return True
@@ -188,10 +165,10 @@ class redis2bqSerial:
                so use 'inserted' to distinguish between success and not
             """
             try:
-                inserted = self.bq_client.push_rows(DATA_SET,
-                                                    self.table_name,
-                                                    lines,
-                                                    'dt')
+                inserted = bq_client.push_rows(DATA_SET,
+                                               self.table_name,
+                                               lines,
+                                               'dt')
             except Exception as e:
                 logger.error('[{}] '
                              'Problem writing data BigQuery.'
@@ -293,13 +270,6 @@ class redis2bqSerial:
         if not self.needs_writing_bq():
             logger.debug("[{}] there is no need "
                          "writing to BigQuery".format(self.site_name))
-            return False
-
-        try:
-            self.connect_bigquery()
-        except BigQueryConnectionError:
-            logger.info("[{}]"
-                        "llen:{} pendding".format(self.site_name, self.llen))
             return False
 
         try:
@@ -420,7 +390,25 @@ if __name__ == '__main__':
     logger.info("site_name start:" +
                 ",".join([site["site_name"] for site in OCEANUS_SITES]))
 
-    import gc
+    bq_result = False
+    for i in range(1, CONNECTION_RETRY+1):
+        try:
+            bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                   readonly=False)
+        except Exception as e:
+            logger.error("connecting BigQuery failed."
+                         "count:{}/{}"
+                         "\n{}".format(i, CONNECTION_RETRY, e))
+            sleep(i*10)
+        else:
+            bq_result = True
+            break
+
+    if bq_result is False:
+        logger.critical("connnecting BigQuery retry failed."
+                        "count:{}/{}".format(i, CONNECTION_RETRY))
+        exit()
+
     while keep_processing:
 
         for site in OCEANUS_SITES:
