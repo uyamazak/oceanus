@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import gc
+from sys import exit
 from datetime import datetime
 from os import environ
 from time import sleep
@@ -14,7 +15,7 @@ PROJECT_ID = environ['PROJECT_ID']
 DATA_SET = environ['DATA_SET']
 JSON_KEY_FILE = environ['JSON_KEY_FILE']
 BQ_TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
-INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 5))
+INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 10))
 BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
 
 
@@ -88,33 +89,51 @@ if __name__ == '__main__':
                 "BQ_TABLE_PREFIX:{}".format(PROJECT_ID,
                                             DATA_SET,
                                             BQ_TABLE_PREFIX))
-    bq_result = False
-    for i in range(1, BQ_CONNECTION_RETRY+1):
-        try:
-            bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                   readonly=False)
-        except Exception as e:
-            logger.error("connecting BigQuery failed."
-                         "count:{}/{}"
-                         "\n{}".format(i, BQ_CONNECTION_RETRY, e))
-            sleep(i*10)
-        else:
-            bq_result = True
-            break
 
-    if bq_result is False:
-        logger.critical("connnecting BigQuery retry failed."
-                        "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
-        exit()
+    def create_bq_client():
+        bq_result = False
+        for i in range(1, BQ_CONNECTION_RETRY+1):
+            try:
+                bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                       readonly=False)
+            except Exception as e:
+                logger.error("connecting BigQuery failed."
+                             "count:{}/{}"
+                             "\n{}".format(i, BQ_CONNECTION_RETRY, e))
+                bq_result = False
+                sleep(i*15)
+            else:
+                return bq_client
+
+        if bq_result is False:
+            logger.critical("connnecting BigQuery retry failed."
+                            "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
+            return bq_result
+
+    bq_client = create_bq_client()
+    if bq_client is False:
+        exit("create_bq_client() failed")
 
     while True:
         for site in OCEANUS_SITES:
             # logger.debug("check:{}".format(site["site_name"]))
             tm = TableManager(site, bq_client)
-            tm.main()
-            tm = None
-            site = None
-            del tm
-            del site
-            gc.collect()
+            try:
+                tm.main()
+            except BrokenPipeError:
+                logger.error("BrokenPipeError at tm.main()\n"
+                             "retry create_bq_client()")
+                bq_client = create_bq_client()
+                if bq_client is False:
+                    exit("retry create_bq_client() failed. exit()")
+                break
+            except Exception as e:
+                logger.critical("{} at tm.main()\n".format(e))
+                exit()
+            else:
+                tm = None
+                site = None
+                del tm
+                del site
+                gc.collect()
         sleep(INTERVAL_SECOND)

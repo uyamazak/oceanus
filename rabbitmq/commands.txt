@@ -1,0 +1,5 @@
+sudo docker run --rm \
+    --hostname oceanus-rabbit \
+    -e RABBITMQ_DEFAULT_USER=oceanus \
+    -e RABBITMQ_DEFAULT_PASS=JBWAFj8drBW5 \
+    rabbitmq:3
