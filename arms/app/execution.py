@@ -11,6 +11,7 @@ logger = oceanus_logging()
 class ExecutionResource(object):
     """
     Execution is oceanus arm's base Class.
+    You can not use this function directly.
     So GET and POST is disabled.
 
     For quick response, save to Redis,

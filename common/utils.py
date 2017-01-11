@@ -46,12 +46,14 @@ def resp_beacon_gif(resp):
 def create_bq_table_name(site_name, delta_days=0):
     """return BigQuery table name"""
     TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
-    if delta_days != 0:
-        date_delta = datetime.now() + \
-                     timedelta(days=delta_days)
+    prefix = TABLE_PREFIX + site_name
 
-        return TABLE_PREFIX + site_name + \
-            date_delta.strftime('_%Y%m%d')
+    date_part = ""
+    if delta_days != 0:
+        date_delta = datetime.now() + timedelta(days=delta_days)
+
+        date_part = date_delta.strftime('_%Y%m%d')
     else:
-        return TABLE_PREFIX + site_name + \
-            datetime.now().strftime('_%Y%m%d')
+        date_part = datetime.now().strftime('_%Y%m%d')
+
+    return prefix + date_part

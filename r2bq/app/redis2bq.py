@@ -36,7 +36,7 @@ MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 45))
 
 class redis2bqSerial:
 
-    def __init__(self, site):
+    def __init__(self, site, bq_client):
         """
         arg site is defined in common.settings
         """
@@ -47,6 +47,7 @@ class redis2bqSerial:
         self.keep_processing = True
         self.lines = []
         self.llen = None
+        self.bq_client = bq_client
 
     def retry_wait(self, retry_num,
                    base_seconds=RETRY_INTERVAL_BASE,
@@ -97,7 +98,7 @@ class redis2bqSerial:
         raise RedisConnectionError
 
     def ensure_table_exists(self):
-        exists = bq_client.check_table(DATA_SET, self.table_name)
+        exists = self.bq_client.check_table(DATA_SET, self.table_name)
         if exists:
             logger.debug("table [{}] exists".format(self.table_name))
             return True
@@ -268,7 +269,7 @@ class redis2bqSerial:
             return False
 
         if not self.needs_writing_bq():
-            logger.debug("[{}] there is no need "
+            logger.debug("[{}] no need "
                          "writing to BigQuery".format(self.site_name))
             return False
 
@@ -343,7 +344,7 @@ class redis2bqSerial:
 
             if not res[1]:
                 "if body is empty, proceed to the next"
-                logger.debug("res[1] is empty. break")
+                logger.debug("res[1] is empty. continue")
                 continue
 
             try:
@@ -390,33 +391,51 @@ if __name__ == '__main__':
     logger.info("site_name start:" +
                 ",".join([site["site_name"] for site in OCEANUS_SITES]))
 
-    bq_result = False
-    for i in range(1, CONNECTION_RETRY+1):
-        try:
-            bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                   readonly=False)
-        except Exception as e:
-            logger.error("connecting BigQuery failed."
-                         "count:{}/{}"
-                         "\n{}".format(i, CONNECTION_RETRY, e))
-            sleep(i*10)
-        else:
-            bq_result = True
-            break
+    def create_bq_client():
+        bq_result = False
+        for i in range(1, CONNECTION_RETRY+1):
+            try:
+                bq_client = get_client(json_key_file=JSON_KEY_FILE,
+                                       readonly=False)
+            except Exception as e:
+                logger.error("connecting BigQuery failed."
+                             "count:{}/{}"
+                             "\n{}".format(i, CONNECTION_RETRY, e))
+                bq_result = False
+                sleep(i*RETRY_INTERVAL_BASE)
+            else:
+                return bq_client
 
-    if bq_result is False:
-        logger.critical("connnecting BigQuery retry failed."
-                        "count:{}/{}".format(i, CONNECTION_RETRY))
-        exit()
+        if bq_result is False:
+            logger.critical("connnecting BigQuery retry failed."
+                            "count:{}/{}".format(i, CONNECTION_RETRY))
+            return bq_result
+
+    bq_client = create_bq_client()
+
+    if bq_client is False:
+        exit("create_bq_client() failed")
 
     while keep_processing:
 
         for site in OCEANUS_SITES:
-            r2bq = redis2bqSerial(site)
+            r2bq = redis2bqSerial(site, bq_client)
             try:
                 r2bq.main()
+            except BrokenPipeError:
+                logger.critical("BrokenPipeError"
+                                "retry create_bq_client()")
+                bq_client = create_bq_client()
+                if bq_client is False:
+                    logger.critical("Retry create_bq_client()"
+                                    "failed clean_up()")
+                    r2bq.clean_up()
+                break
             except TimeoutError:
-                logger.critical("timeout error exit")
+                logger.critical("TimeoutError clean_up()")
+                r2bq.clean_up()
+            except Exception as e:
+                logger.critical("{} clean_up()".format(e))
                 r2bq.clean_up()
 
             del site

@@ -24,12 +24,46 @@ get_list = [
 
 post_list = [
     ("{}/pirate/movieform", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D"),
-    ("{}/pirate/namecard", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D"),
 ]
+
+once_get_list = [
+        "{}/swallow/bizocean?oid=test&evt=pageview&uid=1084205&ref=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fcontact%2F&tit=%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B%E5%AE%8C%E4%BA%86%EF%BD%9Cbizocean%20-%20%E3%81%82%E3%82%89%E3%82%86%E3%82%8B%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%E3%82%92%E6%8F%90%E4%BE%9B%E3%81%99%E3%82%8B%EF%BC%81&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fcontact%2Finquiry%2Fcomplete%2F&enc=UTF-8&scr=1920x1080&vie=1903x510&sid=86895a04e5a59600",
+        ]
+
+once_post_list =[
+        ("{}/pirate/namecard", "name=%E3%83%86%E3%82%B9%E3%83%88%E6%8B%85%E5%BD%93%E8%80%85&cname=%E3%83%86%E3%82%B9%E3%83%88%E8%B2%B4%E7%A4%BE%E5%90%8D&tel=03-5148-1212&email=yu_yamazaki%40bizocean.co.jp&oid=test&uid=1000000&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fvideo%2Fquestionnaire_oceanus%2F&enc=UTF-8&sid=23cb8839206d8759&jsn=%7B%22agreement%22%3A%22on%22%7D"),
+        ]
 
 error_count = 0
 
-for i in range(13):
+for url in once_get_list:
+    url = url.format(HOST)
+    try:
+        with urllib.request.urlopen(url) as page:
+            if page.getcode() != 200:
+                print("error")
+            else:
+                pass
+    except Exception as e:
+        print("error:{}\n{}".format(url, e))
+        error_count += 1
+
+for url, data in once_post_list:
+    url = url.format(HOST)
+    data = data.encode('utf-8')
+    try:
+        with urllib.request.urlopen(url=url, data=data) as page:
+            if page.getcode() != 200:
+                print("error")
+                error_count += 1
+            else:
+                pass
+                #print("ok")
+    except Exception as e:
+        print("error:{}\n{}".format(url, e))
+        error_count += 1
+
+for i in range(5):
     for url in get_list:
         url = url.format(HOST)
         try:
@@ -41,7 +75,7 @@ for i in range(13):
                     #print("ok")
         except Exception as e:
             print("error:{}\n{}".format(url, e))
-            error_count = error_count + 1
+            error_count += 1
 
     for url, data in post_list:
         url = url.format(HOST)
@@ -50,14 +84,15 @@ for i in range(13):
             with urllib.request.urlopen(url=url, data=data) as page:
                 if page.getcode() != 200:
                     print("error")
-                    error_count = error_count + 1
+                    error_count += 1
                 else:
                     pass
                     #print("ok")
         except Exception as e:
             print("error:{}\n{}".format(url, e))
-            error_count = error_count + 1
+            error_count += 1
+
 if error_count == 0:
-    print("ok! no errors found")
+    print("OK! no errors found")
 else:
     print("NG! {} errors found".format(error_count))

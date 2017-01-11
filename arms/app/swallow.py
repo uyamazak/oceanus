@@ -7,7 +7,7 @@ from datetime import datetime
 from common.utils import resp_beacon_gif, oceanus_logging
 from common.errors import RedisWritingError
 
-logger = oceanus_logging()
+logger = oceanus_logging(__name__)
 
 
 class SwallowResource(ExecutionResource):
@@ -19,7 +19,9 @@ class SwallowResource(ExecutionResource):
         convert lower, upper, length
         """
         if user_data['enc']:
-            user_data['enc'] = user_data['enc'].upper()
+            """img tag at emailopen,
+               it may contains slash for some reason."""
+            user_data['enc'] = user_data['enc'].upper().replace("/", "")
         if user_data['sid']:
             user_data['sid'] = user_data['sid'].lower()
         if user_data['evt']:
@@ -30,7 +32,6 @@ class SwallowResource(ExecutionResource):
         if len(user_data['ua']) > ua_max:
             user_data['ua'] = user_data['ua'][0:ua_max]
             logger.info('cut ua {}:{}'.format(ua_max, user_data['ua']))
-
         return user_data
 
     def on_get(self, req, resp, site_name=None):
@@ -177,11 +178,12 @@ class SwallowResource(ExecutionResource):
                        for k, v in item_dict.items()})
         validate_result = v.validate(user_data)
 
+        redis_result = None
+
         if validate_result:
             user_data['jsn'] = self.clean_json(user_data['jsn'])
             resp.status = falcon.HTTP_200
             redis_data = json.dumps(user_data)
-            redis_result = None
             try:
                 redis_result = self.write_to_redis(site_name, redis_data)
             except RedisWritingError:

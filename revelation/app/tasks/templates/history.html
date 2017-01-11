@@ -1,0 +1,35 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<body>
+<h1>{{ title }}</h1>
+<p>uid: {{ data.uid }}</p>
+<p>{{ description }}</p>
+{% if history %}
+  <table style="border-collapse: collapse;">
+  <tbody>
+      <tr>
+          <th style="border:1px solid">dt </th>
+          <th style="border:1px solid">tit</th>
+          <th style="border:1px solid">url</th>
+          <th style="border:1px solid">uid</th>
+          <th style="border:1px solid">dev</th>
+          <th style="border:1px solid">rad</th>
+      </tr>
+  {% for h in history %}
+      <tr>
+          <td style="border:1px solid #999">{{ h.dt_jp }}</td>
+          <td style="border:1px solid #999">{{ h.tit }}</td>
+          <td style="border:1px solid #999">{{ h.url }}</td>
+          <td style="border:1px solid #999">{{ h.uid }}</td>
+          <td style="border:1px solid #999">{{ h.dev }}</td>
+          <td style="border:1px solid #999">{{ h.rad }}</td>
+      </tr>
+  {% endfor %}
+  </tbody>
+  </table>
+{% else %}
+  <p>履歴が見つかりませんでした</p>
+{% endif %}
+</html>
