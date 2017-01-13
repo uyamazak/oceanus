@@ -75,7 +75,13 @@ class GoogleSpreadSheetsTasks:
         row = self.format_ws_row(data)
         logger.debug("row:{}".format(row))
         ws = self.get_ws(ws_title)
-        result = ws.append_row(row)
+        try:
+            result = ws.append_row(row)
+        except Exception as e:
+            logger.error("error at append_row retry \n{}")
+            self.open_gspread_sheet()
+            ws = self.get_ws(ws_title)
+            result = ws.append_row(row)
         logger.debug("result:{}".format(result))
         return result
 

@@ -18,6 +18,10 @@ celery_broker = ('pyamqp://{RABBITMQ_USER}:'
 celery_backend = 'rpc://'
 app = Celery('tasks', broker=celery_broker, backend=celery_backend)
 
+gs_tasks = GoogleSpreadSheetsTasks()
+sg_tasks = SendGridTasks()
+bq_tasks = GoogleBigQueryTasks()
+
 
 @app.task
 def add(x, y):
@@ -29,21 +33,21 @@ def send2ws(data,
             title_prefix="",
             title_suffix="",
             date_format=None):
-    gs = GoogleSpreadSheetsTasks()
-    return gs.main(data,
-                   title_prefix=title_prefix,
-                   title_suffix=title_suffix,
-                   date_format=date_format)
+    return gs_tasks.main(data,
+                         title_prefix=title_prefix,
+                         title_suffix=title_suffix,
+                         date_format=date_format)
 
 
 @app.task
 def send2email(**kwargs):
-    sg = SendGridTasks()
-    return sg.main(kwargs)
+    return sg_tasks.main(kwargs)
 
 
 @app.task
-def send_user_history(site_name, sid="", data=None, description=""):
-    bq = GoogleBigQueryTasks()
-    bq.main(site_name, sid, data, description)
+def send_user_history(site_name, sid="", data=None, desc=""):
+    bq_tasks.main(site_name=site_name,
+                  sid=sid,
+                  data=data,
+                  desc=desc)
     return

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from datetime import datetime, timezone, timedelta
 import os
 import json
 import sys
@@ -7,7 +6,7 @@ import redis
 import time
 
 from signal import signal, SIGINT, SIGTERM
-from common.utils import oceanus_logging
+from common.utils import oceanus_logging, convert2jst
 from common.settings import (REDIS_HOST,
                              REDIS_PORT,
                              OCEANUS_SITES)
@@ -22,6 +21,10 @@ SLACK_BOT_NAME = os.environ["SLACK_BOT_NAME"]
 
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
 SPREAD_SHEET_KEY = os.environ['SPREAD_SHEET_KEY']
+
+TASK_KEY_PREFIX = "revelation_tasks_"
+TASK_KEY_EXPIRE = 300
+TASK_KEY_LIMIT = 50
 
 
 class Revelation:
@@ -47,6 +50,22 @@ class Revelation:
         self.connect_redis()
         self.pubsub = self.r.pubsub()
 
+    def is_registerable_task(self, task_id):
+        key = "{}{}".format(TASK_KEY_PREFIX, task_id)
+
+        if self.r.get(key):
+            logger.debug("task {} already registerd.".format(key))
+            return False
+
+        exists_task_count = len(self.r.keys(TASK_KEY_PREFIX + "*"))
+        logger.debug("exists_task_num {}".format(exists_task_count))
+        if exists_task_count > TASK_KEY_LIMIT:
+            logger.error("task num is over limit")
+            return False
+
+        result = self.r.setex(key, TASK_KEY_EXPIRE, 1)
+        return result
+
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
             self.keep_processing = False
@@ -65,23 +84,12 @@ class Revelation:
             text = "{} {}: {}".format(text, k, v)
         return text
 
-    def convert2jst(self, dt_str):
-        JST = timezone(timedelta(hours=+9), 'JST')
-        try:
-            obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S.%f')
-        except ValueError:
-            # if microseconds is not set
-            obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
-        utc_ts = obj_dt.replace(tzinfo=timezone.utc).timestamp()
-        dt = datetime.fromtimestamp(utc_ts, JST)
-        return dt
-
     def prepare_item(self, item):
         channel = item['channel'].decode('utf-8')
         data = json.loads(item["data"].decode('utf-8'), encoding="utf-8")
         dt = None
         if data["dt"]:
-            dt = self.convert2jst(data["dt"])
+            dt = convert2jst(data["dt"])
         jsn = None
         jsn_text = ""
         if data["jsn"]:
@@ -101,6 +109,7 @@ class Revelation:
         channel = ex_item.get("channel")
         dt = ex_item.get("dt")
         jsn = ex_item.get("jsn")
+        count = 0
         # 動画広告フォーム
         if channel == "movieform":
             send2ws.delay((
@@ -110,20 +119,28 @@ class Revelation:
                      data.get("url"),
                     ),
                     title_prefix="movie_")
+            count += 1
         # 名刺情報
         if channel == "namecard":
+            count += 1
             # 履歴メール
             # logger.debug("in url:{}".format(data["url"]))
-            send_user_history.apply_async(kwargs={"site_name": "bizocean",
-                                                  "sid": data.get("sid"),
-                                                  "data": data,
-                                                  "description": "名刺情報入力ユーザーの履歴",
-                                                  },
-                                          countdown=60)
+            delay_seconds = 30
+            desc = ("名刺情報入力後 {} 秒後に"
+                    "BigQueryをスキャンしています".format(delay_seconds))
+            if self.is_registerable_task("bq_" + data.get("sid")):
+                send_user_history.apply_async(kwargs={
+                    "site_name": "bizocean",
+                    "sid": data.get("sid"),
+                    "data": data,
+                    "desc": desc
+                    },
+                    countdown=delay_seconds)
         # bizocean内
         if channel == "bizocean":
             # 検索見つからない
             if data["evt"] == "search_not_found":
+                count += 1
                 if not jsn:
                     logger.error("jsn is None. {}".format(data))
                 else:
@@ -139,6 +156,7 @@ class Revelation:
 
             # 有料書式DL完了
             if data["evt"] == "paid":
+                count += 1
                 values = (dt,
                           "有料書式売れた!",
                           jsn.get("price"),
@@ -151,6 +169,7 @@ class Revelation:
                               title_prefix="paid_")
             # エラー
             if "error" in data["evt"]:
+                count += 1
                 values = (dt,
                           data.get("evt", ""),
                           data.get("url", ""),
@@ -163,7 +182,7 @@ class Revelation:
                 send2ws.delay(data=values,
                               title_prefix="error_")
 
-        return
+        return count
 
     def main(self):
         for s in (SIGINT, SIGTERM):
@@ -186,15 +205,15 @@ class Revelation:
                 logger.debug("type subscribe")
                 continue
 
-            revelation_count = self.make_revelation(item)
+            count = self.make_revelation(item)
+            if count > 0:
+                time.sleep(0.05)
             # slack.api_token = SLACK_API_TOKEN
             # slack_result = slack.chat.post_message(SLACK_CHANNEL,
             #                                        message,
             #                                        username=SLACK_BOT_NAME)
             # logger.debug("slack_result:{}".format(slack_result))
             # logger.debug("revelation_count:{}".format(revelation_count))
-            time.sleep(0.1)
-
 
             if not self.keep_processing:
                 logger.debug("unsubscribe()")
