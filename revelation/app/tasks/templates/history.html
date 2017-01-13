@@ -4,27 +4,70 @@
 </head>
 <body>
 <h1>{{ title }}</h1>
-<p>uid: {{ data.uid }}</p>
-<p>{{ description }}</p>
+
+{% set td_style='style="border:1px solid #999;padding:4px;"' %}
+
+<h2>フックになったデータ</h2>
+<table style="border-collapse: collapse;">
+{% for k,v in data.items() %}
+<tr>
+    <th style="border:1px solid #999">{{k}}</th>
+    <td style="border:1px solid #999">{{v}}</td>
+</tr>
+{% endfor %}
+</table>
+
+
+<p>{{ desc }}</p>
+<table style="border-collapse: collapse;">
+  <tr style="background:#ccc;">
+    <th {{ td_style }}>dt </th>
+    <th {{ td_style }}>sid</th>
+    <th {{ td_style }}>uid</th>
+    <th {{ td_style }}>name</th>
+    <th {{ td_style }}>jsn</th>
+    <th {{ td_style }}>dev</th>
+    <th {{ td_style }}>rad</th>
+  </tr>
+  <tr>
+    <td {{ td_style }}>{{ data.dt_jp }}</td>
+    <td {{ td_style }}>{{ data.sid }}</td>
+    <td {{ td_style }}>{{ data.uid }}</td>
+    <td {{ td_style }}>{{ data.name }}</td>
+    <td {{ td_style }}>
+        {% if data.jsn_loads %}
+        <dl>
+        {% for jt, jv in data.jsn_loads.items() %}
+        <dt>{{ jt }}</dt>
+        <dd>{{ jv }}</dd>
+        {% endfor %}
+        </dl>
+        {% endif %}
+    </td>
+    <td {{ td_style }}>{{ data.dev }}</td>
+    <td {{ td_style }}>{{ data.rad }}</td>
+  </tr>
+</table>
+
 {% if history %}
   <table style="border-collapse: collapse;">
   <tbody>
-      <tr>
-          <th style="border:1px solid">dt </th>
-          <th style="border:1px solid">tit</th>
-          <th style="border:1px solid">url</th>
-          <th style="border:1px solid">uid</th>
-          <th style="border:1px solid">dev</th>
-          <th style="border:1px solid">rad</th>
+      <tr style="background:#ccc;">
+        <th {{ td_style }}>dt </th>
+        <th {{ td_style }}>evt</th>
+        <th {{ td_style }}>tit</th>
+        <th {{ td_style }}>uid</th>
+        <th {{ td_style }}>dev</th>
+        <th {{ td_style }}>rad</th>
       </tr>
   {% for h in history %}
       <tr>
-          <td style="border:1px solid #999">{{ h.dt_jp }}</td>
-          <td style="border:1px solid #999">{{ h.tit }}</td>
-          <td style="border:1px solid #999">{{ h.url }}</td>
-          <td style="border:1px solid #999">{{ h.uid }}</td>
-          <td style="border:1px solid #999">{{ h.dev }}</td>
-          <td style="border:1px solid #999">{{ h.rad }}</td>
+        <td {{ td_style }}>{{ h.dt_jp }}</td>
+        <td {{ td_style }}>{{ h.evt }}</td>
+        <td {{ td_style }}><a href="{{ h.url }}">{{ h.tit }}</a></td>
+        <td {{ td_style }}>{{ h.uid }}</td>
+        <td {{ td_style }}>{{ h.dev }}</td>
+        <td {{ td_style }}>{{ h.rad }}</td>
       </tr>
   {% endfor %}
   </tbody>
