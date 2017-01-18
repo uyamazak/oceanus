@@ -4,7 +4,7 @@
 # please create a hard link to run the management/link_common_files.sh.
 import logging
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from os import environ
 
 
@@ -57,3 +57,15 @@ def create_bq_table_name(site_name, delta_days=0):
         date_part = datetime.now().strftime('_%Y%m%d')
 
     return prefix + date_part
+
+
+def convert2jst(dt_str):
+    JST = timezone(timedelta(hours=+9), 'JST')
+    try:
+        obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        # if microseconds is not set
+        obj_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
+    utc_ts = obj_dt.replace(tzinfo=timezone.utc).timestamp()
+    dt = datetime.fromtimestamp(utc_ts, JST)
+    return dt

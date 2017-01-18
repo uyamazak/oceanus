@@ -9,7 +9,7 @@ from os import environ
 
 """ Redis settings"""
 REDIS_HOST = environ.get('REDISMASTER_SERVICE_HOST', "localhost")
-REDIS_PORT = environ.get('REDISMASTER_SERVICE_PORT', 6379)
+REDIS_PORT = int(environ.get('REDISMASTER_SERVICE_PORT', 6379))
 
 """ RabbitMQ settings"""
 RABBITMQ_HOST = environ.get('RABBITMQ_HOST', 'localhost')
@@ -18,9 +18,9 @@ RABBITMQ_USER = environ.get('RABBITMQ_USER', 'guest')
 RABBITMQ_PASSWORD = environ.get('RABBITMQ_PASSWORD', 'guest')
 
 """ SendGrid settings"""
-SENDGRID_API_KEY = environ.get('SENDGRID_API_KEY')
-SENDGRID_FROM_EMAIL = "yu_yamazaki@bizocean.co.jp"
-SENDGRID_TO_EMAIL = "yu_yamazaki@bizocean.co.jp"
+SENDGRID_API_KEY = environ.get('SENDGRID_API_KEY', "")
+SENDGRID_FROM_EMAIL = environ.get('SENDGRID_FROM_EMAIL', "yu_yamazaki+sgfrom@bizocean.co.jp")
+SENDGRID_TO_EMAIL = environ.get('SENDGRID_TO_EMAIL', "yu_yamazaki+sgto@bizocean.co.jp")
 
 """
 BigQuery's table settings

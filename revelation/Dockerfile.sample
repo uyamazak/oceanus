@@ -2,22 +2,41 @@ FROM python:3.5-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
 RUN pip3 install --upgrade -q \
-google-api-python-client \
-redis \
-pyslack \
+bigquery-python \
 requests \
+redis \
+Celery \
+Jinja2
+
+RUN pip3 install --upgrade -q \
+google-api-python-client \
 gspread \
-oauth2client
+oauth2client \
+pyslack \
+sendgrid
 
 ENV REDISMASTER_SERVICE_HOST localhost
 ENV REDISMASTER_SERVICE_PORT 6379
 ENV LOG_LEVEL WARNING
 
-ENV JSON_KEY_FILE keys/your_google_key_file.json
-ENV SPREAD_SHEET_KEY sample
+ENV PROJECT_ID yourprojectname
+ENV DATA_SET yourdataset
+ENV JSON_KEY_FILE keys/yourkey.json
+ENV BQ_TABLE_PREFIX yourpregix
+
+ENV SENDGRID_API_KEY SG.YOURKEY
+ENV SENDGRID_FROM_EMAIL sample@example.com
+ENV SENDGRID_TO_EMAIL sample@example.com
+
+ENV RABBITMQ_HOST 127.0.0.1
+ENV RABBITMQ_PORT 5672
+ENV RABBITMQ_USER username
+ENV RABBITMQ_PASSWORD pwassword
+
+ENV SPREAD_SHEET_KEY GOOGLE_SPREDSHEET_KEY
 
 RUN mkdir /oceanus/
 COPY app /oceanus/app
-WORKDIR /oceanus/app/
+WORKDIR /oceanus/app
 
 CMD ["python3.5","revelation.py"]

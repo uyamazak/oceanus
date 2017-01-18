@@ -3,3 +3,9 @@ sudo docker run --rm \
     -e RABBITMQ_DEFAULT_USER=oceanus \
     -e RABBITMQ_DEFAULT_PASS=JBWAFj8drBW5 \
     rabbitmq:3
+
+
+#deployment
+kc run rabbitmq --image=asia.gcr.io/oceanus-dev/rabbitmq:v20170112-01
+
+#service

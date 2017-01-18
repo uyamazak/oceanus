@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-import os
 import json
 import sys
 import redis
-import time
-
+from os import environ
 from signal import signal, SIGINT, SIGTERM
 from common.utils import oceanus_logging, convert2jst
 from common.settings import (REDIS_HOST,
@@ -15,16 +13,16 @@ from tasks.app import send2ws, send_user_history
 logger = oceanus_logging()
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-SLACK_API_TOKEN = os.environ["SLACK_API_TOKEN"]
-SLACK_CHANNEL = os.environ["SLACK_CHANNEL"]
-SLACK_BOT_NAME = os.environ["SLACK_BOT_NAME"]
+# SLACK_API_TOKEN = environ.get("SLACK_API_TOKEN")
+# SLACK_CHANNEL = environ.get("SLACK_CHANNEL")
+# SLACK_BOT_NAME = environ.get("SLACK_BOT_NAME")
 
-JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
-SPREAD_SHEET_KEY = os.environ['SPREAD_SHEET_KEY']
+JSON_KEY_FILE = environ.get('JSON_KEY_FILE')
+SPREAD_SHEET_KEY = environ.get('SPREAD_SHEET_KEY')
 
-TASK_KEY_PREFIX = "revelation_tasks_"
+TASK_KEY_PREFIX = "task_revelation_"
 TASK_KEY_EXPIRE = 300
-TASK_KEY_LIMIT = 50
+TASK_KEY_LIMIT = 30
 
 
 class Revelation:
@@ -54,11 +52,11 @@ class Revelation:
         key = "{}{}".format(TASK_KEY_PREFIX, task_id)
 
         if self.r.get(key):
-            logger.debug("task {} already registerd.".format(key))
+            logger.error("task {} already registerd.".format(key))
             return False
 
         exists_task_count = len(self.r.keys(TASK_KEY_PREFIX + "*"))
-        logger.debug("exists_task_num {}".format(exists_task_count))
+        logger.debug("exists_task_count: {}".format(exists_task_count))
         if exists_task_count > TASK_KEY_LIMIT:
             logger.error("task num is over limit")
             return False
@@ -112,13 +110,13 @@ class Revelation:
         count = 0
         # 動画広告フォーム
         if channel == "movieform":
-            send2ws.delay((
-                     dt,
-                     data.get("cname"),
-                     data.get("uid"),
-                     data.get("url"),
-                    ),
-                    title_prefix="movie_")
+            values = (dt,
+                      data.get("cname"),
+                      data.get("uid"),
+                      data.get("url"),
+                      )
+            send2ws.delay(data=values,
+                          title_prefix="movie_")
             count += 1
         # 名刺情報
         if channel == "namecard":
@@ -206,14 +204,13 @@ class Revelation:
                 continue
 
             count = self.make_revelation(item)
-            if count > 0:
-                time.sleep(0.05)
+            logger.debug("revelation_count:{}".format(count))
+
             # slack.api_token = SLACK_API_TOKEN
             # slack_result = slack.chat.post_message(SLACK_CHANNEL,
             #                                        message,
             #                                        username=SLACK_BOT_NAME)
             # logger.debug("slack_result:{}".format(slack_result))
-            # logger.debug("revelation_count:{}".format(revelation_count))
 
             if not self.keep_processing:
                 logger.debug("unsubscribe()")
