@@ -1,0 +1,3 @@
+FROM rabbitmq:3.6
+ENV RABBITMQ_DEFAULT_USER username
+ENV RABBITMQ_DEFAULT_PASS mypassword

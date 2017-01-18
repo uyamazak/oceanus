@@ -11,7 +11,7 @@ else:
 
 print("HOST is {}".format(HOST))
 get_list = [
-    "{}/swallow?oid=test&evt=pageview&uid=1000000&ref=https%3A%2F%2Ftest.bizocean.jp%2F&tit=%E8%AB%8B%E6%B1%82%E6%9B%B8003%20%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E3%81%AA%E8%AB%8B%E6%B1%82%E6%9B%B8%EF%BD%9C%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%81%AE%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E3%81%AF%E3%80%90%E6%9B%B8%E5%BC%8F%E3%81%AE%E7%8E%8B%E6%A7%98%E3%80%91&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fdetail%2F100532%2F&enc=UTF-8&scr=1920x1080&vie=1903x499&sid=ffffffffffffffff",
+    "{}/swallow?oid=test&evt=pageview&uid=1000000&ref=https%3A%2F%2Ftest.bizocean.jp%2F&tit=%E8%AB%8B%E6%B1%82%E6%9B%B8003%20%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E3%81%AA%E8%AB%8B%E6%B1%82%E6%9B%B8%EF%BD%9C%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%81%AE%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E3%81%AF%E3%80%90%E6%9B%B8%E5%BC%8F%E3%81%AE%E7%8E%8B%E6%A7%98%E3%80%91&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fdetail%2F100532%2F&enc=UTF-8&scr=1920x1080&vie=1903x499&sid=23cb8839206d8759",
     "{}/swallow?oid=test&evt=search_not_found&uid=10000000&ref=https%3A%2F%2Fwww.bizocean.jp%2Fdoc%2Fdetail%2F100532%2F&tit=%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%81%AE%E6%A4%9C%E7%B4%A2%E7%B5%90%E6%9E%9C%EF%BD%9C%E7%84%A1%E6%96%99%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%80%81%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88%E3%81%AE%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E3%81%AF%E3%80%90%E6%9B%B8%E5%BC%8F%E3%81%AE%E7%8E%8B%E6%A7%98%E3%80%91&url=https%3A%2F%2Fwww.bizocean.jp%2Fdoc%2Fsearch%2Fall%2F-%2F%3Fkeyword%3D%25E3%2583%259D%25E3%2582%25B1%25E3%2583%25A2%25E3%2583%25B3%26price_segment%3Dboth&enc=UTF-8&scr=1920x1080&vie=1903x733&jsn=%7B%22kwd%22%3A%22%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%22%7D&sid=ffffffffffffffff",
     "{}/swallow?oid=test&evt=emailopen&url=https%3A%2F%2Fkrs.bz%2Fbizocean&tit=85&uid=1000000&sid=1000000&jsn=%7B%22aiid%22%3A%2225%22%2C%22acid%22%3A%2256%22%7D&enc=UTF-8",
     "{}/swallow?oid=test&evt=emailclick&uid=1000000&tit=85&url=https%3A%2F%2Fpx.a8.net%2Fsvt%2Fejp%3Fa8mat%3D2NR6CY%2B76ZKXE%2B33NG%2B6KESX&enc=utf-8&scr=1280x600&vie=1280x483&jsn=%7B%22aiid%22%3A%2225%22%2C%22acid%22%3A%2256%22%7D&sid=ffffffffffffffff",
@@ -63,7 +63,7 @@ for url, data in once_post_list:
         print("error:{}\n{}".format(url, e))
         error_count += 1
 
-for i in range(5):
+for i in range(25):
     for url in get_list:
         url = url.format(HOST)
         try:

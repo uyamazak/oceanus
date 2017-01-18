@@ -13,9 +13,7 @@ jinja2_env = Environment(
                             encoding='utf8')
 )
 
-
 logger = oceanus_logging()
-
 LOG_LEVEL = os.environ['LOG_LEVEL']
 
 JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
@@ -27,9 +25,6 @@ HISTORY_LIMIT = os.environ.get("HISTORY_LIMIT", 100)
 
 
 class GoogleBigQueryTasks:
-
-    def __init__(self):
-        pass
 
     def get_history_by_sid(self, site_name, sid="", delta_days=1):
         table_prefix = "[{}:{}.{}{}_]".format(PROJECT_ID,
@@ -101,7 +96,9 @@ class GoogleBigQueryTasks:
         html = tpl.render(content)
         return html
 
-    def main(self, site_name, sid, data, delta_days=1, desc=""):
+    def main(self, site_name, sid, data, **kwargs):
+        delta_days = kwargs.get("delta_days", 1)
+        desc = kwargs.get("desc", "")
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE)
 
         if LOG_LEVEL != "DEBUG":
@@ -109,7 +106,10 @@ class GoogleBigQueryTasks:
                         "Sending Email is DEBUG only now."
                         "LOG_LEVEL:{}".format(LOG_LEVEL))
             return
-        history = self.get_history_by_sid(site_name, sid, delta_days=1)
+
+        history = self.get_history_by_sid(site_name,
+                                          sid,
+                                          delta_days=delta_days)
         mail_body = self.create_mail_body(sid=sid,
                                           data=data,
                                           history=history,
@@ -117,5 +117,3 @@ class GoogleBigQueryTasks:
         mail_subject = "[oceanus]お知らせメール"
         app.send2email.delay(subject=mail_subject, body=mail_body)
         logger.debug("mail_subject:{}".format(mail_subject))
-        #logger.debug("mail_body:{}".format(mail_body))
-        # app.send2email(subject=mail_subject, body=mail_body)
