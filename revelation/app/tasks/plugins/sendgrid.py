@@ -1,17 +1,15 @@
+import sendgrid
 from common.settings import (SENDGRID_API_KEY,
                              SENDGRID_FROM_EMAIL,
                              SENDGRID_TO_EMAIL)
-import sendgrid
 from sendgrid.helpers.mail import (Email,
                                    Content,
                                    Mail)
-import os
-
-LOG_LEVEL = os.environ['LOG_LEVEL']
 
 
 class SendGridTasks:
-    def main(self, kwargs):
+
+    def send2email(self, kwargs):
         subject = kwargs.get("subject")
         body = kwargs.get("body")
         sg = sendgrid.SendGridAPIClient(apikey=SENDGRID_API_KEY)

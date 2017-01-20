@@ -1,8 +1,8 @@
 import falcon
-from swallow import SwallowResource
-from pirate import PirateResource
-from healthcheck import HealthCheckResource, RedisStatusResource
-from okeanides import StaticResource, RobotsTxtResource, FaviconIcoResource
+from resources.swallow import SwallowResource
+from resources.pirate import PirateResource
+from resources.healthcheck import HealthCheckResource, RedisStatusResource
+from resources.static import StaticResource, RobotsTxtResource, FaviconIcoResource
 
 app = falcon.API()
 app.req_options.auto_parse_form_urlencoded = True

@@ -1,8 +1,8 @@
-from .base import BaseHook
-from tasks.app import send2ws
+from hooks.base import BaseHook
+from tasks.celery_app import send2ws
 
 
-class movieformHook(BaseHook):
+class MovieformHook(BaseHook):
 
     def main(self) -> int:
         channel = self.item.get("channel")

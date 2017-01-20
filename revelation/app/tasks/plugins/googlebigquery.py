@@ -4,7 +4,7 @@ import json
 from common.utils import oceanus_logging, convert2jst
 from bigquery import get_client
 from datetime import date, timedelta
-from . import app
+from tasks import celery_app
 from jinja2 import Environment, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -66,7 +66,7 @@ class GoogleBigQueryTasks:
                    HISTORY_LIMIT=HISTORY_LIMIT,
                    )
         logger.debug(sql)
-        job_id, _results = self.bq_client.query(sql, timeout=20)
+        job_id, _results = self.bq_client.query(sql, timeout=30)
         complete, row_count = self.bq_client.check_job(job_id)
         if complete:
             results = self.bq_client.get_query_rows(job_id)
@@ -96,7 +96,7 @@ class GoogleBigQueryTasks:
         html = tpl.render(content)
         return html
 
-    def main(self, site_name, sid, data, **kwargs):
+    def send_user_history(self, site_name, sid, data, **kwargs):
         delta_days = kwargs.get("delta_days", 1)
         desc = kwargs.get("desc", "")
         self.bq_client = get_client(json_key_file=JSON_KEY_FILE)
@@ -115,5 +115,5 @@ class GoogleBigQueryTasks:
                                           history=history,
                                           desc=desc)
         mail_subject = "[oceanus]お知らせメール"
-        app.send2email.delay(subject=mail_subject, body=mail_body)
+        celery_app.send2email.delay(subject=mail_subject, body=mail_body)
         logger.debug("mail_subject:{}".format(mail_subject))

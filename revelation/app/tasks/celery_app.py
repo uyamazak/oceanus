@@ -4,9 +4,10 @@ from common.settings import (RABBITMQ_HOST,
                              RABBITMQ_USER,
                              RABBITMQ_PASSWORD)
 from common.utils import oceanus_logging
-from .sendgrid import SendGridTasks
-from .gspread import GoogleSpreadSheetsTasks
-from .googlebigquery import GoogleBigQueryTasks
+from .plugins.sendgrid import SendGridTasks
+from .plugins.gspread import GoogleSpreadSheetsTasks
+from .plugins.googlebigquery import GoogleBigQueryTasks
+logger = oceanus_logging()
 
 celery_broker = ('pyamqp://{RABBITMQ_USER}:'
                  '{RABBITMQ_PASSWORD}'
@@ -19,37 +20,44 @@ celery_broker = ('pyamqp://{RABBITMQ_USER}:'
 celery_backend = 'rpc://'
 app = Celery('tasks', broker=celery_broker, backend=celery_backend)
 
-logger = oceanus_logging()
-
 gs_tasks = GoogleSpreadSheetsTasks()
-sg_tasks = SendGridTasks()
-bq_tasks = GoogleBigQueryTasks()
 
 
-@app.task(bind=True)
+@app.task(bind=True, rate_limit='1/s')
 def send2ws(self, data, **kwargs):
     try:
-        result = gs_tasks.main(data, **kwargs)
+        result = gs_tasks.send2ws(data, **kwargs)
     except Exception as e:
         logger.error("task error:{}".format(e))
-        raise self.retry(exc=e)
+        raise self.retry(exc=e, countdown=30)
     return result
 
 
-@app.task
-def send2email(**kwargs):
-    return sg_tasks.main(kwargs)
+sg_tasks = SendGridTasks()
 
 
-@app.task(bind=True)
-def send_user_history(self, site_name, sid, data, **kwargs):
+@app.task(bind=True, rate_limit='10/m')
+def send2email(self, **kwargs):
     try:
-        result = bq_tasks.main(site_name=site_name,
-                               sid=sid,
-                               data=data,
-                               **kwargs)
+        result = sg_tasks.send2email(kwargs)
     except Exception as e:
         logger.error("task error:{}".format(e))
-        raise self.retry(exc=e)
+        raise self.retry(exc=e, countdown=30)
+    return result
+
+
+bq_tasks = GoogleBigQueryTasks()
+
+
+@app.task(bind=True, rate_limit='15/m')
+def send_user_history(self, site_name, sid, data, **kwargs):
+    try:
+        result = bq_tasks.send_user_history(site_name=site_name,
+                                            sid=sid,
+                                            data=data,
+                                            **kwargs)
+    except Exception as e:
+        logger.error("task error:{}".format(e))
+        raise self.retry(exc=e, countdown=30)
 
     return result

@@ -1,8 +1,8 @@
-from .base import BaseHook
-from tasks.app import send_user_history
+from hooks.base import BaseHook
+from tasks.celery_app import send_user_history
 
 
-class namecardHook(BaseHook):
+class NamecardHook(BaseHook):
 
     def main(self)-> int:
         channel = self.item.get("channel")
