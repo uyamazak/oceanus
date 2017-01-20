@@ -85,21 +85,47 @@ GCPには、Google内部で使われているGoogle Cloud Datalab（ベータ）
 web server
 Get parameters and save to Redis list and PubSub.
 
+- python3
+- falcon https://falconframework.org/
+- Cerberus http://docs.python-cerberus.org/en/stable/
+
 ### r2bq/
 Remove the data from Redis list and save to BigQuery.
 
+- python3
+- Redis
+- BigQuery
+
 ### redis-pd/
+https://redis.io/
 Docker image of most official of Redis With Persistent Disc on GCP.
+
 
 ### table-manager/
 To see if there is a table required on the BigQuery, creating one if there is none
+
+- Python3
+- BigQuery
 
 ### revelation/
 Using the PubPub of Redis, perform a streaming process.
 It can be write to the slack and Google spread sheets depending on the conditions.
 
+- python3
+- Redis
+- RabbitMQ 
+- Celery http://www.celeryproject.org/
+- BigQuery
+- SendGrid https://sendgrid.kke.co.jp/
+- Google SpreadSheet
+
+### rabbitmq
+https://www.rabbitmq.com/
+
 ### management/
 management tools. docker build, push etc.
+
+- shell scripts
 
 ## Demo
 http://www.bizocean.jp
