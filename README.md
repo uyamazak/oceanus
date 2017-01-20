@@ -8,6 +8,9 @@ Oceanus get HTTP Request and save to Google BigQuery.
 You can run it on Docker and Google Container Engine.
 
 ## Description
+![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170120/20170120102719.png "oceanus構成図")
+
+
 アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存することができます。
 開発はローカルのDocker、本番はGoogle Cloud Platform（GCP）のGoogle Container Engine（GKE）で運用することができます。
 
