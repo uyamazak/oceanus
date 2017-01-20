@@ -58,7 +58,7 @@ class GoogleSpreadSheetsTasks:
         self.prepare_worksheet(ws_title)
         try:
             self.worksheet = self.gsheet.worksheet(ws_title)
-        except Exception as e:
+        except Exception:
             self.update_worksheets_list()
             self.prepare_worksheet(ws_title)
             self.worksheet = self.gsheet.worksheet(ws_title)
@@ -82,7 +82,7 @@ class GoogleSpreadSheetsTasks:
                                  "type:{}".format(e, a))
         return row
 
-    def main(self, data, **kwargs):
+    def send2ws(self, data, **kwargs):
         title_prefix = kwargs.get("title_prefix", "")
         title_suffix = kwargs.get("title_suffix", "")
         date_format = kwargs.get("date_format", None)

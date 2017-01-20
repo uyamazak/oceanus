@@ -1,9 +1,9 @@
-from hooks.bizocean import bizoceanHook
-from hooks.namecard import namecardHook
-from hooks.movieform import movieformHook
+from hooks.plugins.bizocean import BizoceanHook
+from hooks.plugins.namecard import NamecardHook
+from hooks.plugins.movieform import MovieformHook
 
 INSTALLED_HOOKS = (
-    bizoceanHook,
-    namecardHook,
-    movieformHook,
+    BizoceanHook,
+    NamecardHook,
+    MovieformHook,
 )

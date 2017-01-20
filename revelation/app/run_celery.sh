@@ -1,1 +1,1 @@
-celery -A tasks.app worker --loglevel=warning
+celery -A tasks.celery_app worker --loglevel=warning

@@ -8,12 +8,12 @@ from os import environ
 
 
 """ Redis settings"""
-REDIS_HOST = environ.get('REDISMASTER_SERVICE_HOST', "localhost")
-REDIS_PORT = int(environ.get('REDISMASTER_SERVICE_PORT', 6379))
+REDIS_HOST = environ.get('REDIS_PD_SERVICE_HOST', "localhost")
+REDIS_PORT = int(environ.get('REDIS_PD_SERVICE_PORT', 6379))
 
 """ RabbitMQ settings"""
-RABBITMQ_HOST = environ.get('RABBITMQ_HOST', 'localhost')
-RABBITMQ_PORT = environ.get('RABBITMQ_PORT', '5672')
+RABBITMQ_HOST = environ.get('RABBITMQ_SERVICE_HOST', 'localhost')
+RABBITMQ_PORT = int(environ.get('RABBITMQ_SERVICE_PORT', 5672))
 RABBITMQ_USER = environ.get('RABBITMQ_USER', 'guest')
 RABBITMQ_PASSWORD = environ.get('RABBITMQ_PASSWORD', 'guest')
 

@@ -1,10 +1,10 @@
-from .base import BaseHook
-from tasks.app import send2ws
+from hooks.base import BaseHook
 from common.utils import oceanus_logging
+from tasks.celery_app import send2ws
 logger = oceanus_logging()
 
 
-class bizoceanHook(BaseHook):
+class BizoceanHook(BaseHook):
 
     def main(self) -> int:
         channel = self.item.get("channel")

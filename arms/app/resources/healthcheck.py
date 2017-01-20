@@ -3,12 +3,10 @@ import redis
 import os
 from pprint import pformat
 from common.utils import oceanus_logging
-from common.settings import OCEANUS_SITES
+from common.settings import OCEANUS_SITES, REDIS_HOST, REDIS_PORT
 logger = oceanus_logging()
 
 CHUNK_NUM_SUM = sum([i["chunk_num"] for i in OCEANUS_SITES])
-REDIS_HOST = os.environ['REDISMASTER_SERVICE_HOST']
-REDIS_PORT = os.environ['REDISMASTER_SERVICE_PORT']
 REDIS_DELAY_LIMIT_RATE = int(os.environ.get('REDIS_DELAY_LIMIT_RATE', 2))
 REDIS_DELAY_LIMIT = CHUNK_NUM_SUM * REDIS_DELAY_LIMIT_RATE
 

@@ -27,6 +27,7 @@ class Revelation:
     Writing to Google spreadsheets, sending mail, etc. are
     handled on the task side through the task queue
     """
+
     def connect_redis(self):
         self.r = redis.StrictRedis(host=REDIS_HOST,
                                    port=REDIS_PORT,
@@ -58,18 +59,18 @@ class Revelation:
                                            REDIS_PORT,
                                            self.site_name_list))
         self.pubsub.subscribe(self.site_name_list)
-        for item in self.pubsub.listen():
-            logger.debug("for item in pubsub.listen()")
+        for message in self.pubsub.listen():
+            logger.debug("for message in pubsub.listen()")
 
-            if not item:
-                logger.debug('not item')
+            if not message:
+                logger.debug('not message')
                 continue
 
-            if item["type"] == "subscribe":
+            if message["type"] == "subscribe":
                 logger.debug("type subscribe")
                 continue
 
-            count = apply_hook(item, self.r)
+            count = apply_hook(message, self.r)
             if count > 0:
                 logger.debug("apply_hook count:{}".format(count))
 
@@ -78,6 +79,7 @@ class Revelation:
                 break
         else:
             logger.debug("end listen")
+
 
 if __name__ == '__main__':
     logger.info("starting revelation...")

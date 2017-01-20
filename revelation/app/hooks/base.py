@@ -7,7 +7,12 @@ TASK_KEY_EXPIRE = 300
 TASK_KEY_LIMIT = 30
 
 
-class BaseHook():
+class BaseHook:
+    """
+    this is base, so receive message and
+    redis client but do nothing.
+    main() must return executed tasks count
+    """
 
     def prepare_item(self, message):
         channel = message['channel'].decode('utf-8')
@@ -45,5 +50,4 @@ class BaseHook():
         self.redis = redis
 
     def main(self) -> int:
-        """main() must return executed count"""
         return 0
