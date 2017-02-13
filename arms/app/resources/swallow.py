@@ -4,7 +4,8 @@ import json
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
-from common.utils import resp_beacon_gif, oceanus_logging
+from common.utils import resp_beacon_gif, oceanus_logging, is_internal_ip
+
 from common.errors import RedisWritingError
 
 logger = oceanus_logging(__name__)
@@ -57,120 +58,105 @@ class SwallowResource(ExecutionResource):
                     }
         key is used as BigQuery's column name
         """
-
+        client_rad = self.get_client_rad(req.access_route)
         item_dict = {
             # date and time
-            'dt': (
-                   str(datetime.utcnow()),
+            'dt': (str(datetime.utcnow()),
                    {'type': 'string'}
-                  ),
+                   ),
             # client id in user cookie
-            'sid': (
-                    req.get_param('sid', required=True),
+            'sid': (req.get_param('sid', required=True),
                     {'type': 'string',
                      'regex': '^[0-9a-f]{1,32}$'}
-                   ),
+                    ),
             # remote address ip
-            'rad': (
-                    self.get_client_rad(req.access_route),
+            'rad': (client_rad,
                     {'type': 'string',
                      'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
                               '2[0-4][0-9]|25[0-5])\.){3}'
                               '([1-9]?[0-9]|1[0-9]{2}|'
                               '2[0-4][0-9]|25[0-5])$'}
-                   ),
+                    ),
             # event name
-            'evt': (
-                    req.get_param('evt', required=True),
+            'evt': (req.get_param('evt', required=True),
                     {'type': 'string',
                      'maxlength': 16}
-                   ),
+                    ),
             # user agent
-            'ua':  (
-                    req.user_agent,
+            'ua':  (req.user_agent,
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 512}
-                   ),
+                    ),
             # device detecting from user agent
-            'dev': (
-                    self. get_client_device(req.user_agent),
+            'dev': (self. get_client_device(req.user_agent),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 16}
-                   ),
+                    ),
             # oceanus id
-            'oid': (
-                    req.get_param('oid', required=True),
+            'oid': (req.get_param('oid', required=True),
                     {'type': 'string',
                      'maxlength': 16}
-                   ),
+                    ),
             # user uniq id ex. bizocean id
-            'uid': (
-                    req.get_param('uid', required=False),
+            'uid': (req.get_param('uid', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 64}
-                   ),
+                    ),
             # encode
-            'enc': (
-                    req.get_param('enc', required=False),
+            'enc': (req.get_param('enc', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'regex': '^[0-9a-zA-Z\-(\)_\s]+$',
                      'maxlength': 16}
-                   ),
-            'url': (
-                    req.get_param('url', required=True),
+                    ),
+            'url': (req.get_param('url', required=True),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 1024},
-                   ),
+                    ),
             # referer
-            'ref': (
-                    req.get_param('ref', required=False),
+            'ref': (req.get_param('ref', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 1024},
-                   ),
+                    ),
             # urlencoded json text
-            'jsn': (
-                    req.get_param('jsn', required=False),
+            'jsn': (req.get_param('jsn', required=False),
                     {'validator': self.validate_json,
                      'nullable': True,
                      'empty': True,
                      'maxlength': 4096}
-                   ),
+                    ),
             # page title
-            'tit': (
-                    req.get_param('tit', required=False),
+            'tit': (req.get_param('tit', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 1024}
-                   ),
+                    ),
             # screen size
-            'scr': (
-                    req.get_param('scr', required=False),
+            'scr': (req.get_param('scr', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 16}
-                   ),
+                    ),
             # view size
-            'vie': (
-                    req.get_param('vie', required=False),
+            'vie': (req.get_param('vie', required=False),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 16}
-                   ),
+                    ),
         }
         user_data = self.adjust_user_data({k: v[0]
                                            for k, v in item_dict.items()})
@@ -201,21 +187,35 @@ class SwallowResource(ExecutionResource):
                                                   req.access_route))
             resp.status = falcon.HTTP_400
 
-        if req.get_param('debug', required=False):
-            resp.body = "oceanus swallow debug" \
-                         + "\n\n site_name:" + site_name \
-                         + "\n\n user_data:\n" + pformat(user_data) \
-                         + '\n\n validate: ' + pformat(validate_result) \
-                         + '\n\n validate errors:\n' + pformat(v.errors) \
-                         + '\n\n access_route: ' + pformat(req.access_route) \
-                         + '\n\n context:\n' + pformat(req.context) \
-                         + '\n\n headers:\n' + pformat(req.headers) \
-                         + '\n\n env:\n' + pformat(req.env) \
-                         + '\n\n redis result: ' + pformat(redis_result) \
-                         + '\n\n redis keys: ' + pformat(self.r.keys())
+        if req.get_param('debug', required=False) and \
+           is_internal_ip(client_rad):
+            resp.body = ('oceanus swallow debug'
+                         '\n\n site_name:{}'
+                         '\n\n user_data:\n{}'
+                         '\n\n validate: {}'
+                         '\n\n validate errors:\n{}'
+                         '\n\n access_route: {}'
+                         '\n\n context:\n{}'
+                         '\n\n headers:\n{}'
+                         '\n\n env:\n{}'
+                         '\n\n redis result: {}'
+                         '\n\n redis keys: {}'
+                         ''.format(site_name,
+                                   pformat(user_data),
+                                   pformat(validate_result),
+                                   pformat(v.errors),
+                                   pformat(req.access_route),
+                                   pformat(req.context),
+                                   pformat(req.headers),
+                                   pformat(req.env),
+                                   pformat(redis_result),
+                                   pformat(self.r.keys()))
+                         )
+
         else:
             # response 1px gif
             resp = resp_beacon_gif(resp)
+
 
 if __name__ == "__main__":
     app = falcon.API()

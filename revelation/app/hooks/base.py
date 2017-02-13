@@ -9,7 +9,7 @@ TASK_KEY_LIMIT = 30
 
 class BaseHook:
     """
-    this is base, so receive message and
+    this is base, so just receive message and
     redis client but do nothing.
     main() must return executed tasks count
     """
@@ -50,4 +50,7 @@ class BaseHook:
         self.redis = redis
 
     def main(self) -> int:
+        """
+        do somethings
+        """
         return 0

@@ -4,9 +4,10 @@
 # please create a hard link to run the management/link_common_files.sh.
 import logging
 import base64
+import ipaddress
 from datetime import datetime, timedelta, timezone
 from os import environ
-
+from common.settings import INTERNAL_IPS_V4
 
 loggers = {}
 
@@ -69,3 +70,14 @@ def convert2jst(dt_str):
     utc_ts = obj_dt.replace(tzinfo=timezone.utc).timestamp()
     dt = datetime.fromtimestamp(utc_ts, JST)
     return dt
+
+
+def is_internal_ip(client_ip_str) -> bool:
+    internal_ip_list = INTERNAL_IPS_V4.split(",")
+    client_ip = ipaddress.ip_address(client_ip_str)
+    for internal_ip in internal_ip_list:
+        ip_network = ipaddress.ip_network(internal_ip)
+        if client_ip in ip_network:
+            return True
+
+    return False

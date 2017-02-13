@@ -6,6 +6,8 @@
 
 from os import environ
 
+"""admin IP sesstings"""
+INTERNAL_IPS_V4 = environ.get("INTERNAL_IPS_V4", "192.168.0.0/16,124.219.182.127")
 
 """ Redis settings"""
 REDIS_HOST = environ.get('REDIS_PD_SERVICE_HOST', "localhost")
@@ -127,6 +129,11 @@ OCEANUS_SITES = (
      "chunk_num": 1,
      },
     {"site_name": "namecard",
+     "table_schema": FORM_TABLE_SCHEMA,
+     "method": 'pirate',
+     "chunk_num": 1,
+     },
+    {"site_name": "docreq",
      "table_schema": FORM_TABLE_SCHEMA,
      "method": 'pirate',
      "chunk_num": 1,

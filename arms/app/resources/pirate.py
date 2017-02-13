@@ -1,7 +1,6 @@
 import falcon
 import json
 from execution import ExecutionResource
-from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
 from common.errors import RedisWritingError
@@ -16,6 +15,7 @@ class PirateResource(ExecutionResource):
     The oceanus pirate receives form data
     in JSON format, save to Redis
     """
+
     def adjust_user_data(self, user_data):
         """
         in order to prevent unnecessary validate error
@@ -59,102 +59,89 @@ class PirateResource(ExecutionResource):
                     }
         key is BigQuery's column name
         """
+        client_rad = self.get_client_rad(req.access_route)
         item_dict = {
-            'dt':  (
-                    str(datetime.utcnow()),
+            'dt':  (str(datetime.utcnow()),
                     {'type': 'string'}
-                   ),
-            'sid': (
-                    req.get_param('sid', required=True),
+                    ),
+            'sid': (req.get_param('sid', required=True),
                     {'type': 'string',
                      'regex': '^[0-9a-f]{1,32}$'}
-                   ),
-            'uid': (
-                    req.get_param('uid', required=False, default=""),
+                    ),
+            'uid': (req.get_param('uid', required=False, default=""),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 64}
-                   ),
-            'oid': (
-                    req.get_param('oid', required=False, default=""),
+                    ),
+            'oid': (req.get_param('oid', required=False, default=""),
                     {'type': 'string',
                      'maxlength': 16}
-                   ),
-            'rad': (
-                    self.get_client_rad(req.access_route),
+                    ),
+            'rad': (client_rad,
                     {'type': 'string',
                      'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
                               '2[0-4][0-9]|25[0-5])\.){3}'
                               '([1-9]?[0-9]|1[0-9]{2}|'
                               '2[0-4][0-9]|25[0-5])$'}
-                   ),
-            'ua':  (
-                    req.user_agent,
+                    ),
+            'ua':  (req.user_agent,
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 512}
-                   ),
-            'dev': (
-                    self. get_client_device(req.user_agent),
+                    ),
+            'dev': (self. get_client_device(req.user_agent),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 16}
                     ),
-            'url':  (
-                     req.get_param('url', required=False),
+            'url':  (req.get_param('url', required=False),
                      {'type': 'string',
                       'nullable': True,
                       'empty': True,
                       'maxlength': 1024},
-                    ),
+                     ),
             # user name
-            'name': (
-                     req.get_param('name',  required=False),
+            'name': (req.get_param('name',  required=False),
                      {'type': 'string',
                       'nullable': True,
                       'empty': True,
                       'maxlength': 1024},
-                    ),
+                     ),
             # company name
-            'cname': (
-                      req.get_param('cname', required=False),
+            'cname': (req.get_param('cname', required=False),
                       {'type': 'string',
                        'nullable': True,
                        'empty': True,
                        'maxlength': 1024},
-                     ),
-            'email': (
-                      req.get_param('email', required=False),
+                      ),
+            'email': (req.get_param('email', required=False),
                       {'type': 'string',
                        'nullable': True,
                        'empty': True,
                        'maxlength': 1024},
-                     ),
-            'tel':  (
-                     req.get_param('tel',   required=False),
+                      ),
+            'tel':  (req.get_param('tel',   required=False),
                      {'type': 'string',
                       'nullable': True,
                       'empty': True,
                       'maxlength': 1024},
-                    ),
-            'jsn': (
-                    req.get_param('jsn',  required=False),
+                     ),
+            'jsn': (req.get_param('jsn',  required=False),
                     {'validator': self.validate_json,
                      'nullable': True,
                      'empty': True,
                      'maxlength': 10000},
-                   ),
-            'enc': (
-                    req.get_param('enc',  required=False, default=""),
+                    ),
+            'enc': (req.get_param('enc',  required=False, default=""),
                     {'type': 'string',
                      'empty': True,
                      'nullable': True,
                      'regex': '^[0-9a-zA-Z\-(\)_\s]*$',
                      'maxlength': 16}
-                   )
+                    )
         }
         user_data = self.adjust_user_data({k: v[0]
                                            for k, v in item_dict.items()})
@@ -184,13 +171,13 @@ class PirateResource(ExecutionResource):
             logger.error("redis publish failed")
 
         if req.get_param('debug', required=False):
-            resp.body = "oceanus pirate debug" \
-                        + "\n\n site_name:" + site_name \
-                        + "\n\n user_data:\n" + pformat(user_data) \
-                        + '\n\n validate: ' + pformat(validate_result) \
-                        + '\n\n validate errors:\n' + pformat(v.errors) \
-                        + '\n\n redis result: ' + pformat(redis_result) \
-                        + '\n\n redis keys: ' + pformat(self.r.keys())
-            return
+            logger.info("site_name:{}\n"
+                        "user_data:{}\n"
+                        "validate errors:{}\n"
+                        "redis result: \n"
+                        "".format(site_name,
+                                  user_data,
+                                  v.errors,
+                                  redis_result))
         else:
             resp.body = ""

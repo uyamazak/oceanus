@@ -33,6 +33,18 @@ def send2ws(self, data, **kwargs):
     return result
 
 
+@app.task(bind=True)
+def reauthorize_gspread(self):
+    logger.info("reauthorize_gspread")
+    gs_tasks.open_gspread_sheet()
+
+
+# @app.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     """http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html"""
+#     sender.add_periodic_task(60 * 15, reauthorize_gspread.s(), expires=30)
+
+
 sg_tasks = SendGridTasks()
 
 

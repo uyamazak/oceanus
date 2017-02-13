@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import sys
 import redis
+import json
 from os import environ
 from signal import signal, SIGINT, SIGTERM
 from common.utils import oceanus_logging
 from common.settings import (REDIS_HOST,
                              REDIS_PORT,
                              OCEANUS_SITES)
-from hooks.hook import apply_hook
 
 logger = oceanus_logging()
 
@@ -15,7 +15,7 @@ JSON_KEY_FILE = environ.get('JSON_KEY_FILE')
 SPREAD_SHEET_KEY = environ.get('SPREAD_SHEET_KEY')
 
 
-class Revelation:
+class Subscribe:
     """
     Revelation can check the contents of channels and data
     by classifying the data acquired from Redis' PubSub and
@@ -55,29 +55,37 @@ class Revelation:
                                            REDIS_PORT,
                                            self.site_name_list))
         self.pubsub.subscribe(self.site_name_list)
+        count = 0
         for message in self.pubsub.listen():
-            logger.debug("for message in pubsub.listen()")
 
             if not message:
-                logger.debug('not message')
+                # logger.debug('not message')
                 continue
 
             if message["type"] == "subscribe":
-                logger.debug("type subscribe")
+                # logger.debug("type subscribe")
                 continue
 
-            count = apply_hook(message, self.redis)
-            if count > 0:
-                logger.debug("apply_hook count:{}".format(count))
+            channel = message['channel'].decode('utf-8')
+            data = json.loads(message["data"].decode('utf-8'), encoding="utf-8")
+            data_json = json.dumps(data,
+                                   sort_keys=True,
+                                   indent=2,
+                                   ensure_ascii=False)
+            print("[{}]: "
+                  "{}{}".format(count,
+                                channel,
+                                data_json))
+            count += 1
 
             if not self.keep_processing:
-                logger.debug("unsubscribe()")
+                # logger.debug("unsubscribe()")
                 break
         else:
             logger.debug("end listen")
 
 
 if __name__ == '__main__':
-    logger.info("starting make revelation and send to RabbitMQ...")
-    reve = Revelation([site["site_name"] for site in OCEANUS_SITES])
+    logger.info("subscribing start")
+    reve = Subscribe([site["site_name"] for site in OCEANUS_SITES])
     reve.main()

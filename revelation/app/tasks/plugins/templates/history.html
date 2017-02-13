@@ -64,7 +64,12 @@
       <tr>
         <td {{ td_style }}>{{ h.dt_jp }}</td>
         <td {{ td_style }}>{{ h.evt }}</td>
-        <td {{ td_style }}><a href="{{ h.url }}">{{ h.tit }}</a></td>
+        <td {{ td_style }}>
+                {% if "https://" in h.url or "http://" in h.url %}
+                    <a href="{{ h.url }}">{{ h.tit }}</a></td>
+                {% else %}
+                    {{ h.tit }} [{{ h.url }}]
+                {% endif %}
         <td {{ td_style }}>{{ h.uid }}</td>
         <td {{ td_style }}>{{ h.dev }}</td>
         <td {{ td_style }}>{{ h.rad }}</td>

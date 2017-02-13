@@ -19,10 +19,8 @@ class BizoceanHook(BaseHook):
 
         # 検索見つからない
         if data["evt"] == "search_not_found":
-            count += 1
-            if not jsn:
-                logger.error("jsn is None. {}".format(data))
-            else:
+            if jsn:
+                count += 1
                 values = (dt,
                           jsn.get("kwd", ""),
                           jsn.get("cat", ""),
@@ -46,6 +44,7 @@ class BizoceanHook(BaseHook):
                       )
             send2ws.delay(data=values,
                           title_prefix="paid_")
+
         # エラー
         if "error" in data["evt"]:
             count += 1

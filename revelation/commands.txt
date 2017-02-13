@@ -14,3 +14,6 @@ docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/revelation/www:/var/www
 
 #worker
 kc run revelation-worker --image=asia.gcr.io/oceanus-dev/revelation:v20170112-02 --command -- sh ./run_worker.sh
+
+# sub.py
+kc exec -it {pod id} python sub.py
