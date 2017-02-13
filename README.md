@@ -8,15 +8,13 @@ Oceanus get HTTP Request and save to Google BigQuery.
 You can run it on Docker and Google Container Engine.
 
 ## Description
+![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170120/20170120102719.png "oceanus構成図")
+
+
 アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存することができます。
 開発はローカルのDocker、本番はGoogle Cloud Platform（GCP）のGoogle Container Engine（GKE）で運用することができます。
 
 自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作られました。
-
-### bizocean上での実績
-oceanusは、登録会員190万人（2016年11月現在）を超えるビジネス書式ダウンロードサイト「bizocean」(http://www.bizocean.jp)で、
-あらゆるデータをBigQuery上に保存することで、データの有効活用、ユーザーサポートの充実、サイトの改善をするために開発され続けています。
-
 
 ### 柔軟性
 bizoceanでは既存のアクセス解析サービスを使っていましたが、メール、会員属性など他の自社データと組み合わせることが簡単にはできませんでした。
@@ -71,6 +69,13 @@ BigQueryはJSON形式にも対応しており（SELECTのJSON_EXTRACT等）、oc
 
 また、BigQueryのテーブルスキーマ、バリデーションルールなどの設定を追加すれば、新しいデータ形式の追加も簡単に行なえます。
 
+### bizocean上での実績
+oceanusは、登録会員190万人（2016年11月現在）を超えるビジネス書式ダウンロードサイト「bizocean」( http://www.bizocean.jp )で、
+あらゆるデータをBigQuery上に保存することで、データの有効活用、ユーザーサポートの充実、サイトの改善をするために開発され続けています。
+
+### メッセージキューイングによる非同期処理
+revelationでは、RabiitMQとCeleryを使い、メールの送信、スプレッドシートの書き込み、BigQueryのスキャンなどをタスク化し、別コンテナで処理しています。
+
 ### データ解析も低コストで可能
 一般的に販売されているBIツールは月額何十万円と小さい企業には手が出せません。
 
@@ -80,21 +85,47 @@ GCPには、Google内部で使われているGoogle Cloud Datalab（ベータ）
 web server
 Get parameters and save to Redis list and PubSub.
 
+- python3
+- falcon https://falconframework.org/
+- Cerberus http://docs.python-cerberus.org/en/stable/
+
 ### r2bq/
 Remove the data from Redis list and save to BigQuery.
 
+- python3
+- Redis
+- BigQuery
+
 ### redis-pd/
+https://redis.io/
 Docker image of most official of Redis With Persistent Disc on GCP.
+
 
 ### table-manager/
 To see if there is a table required on the BigQuery, creating one if there is none
+
+- Python3
+- BigQuery
 
 ### revelation/
 Using the PubPub of Redis, perform a streaming process.
 It can be write to the slack and Google spread sheets depending on the conditions.
 
+- python3
+- Redis
+- RabbitMQ 
+- Celery http://www.celeryproject.org/
+- BigQuery
+- SendGrid https://sendgrid.kke.co.jp/
+- Google SpreadSheet
+
+### rabbitmq
+https://www.rabbitmq.com/
+
 ### management/
 management tools. docker build, push etc.
+
+- shell scripts
 
 ## Demo
 http://www.bizocean.jp
