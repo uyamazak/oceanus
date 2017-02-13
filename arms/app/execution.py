@@ -48,7 +48,8 @@ class ExecutionResource(object):
             return
         try:
             json.loads(value)
-        except:
+        except Exception as e:
+            logger.error('json.loads error:{}'.format(e))
             error(field, 'Must be valid JSON')
 
     def clean_json(self, json_text):
@@ -89,7 +90,7 @@ class ExecutionResource(object):
             """Direct or via Google Load balancer"""
             return access_route[0]
 
-    def get_client_device(self, ua):
+    def get_client_device(self, ua) -> str:
         device = ""
 
         if not ua:
@@ -130,6 +131,7 @@ class ExecutionResource(object):
     """
     Default both method is disabled.
     """
+
     def on_get(self, req, resp, site_name):
             resp.body = "METHOD GET IS INVALID"
             resp.status = falcon.HTTP_400

@@ -26,6 +26,9 @@ HISTORY_LIMIT = os.environ.get("HISTORY_LIMIT", 100)
 
 class GoogleBigQueryTasks:
 
+    def __init__(self):
+        pass
+
     def get_history_by_sid(self, site_name, sid="", delta_days=1):
         table_prefix = "[{}:{}.{}{}_]".format(PROJECT_ID,
                                               DATA_SET,
@@ -66,10 +69,12 @@ class GoogleBigQueryTasks:
                    HISTORY_LIMIT=HISTORY_LIMIT,
                    )
         logger.debug(sql)
-        job_id, _results = self.bq_client.query(sql, timeout=30)
-        complete, row_count = self.bq_client.check_job(job_id)
+        bq_client = get_client(json_key_file=JSON_KEY_FILE)
+        job_id, _results = bq_client.query(sql, timeout=30)
+        complete, row_count = bq_client.check_job(job_id)
         if complete:
-            results = self.bq_client.get_query_rows(job_id)
+            results = bq_client.get_query_rows(job_id)
+            del bq_client
             return results
         else:
             print("not complete")
@@ -99,13 +104,7 @@ class GoogleBigQueryTasks:
     def send_user_history(self, site_name, sid, data, **kwargs):
         delta_days = kwargs.get("delta_days", 1)
         desc = kwargs.get("desc", "")
-        self.bq_client = get_client(json_key_file=JSON_KEY_FILE)
-
-        if LOG_LEVEL != "DEBUG":
-            logger.info("BigQuery Scanning and "
-                        "Sending Email is DEBUG only now."
-                        "LOG_LEVEL:{}".format(LOG_LEVEL))
-            return
+        mail_subject = kwargs.get("subject", "[oceanus]お知らせメール")
 
         history = self.get_history_by_sid(site_name,
                                           sid,
@@ -114,6 +113,5 @@ class GoogleBigQueryTasks:
                                           data=data,
                                           history=history,
                                           desc=desc)
-        mail_subject = "[oceanus]お知らせメール"
         celery_app.send2email.delay(subject=mail_subject, body=mail_body)
         logger.debug("mail_subject:{}".format(mail_subject))

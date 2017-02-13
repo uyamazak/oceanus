@@ -2,22 +2,23 @@ from hooks.base import BaseHook
 from tasks.celery_app import send_user_history
 
 
-class NamecardHook(BaseHook):
+class DocreqHook(BaseHook):
 
     def main(self)-> int:
         channel = self.item.get("channel")
 
         count = 0
-        if channel != "namecard":
+        if channel != "docreq":
             return 0
 
         data = self.item.get("data")
 
-        # 名刺情報
-        delay_seconds = 30
-        desc = ("名刺情報入力後 {} 秒後に"
+        # 書式リクエスト
+        delay_seconds = 60
+        desc = ("書式リクエスト {} 秒後に"
                 "BigQueryをスキャンしています".format(delay_seconds))
-        if self.is_registerable_task("bq_" + data.get("sid")):
+        task_key = "bq_docreq_" + data.get("sid")
+        if self.is_registerable_task(task_key):
             count += 1
             # 履歴メール
             send_user_history.apply_async(
@@ -25,7 +26,8 @@ class NamecardHook(BaseHook):
                     "site_name": "bizocean",
                     "sid": data.get("sid"),
                     "data": data,
-                    "desc": desc
+                    "desc": desc,
+                    "subject": "[oceanus]書式リクエスト {}".format(task_key),
                 },
                 countdown=delay_seconds)
 

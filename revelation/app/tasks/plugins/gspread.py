@@ -17,32 +17,44 @@ SPREAD_SHEET_KEY = os.environ['SPREAD_SHEET_KEY']
 
 class GoogleSpreadSheetsTasks:
     worksheets_list = None
+    gsheet = None
+    gclient = None
 
-    def open_gspread_sheet(self):
+    def authorize_gspread(self) -> None:
         scope = ['https://spreadsheets.google.com/feeds']
         credentials = SAC.from_json_keyfile_name(JSON_KEY_FILE, scope)
-        try:
-            gc = gspread.authorize(credentials)
-        except Exception as e:
-            logger.error("open_gspread_sheet {}".format(e))
-        self.gsheet = gc.open_by_key(SPREAD_SHEET_KEY)
+        self.gclient = gspread.authorize(credentials)
+        self.gsheet = self.gclient.open_by_key(SPREAD_SHEET_KEY)
 
-    def update_worksheets_list(self):
+    def is_token_valid(self) -> bool:
+        if not self.gsheet:
+            return False
+        try:
+            expired = self.gsheet.client.auth.access_token_expired
+        except Exception as e:
+            logger.debug("expired {}".format(e))
+            return False
+
+        if expired:
+            return False
+
+        return True
+
+    def update_worksheets_list(self) -> None:
         self.worksheets_list = [ws.title for ws in self.gsheet.worksheets()]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.keep_processing = True
-        self.open_gspread_sheet()
+        self.authorize_gspread()
         self.update_worksheets_list()
 
-    def prepare_worksheet(self, ws_title):
+    def prepare_worksheet(self, ws_title) -> None:
         if ws_title not in self.worksheets_list:
             self.gsheet.add_worksheet(ws_title, 1, 20)
             logger.info("create worksheet:{}".format(ws_title))
             self.update_worksheets_list()
 
         logger.debug("worksheets: {}".format(self.worksheets_list))
-        return
 
     def create_ws_title(self, prefix="", suffix="", date_format="%Y-%m"):
         if date_format is None:
@@ -64,7 +76,7 @@ class GoogleSpreadSheetsTasks:
             self.worksheet = self.gsheet.worksheet(ws_title)
         return self.worksheet
 
-    def format_ws_row(self, args):
+    def format_ws_row(self, args) -> list:
         row = []
         for a in args:
             # logger.debug("a: {}".format(a))
@@ -89,15 +101,18 @@ class GoogleSpreadSheetsTasks:
         ws_title = self.create_ws_title(prefix=title_prefix,
                                         suffix=title_suffix,
                                         date_format=date_format)
-        # logger.debug("data:{}".format(data))
         row = self.format_ws_row(data)
-        # logger.debug("row:{}".format(row))
         ws = self.get_ws(ws_title)
+        if not self.is_token_valid():
+            self.authorize_gspread()
+            ws = self.get_ws(ws_title)
+            logger.info("access_token_expired reauthorize.")
         try:
             result = ws.append_row(row)
-        except gspread.exceptions.RequestError:
-            logger.error("401 error reopen")
-            self.open_gspread_sheet()
+        except gspread.exceptions.RequestError as e:
+            logger.error("401 error reopen retry:{}".format(e))
+            self.authorize_gspread()
+            ws = self.get_ws(ws_title)
             result = ws.append_row(row)
         logger.debug("result:{}".format(result))
         return result

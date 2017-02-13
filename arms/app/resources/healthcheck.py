@@ -2,8 +2,10 @@ import falcon
 import redis
 import os
 from pprint import pformat
-from common.utils import oceanus_logging
-from common.settings import OCEANUS_SITES, REDIS_HOST, REDIS_PORT
+from common.utils import oceanus_logging, is_internal_ip
+from common.settings import (OCEANUS_SITES,
+                             REDIS_HOST,
+                             REDIS_PORT)
 logger = oceanus_logging()
 
 CHUNK_NUM_SUM = sum([i["chunk_num"] for i in OCEANUS_SITES])
@@ -12,6 +14,7 @@ REDIS_DELAY_LIMIT = CHUNK_NUM_SUM * REDIS_DELAY_LIMIT_RATE
 
 
 class HealthCheckResource(object):
+
     def __init__(self):
         self.r = None
         self.r_info = None
@@ -45,6 +48,34 @@ class HealthCheckResource(object):
         resp.body = resp.body + body
         return resp
 
+    def _get_client_rad(self, access_route):
+        """In most cases, the client's IP and
+        load balancer's IP are returned.
+        But rarely contains the user side of proxy IP,
+        return three IP in access_route
+
+        access_route
+        e.g.
+        [*.*.*.*] is example of real clieant ip.
+
+        - Direct Access
+          [*.*.*.*]
+
+        - via Google Load balancer
+          [*.*.*.*, 130.211.0.0/22]
+
+        - and via client's proxy
+          [002512 172.16.18.111, *.*.*.*, 130.211.0.0/22]
+
+        """
+
+        if len(access_route) == 3:
+            """via client's proxy ip"""
+            return access_route[1]
+        else:
+            """Direct or via Google Load balancer"""
+            return access_route[0]
+
     def on_get(self, req, resp):
         r_result = self._connect_redis()
         if not r_result:
@@ -56,6 +87,7 @@ class HealthCheckResource(object):
 
 
 class RedisStatusResource(HealthCheckResource):
+
     def on_get(self, req, resp):
         logger.debug("CHUNK_NUM_SUM:{}".format(CHUNK_NUM_SUM))
         logger.debug("REDIS_DELAY_LIMIT:{}".format(REDIS_DELAY_LIMIT))
@@ -75,13 +107,20 @@ class RedisStatusResource(HealthCheckResource):
                 lists[key] = self.r.llen(key)
                 total = total + self.r.llen(key)
 
+        client_ip = self._get_client_rad(req.access_route)
         if req.get_param('debug', required=False):
-            info = ("Redis status\n\n"
-                    "lists: {}\n"
-                    "total/limit: {}/{}\n"
-                    "Redis info : {}").format(lists,
-                                              total, REDIS_DELAY_LIMIT,
-                                              pformat(self.r_info))
+            if is_internal_ip(client_ip):
+                info = ("Redis status\n\n"
+                        "lists: {}\n"
+                        "total/limit: {}/{}\n"
+                        "Redis info : {}").format(lists,
+                                                  total, REDIS_DELAY_LIMIT,
+                                                  pformat(self.r_info))
+            else:
+                info = ("Your ip {} "
+                        "is not included "
+                        "in the internal_ips".format(client_ip))
+
             resp = self._create_success_resp(resp, body=info)
 
         elif total > REDIS_DELAY_LIMIT:
