@@ -3,9 +3,10 @@ oceanus
 
 Open Source Data collecter. Fast and low cost.
 
-Oceanus get HTTP Request and save to Google BigQuery.
+Oceanus get HTTP Request and save to Google BigQuery and
+y ou can judge important data in real time and can notify and aggregate
 
-You can run it on Docker and Google Container Engine.
+Run it on Docker and Google Container Engine.
 
 ## Description
 ![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170120/20170120102719.png "oceanus構成図")
@@ -14,21 +15,27 @@ You can run it on Docker and Google Container Engine.
 アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存することができます。
 開発はローカルのDocker、本番はGoogle Cloud Platform（GCP）のGoogle Container Engine（GKE）で運用することができます。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作られました。
+自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作っています。
+
+プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しているので、その勉強用としてもいかがでしょうか。
+
+導入や運用の支援、自社でのデータ分析のサポートも行いますので、興味のある方はご連絡ください。
 
 ### 柔軟性
 bizoceanでは既存のアクセス解析サービスを使っていましたが、メール、会員属性など他の自社データと組み合わせることが簡単にはできませんでした。
 
-oceanusを使いデータをすべてBigQueryに流し込むことで、自在にデータを組み合わせて集計、解析を行うことができるようになりました。
+oceanusを使いデータをすべてBigQueryに流し込むことで、異なるイベントデータをユーザーID（bizoceanの会員ID、もしくはクッキーに保存するセッションキー）を組み合わせて集計、解析を行うことができるようになりました。
 
-欲しいデータができたら、少しjsを書くだけで、独自のデータをoceanusに送ることができます。
+欲しいデータができたら、必要なページに少しjsを書くだけで、独自のデータをoceanusに送ることができます。
 
 BigQueryではJSON型のカラムも利用できるため、データ構造はそのままで新しいデータを集めて集計することができます。
 
 ### 高速
-WEBリクエストから直接BigQueryに保存するのではなく、Redisを挟むことで、非常に高速にレスポンスできます。
+WEBリクエストから直接BigQueryに保存するのではなく、ローカルネットワーク内で稼働しているRedisを挟むことで、高速にレスポンスできます。
 
 アプリケーション部分のフレームワークにはPythonでもっとも高速と言われるfalconを使っています。
+
+
 
 ### リアルタイム
 BigQueryへ書き込むタイミングを頻度の多いアクセスログは50件に一回、フォームデータは1件に1回などパフォーマンスと合わせて調整できます。
@@ -41,7 +48,7 @@ BigQueryへ書き込むタイミングを頻度の多いアクセスログは50�
 ### 低コスト
 bizoceanでは月間1000万PV、1日70万レコード計250MBを超えるデータを送り続けていますが、GCPのコストは1万円/月程度（2016年10月時点）で収まっています。
 
-そのうちサーバー代（GKE）は5000円程度のため、国レベルで冗長化するマルチリージョン構成にしても、+5000円程度で可能なことを意味します。
+そのうちサーバー代（GKE）は5000円程度のため、国レベルで冗長化するマルチリージョン構成も、同じものをもう一つ+5000円程度で可能です。
 
 またGCPに合わせたクラウドネイティブな設計のため、サーバーの追加や死活監視などをWEBの管理画面から簡単に行えて、メンテナンスコストも削減できます。
 
@@ -54,32 +61,35 @@ BigQueryのストリーミングインサートは便利ですが、ときおり
 
 RedisにはGCEの永続ディスクを接続することで、Redisの再起動時のデータ消失も防げます。
 
-アップデート時も終了シグナルを受けとりメモリ内のデータをBigQuery、もしくはRedisに保存してから安全に終了します。
+ソフトウェアの変更によるアップデート時も終了シグナルを受けとりメモリ内のデータをBigQuery、もしくはRedisに保存してから安全に終了します。
 
 また、GKEがダウンした時に備えるには、GKEとGoogle HTTP Load Balancerを組み合わせることで、マルチリージョンでの展開も容易に可能です。
 
 ### カスタマイズ性
-arms/swallowは単純な1pxGIFビーコンとしてレスポンスするので、JavaScript等でクエリを組み立てれば自由にデータを送ることができます。
+arms/swallowは単純な1pxGIFビーコンとしてレスポンスするので、imgタグや、JavaScript等でクエリを組み立てれば自由にデータを送ることができます。
 
 例えば、bizoceanでは、クッキーに保存したセッションキーと、会員の場合はユーザー識別子を渡すことで、特定のユーザーが何時何分にどんなページを見たかなどをほぼリアルタイムに確認できるためユーザーサポートに役立っています。
 
-BigQueryはJSON形式にも対応しており（SELECTのJSON_EXTRACT等）、oceanusももちろん対応しています。新しいデータを追加するときも、特にソースコードを変更することなくJSON形式そのままで保存できます。
+BigQueryはJSON形式にも対応しており（SELECTのJSON_EXTRACT等）、oceanusももちろん対応しています。新しいデータを追加したいときも、特にソースコードを変更することなくJSON形式そのままで保存できます。
 
-単純なHTTPリクエストを、バリデーション、変換などを行った後に、Redisサーバーに保存します。
-
-また、BigQueryのテーブルスキーマ、バリデーションルールなどの設定を追加すれば、新しいデータ形式の追加も簡単に行なえます。
+また、BigQueryのテーブルスキーマ、バリデーションルールなどの設定を追加すれば、独自のデータ形式の追加も簡単に行なえます。
 
 ### bizocean上での実績
-oceanusは、登録会員190万人（2016年11月現在）を超えるビジネス書式ダウンロードサイト「bizocean」( http://www.bizocean.jp )で、
-あらゆるデータをBigQuery上に保存することで、データの有効活用、ユーザーサポートの充実、サイトの改善をするために開発され続けています。
+oceanusは、登録会員約200万人（2017年2月現在）を超えるビジネス書式ダウンロードサイト「bizocean」( http://www.bizocean.jp )で、あらゆるデータをBigQuery上に保存することで、データの有効活用、ユーザーサポートの充実、サイトの改善をするために開発され続けています。
 
 ### メッセージキューイングによる非同期処理
 revelationでは、RabiitMQとCeleryを使い、メールの送信、スプレッドシートの書き込み、BigQueryのスキャンなどをタスク化し、別コンテナで処理しています。
+
+このことで、数十秒かかるような重い処理も少ないサーバーリソースでパンクさせることなく適切に処理することが可能です。
+
+また、Celeryの機能であるイベントから、数分後に処理を走らせるなども簡単にできます。たとえば、お問い合わせから、10分後に、そのユーザーの履歴をスキャンしてお問い合わせ内容と一緒に送る等です。
 
 ### データ解析も低コストで可能
 一般的に販売されているBIツールは月額何十万円と小さい企業には手が出せません。
 
 GCPには、Google内部で使われているGoogle Cloud Datalab（ベータ）が無料で公開されており、これを使えばBigQueryの料金だけで、データの分析、可視化、機械学習などが可能です。
+
+市販の有料ツールは、非常にとっつきやすいですが、高度なカスタマイズや、高速化等が必要になると結局、PythonのPandas等を直接触る必要が出てくることが多いと言われています。
 
 ### arms/
 web server
@@ -104,7 +114,7 @@ Docker image of most official of Redis With Persistent Disc on GCP.
 ### table-manager/
 To see if there is a table required on the BigQuery, creating one if there is none
 
-- Python3
+- python3
 - BigQuery
 
 ### revelation/
@@ -113,7 +123,7 @@ It can be write to the slack and Google spread sheets depending on the condition
 
 - python3
 - Redis
-- RabbitMQ 
+- RabbitMQ
 - Celery http://www.celeryproject.org/
 - BigQuery
 - SendGrid https://sendgrid.kke.co.jp/
@@ -130,6 +140,10 @@ management tools. docker build, push etc.
 ## Demo
 http://www.bizocean.jp
 
+Google Chromeなどで開発者ツール（F12）を開きながら、bizocean上のページを読み込みます。「Network」の検索窓で「oceanus」を入力すると下記のようなURLに送信しているデータが確認できます。
+
+https://oceanus.bizocean.co.jp/swallow/bizocean?
+
 ## VS.
 
 ## Requirement
@@ -138,7 +152,7 @@ Docker
 
 Kubernetes OR Google Container Engine
 
-BigQuery Account
+Google Cloud Account
 
 ## Usage
 
