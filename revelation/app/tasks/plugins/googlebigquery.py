@@ -21,7 +21,7 @@ DATA_SET = os.environ['DATA_SET']
 PROJECT_ID = os.environ['PROJECT_ID']
 TABLE_PREFIX = os.environ['BQ_TABLE_PREFIX']
 
-HISTORY_LIMIT = os.environ.get("HISTORY_LIMIT", 100)
+HISTORY_LIMIT = os.environ.get("HISTORY_LIMIT", 150)
 
 
 class GoogleBigQueryTasks:

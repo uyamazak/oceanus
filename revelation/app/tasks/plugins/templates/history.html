@@ -3,23 +3,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<h1>{{ title }}</h1>
 
 {% set td_style='style="border:1px solid #999;padding:4px;"' %}
 
-<h2>フックになったデータ</h2>
-<table style="border-collapse: collapse;">
-{% for k,v in data.items() %}
-<tr>
-    <th style="border:1px solid #999">{{k}}</th>
-    <td style="border:1px solid #999">{{v}}</td>
-</tr>
-{% endfor %}
-</table>
-
-
 <p>{{ desc }}</p>
-<table style="border-collapse: collapse;">
+<table style="border-collapse: collapse;margin:0 0 1em;">
   <tr style="background:#ccc;">
     <th {{ td_style }}>dt </th>
     <th {{ td_style }}>sid</th>

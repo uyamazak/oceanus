@@ -56,7 +56,7 @@ class Revelation:
                                            self.site_name_list))
         self.pubsub.subscribe(self.site_name_list)
         for message in self.pubsub.listen():
-            logger.debug("for message in pubsub.listen()")
+            # logger.debug("for message in pubsub.listen()")
 
             if not message:
                 logger.debug('not message')
