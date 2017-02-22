@@ -42,6 +42,7 @@ def resp_beacon_gif(resp):
     resp.append_header('Content-type', 'image/gif')
     resp.body = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
                                  'ACwAAAAAAQABAAACAkQBADs=')
+    return resp
 
 
 def create_bq_table_name(site_name, delta_days=0):
