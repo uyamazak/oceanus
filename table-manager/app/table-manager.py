@@ -15,7 +15,7 @@ PROJECT_ID = environ['PROJECT_ID']
 DATA_SET = environ['DATA_SET']
 JSON_KEY_FILE = environ['JSON_KEY_FILE']
 BQ_TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
-INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 10))
+INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 30))
 BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
 
 
