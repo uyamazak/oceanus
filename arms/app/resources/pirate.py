@@ -1,10 +1,10 @@
 import falcon
 import json
-from execution import ExecutionResource
 from cerberus import Validator
 from datetime import datetime
 from common.errors import RedisWritingError
 from common.utils import oceanus_logging
+from resources.execution import ExecutionResource
 
 logger = oceanus_logging()
 
@@ -79,11 +79,7 @@ class PirateResource(ExecutionResource):
                      'maxlength': 16}
                     ),
             'rad': (client_rad,
-                    {'type': 'string',
-                     'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
-                              '2[0-4][0-9]|25[0-5])\.){3}'
-                              '([1-9]?[0-9]|1[0-9]{2}|'
-                              '2[0-4][0-9]|25[0-5])$'}
+                    {'validator': self.validate_ip}
                     ),
             'ua':  (req.user_agent,
                     {'type': 'string',

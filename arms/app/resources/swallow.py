@@ -1,11 +1,10 @@
-from execution import ExecutionResource
 import falcon
 import json
 from pprint import pformat
 from cerberus import Validator
 from datetime import datetime
+from resources.execution import ExecutionResource
 from common.utils import resp_beacon_gif, oceanus_logging, is_internal_ip
-
 from common.errors import RedisWritingError
 
 logger = oceanus_logging(__name__)
@@ -71,12 +70,9 @@ class SwallowResource(ExecutionResource):
                     ),
             # remote address ip
             'rad': (client_rad,
-                    {'type': 'string',
-                     'regex': '^(([1-9]?[0-9]|1[0-9]{2}|'
-                              '2[0-4][0-9]|25[0-5])\.){3}'
-                              '([1-9]?[0-9]|1[0-9]{2}|'
-                              '2[0-4][0-9]|25[0-5])$'}
+                    {'validator': self.validate_ip}
                     ),
+
             # event name
             'evt': (req.get_param('evt', required=True),
                     {'type': 'string',
