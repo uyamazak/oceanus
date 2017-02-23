@@ -1,6 +1,7 @@
 import json
 import redis
 import falcon
+import ipaddress
 from user_agents import parse as parse_ua
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from common.utils import oceanus_logging
@@ -51,6 +52,24 @@ class ExecutionResource(object):
         except Exception as e:
             logger.error('json.loads error:{}'.format(e))
             error(field, 'Must be valid JSON')
+
+    def validate_ip(self, field, value, error):
+        if not value:
+            return
+        try:
+            ip_obj = ipaddress.ip_address(value)
+        except ValueError as e:
+            logger.error('ipaddress error:{}'.format(e))
+            error(field, 'Must be valid IP')
+            return
+
+        if ip_obj.version == 6:
+            logger.info("used IPv6 {}".format(value))
+
+        if not (ip_obj.is_global or ip_obj.is_private):
+            message = 'ip not global or private:{}'.format(value)
+            logger.error(message)
+            error(field, message)
 
     def clean_json(self, json_text):
         if not json_text:
