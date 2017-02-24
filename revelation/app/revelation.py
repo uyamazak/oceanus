@@ -7,7 +7,7 @@ from common.utils import oceanus_logging
 from common.settings import (REDIS_HOST,
                              REDIS_PORT,
                              OCEANUS_SITES)
-from hooks.hook import apply_hook
+from hook.hook import apply_hook
 
 logger = oceanus_logging()
 
