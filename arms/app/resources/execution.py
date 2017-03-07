@@ -12,8 +12,11 @@ logger = oceanus_logging()
 class ExecutionResource(object):
     """
     Execution is oceanus arm's base Class.
-    You can not use this function directly.
-    So GET and POST is disabled.
+    So you can not use this class directly.
+    Default GET and POST is disabled.
+
+    After receiving data with POST or GET and validation,
+    if there is no error, save it in Redis in json format.
 
     For quick response, save to Redis,
     instead BigQuery direct.
@@ -28,7 +31,8 @@ class ExecutionResource(object):
             result = self.r.lpush(site_name, data)
 
         except Exception as e:
-            logger.critical('Problem adding data to Redis. {0}'.format(e))
+            logger.critical('Problem adding data to Redis. {}'.format(e))
+            logger.critical('losting data:{}'.format(data))
             raise RedisWritingError
 
         return result
@@ -89,16 +93,16 @@ class ExecutionResource(object):
 
         access_route
         e.g.
-        [*.*.*.*] is example of real clieant ip.
+        [111.111.111.111] is example of real clieant ip.
 
         - Direct Access
-          [*.*.*.*]
+          [111.111.111.111]
 
         - via Google Load balancer
-          [*.*.*.*, 130.211.0.0/22]
+          [111.111.111.111, 130.211.0.0/22]
 
         - and via client's proxy
-          [002512 172.16.18.111, *.*.*.*, 130.211.0.0/22]
+          [002512 172.16.18.111, 111.111.111.111, 130.211.0.0/22]
 
         """
 

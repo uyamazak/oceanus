@@ -20,3 +20,7 @@ class BigQueryWritingError(Exception):
 
 class BigQueryTableNotExistsError(Exception):
     pass
+
+
+class ProcessDuplicationError(Exception):
+    pass

@@ -58,6 +58,9 @@
                 {% else %}
                     {{ h.tit }} [{{ h.url }}]
                 {% endif %}
+                {% if loop.first and h.ref %}
+                    <br>ref: {{ h.ref }}
+                {% endif %}
         <td {{ td_style }}>{{ h.uid }}</td>
         <td {{ td_style }}>{{ h.dev }}</td>
         <td {{ td_style }}>{{ h.rad }}</td>
