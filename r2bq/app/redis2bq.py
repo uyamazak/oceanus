@@ -8,15 +8,16 @@ from sys import exit
 from os import environ
 from time import sleep
 from signal import signal, SIGINT, SIGTERM
-from bigquery import get_client
-from common.utils import (oceanus_logging,
-                          create_bq_table_name)
+from common.utils import oceanus_logging
+from common.bq_utils import create_bq_table_name, create_bq_client
 from common.settings import (REDIS_HOST, REDIS_PORT,
                              OCEANUS_SITES)
 from common.errors import (RedisConnectionError,
                            RedisWritingError,
                            BigQueryWritingError,
-                           BigQueryTableNotExistsError)
+                           BigQueryTableNotExistsError,
+                           ProcessDuplicationError
+                           )
 logger = oceanus_logging(__name__)
 
 """Google Parameters"""
@@ -42,7 +43,9 @@ class redis2bqSerial:
         """
         self.site_name = site["site_name"]
         self.table_schema = site["table_schema"]
-        self.table_name = create_bq_table_name(self.site_name)
+        self.time_partitioning_type = site.get("time_partitioning_type", "")
+        self.table_name = create_bq_table_name(self.site_name,
+                                               time_partitioning_type=self.time_partitioning_type)
         self.chunk_num = site["chunk_num"]
         self.keep_processing = True
         self.lines = []
@@ -245,13 +248,13 @@ class redis2bqSerial:
                                                         len(self.lines)))
         exit("exit with losting data")
 
-    def signal_exit_func(self, num, frame):
+    def signal_exit_func(self, num, frame)-> None:
         """called in signal()"""
         if self.keep_processing:
             self.keep_processing = False
             self.clean_up()
 
-    def needs_writing_bq(self):
+    def needs_writing_bq(self)-> bool:
         logger.debug("site_name:{} "
                      "chunk_num:{} "
                      "llen:{}".format(self.site_name,
@@ -262,7 +265,7 @@ class redis2bqSerial:
         else:
             return False
 
-    def ensure_dependencies(self):
+    def ensure_dependencies(self)-> bool:
         try:
             self.connect_redis()
         except RedisConnectionError:
@@ -281,6 +284,28 @@ class redis2bqSerial:
             return False
 
         return True
+
+    def json_line_from_res(self, res)-> str:
+        if res is None:
+            """
+            It happens if you're running dupulicated r2bq processes.
+            When another process has taken the data first"""
+            raise ProcessDuplicationError
+            return ""
+
+        if not res[1]:
+            "if body is empty, proceed to the next"
+            logger.debug("res[1] is empty. continue")
+            return ""
+
+        try:
+            json_line = json.loads(res[1].decode('utf-8'), encoding="utf-8")
+        except Exception as e:
+            logger.error('json.loads error {} '
+                         '{}'.format(e))
+            return ""
+        else:
+            return json_line
 
     @timeout(MAIN_PROCESS_TIMEOUT)
     def main(self):
@@ -316,14 +341,14 @@ class redis2bqSerial:
                 # getting data from redis with blocking
                 res = self.r.brpop(self.site_name, BRPOP_TIMEOUT)
                 """
-                res[0] list's key (same as self.site_name)
+                res[0] list's key (same as self.site_name in settings)
                 res[1] content text
                 """
-                logger.debug("[{}]-CHUNK:{}/{}".format(self.site_name,
-                                                       len(self.lines) + 1,
-                                                       self.chunk_num))
-                logger.debug("res:{}".format(res))
-
+                logger.debug("[{}]-CHUNK:{}/{} "
+                             "res:{}".format(self.site_name,
+                                             len(self.lines) + 1,
+                                             self.chunk_num,
+                                             res))
             except Exception as e:
                 logger.error('[{}] Problem getting data from Redis. '
                              '{}'.format(self.site_name, e))
@@ -335,26 +360,14 @@ class redis2bqSerial:
 
                 continue
 
-            if res is None:
-                """
-                It happens if you're running multiple r2bq processes.
-                When another process has taken the data first"""
-                logger.debug("res is None. break")
-                break
-
-            if not res[1]:
-                "if body is empty, proceed to the next"
-                logger.debug("res[1] is empty. continue")
-                continue
-
             try:
-                line = json.loads(res[1].decode('utf-8'), encoding="utf-8")
-            except Exception as e:
-                logger.error('json.loads error {} '
-                             '{}'.format(e, decoded_res))
-                continue
+                json_line = self.json_line_from_res(res)
+            except ProcessDuplicationError as e:
+                logger.error("res is None: {}".format(e))
+                break
             else:
-                self.lines.append(line)
+                if json_line:
+                    self.lines.append(json_line)
 
         if len(self.lines) == 0:
             logger.debug("len(self.lines) == 0 return")
@@ -391,27 +404,9 @@ if __name__ == '__main__':
     logger.info("site_name start:" +
                 ",".join([site["site_name"] for site in OCEANUS_SITES]))
 
-    def create_bq_client():
-        bq_result = False
-        for i in range(1, CONNECTION_RETRY+1):
-            try:
-                bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                       readonly=False)
-            except Exception as e:
-                logger.error("connecting BigQuery failed."
-                             "count:{}/{}"
-                             "\n{}".format(i, CONNECTION_RETRY, e))
-                bq_result = False
-                sleep(i*RETRY_INTERVAL_BASE)
-            else:
-                return bq_client
-
-        if bq_result is False:
-            logger.critical("connnecting BigQuery retry failed."
-                            "count:{}/{}".format(i, CONNECTION_RETRY))
-            return bq_result
-
-    bq_client = create_bq_client()
+    bq_client = create_bq_client(retry=CONNECTION_RETRY,
+                                 retry_internal_base=RETRY_INTERVAL_BASE,
+                                 json_key_file=JSON_KEY_FILE)
 
     if bq_client is False:
         exit("create_bq_client() failed")

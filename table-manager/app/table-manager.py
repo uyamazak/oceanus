@@ -4,9 +4,8 @@ from sys import exit
 from datetime import datetime
 from os import environ
 from time import sleep
-from bigquery import get_client
-from common.utils import (oceanus_logging,
-                          create_bq_table_name)
+from common.utils import oceanus_logging
+from common.bq_utils import (create_bq_table_name, create_bq_client)
 from common.settings import OCEANUS_SITES
 logger = oceanus_logging(__name__)
 
@@ -17,6 +16,7 @@ JSON_KEY_FILE = environ['JSON_KEY_FILE']
 BQ_TABLE_PREFIX = environ['BQ_TABLE_PREFIX']
 INTERVAL_SECOND = int(environ.get('INTERVAL_SECOND', 30))
 BQ_CONNECTION_RETRY = int(environ.get('BQ_CONNECT_RETRY', 3))
+BQ_CONNECTION_RETRY_BASE = int(environ.get('BQ_CONNECT_RETRY_BASE', 15))
 
 
 class TableManager:
@@ -27,13 +27,17 @@ class TableManager:
         TableManager"""
         self.site_name = site["site_name"]
         self.table_schema = site["table_schema"]
+        self.time_partitioning_type = site.get("time_partitioning_type", "")
+        self.is_time_partitioning = False
+        if self.time_partitioning_type:
+            self.is_time_partitioning = True
         self.bq_client = bq_client
 
     def table_exsits(self, table_name):
         return self.bq_client.check_table(DATA_SET,
                                           table_name)
 
-    def create_table(self, table_name):
+    def create_table(self, table_name, time_partitioning=""):
         """ create table in BigQuery"""
         if self.table_exsits(table_name):
             logger.debug("table {} already exists."
@@ -44,7 +48,8 @@ class TableManager:
                     "table_name:{}".format(table_name))
         created = self.bq_client.create_table(DATA_SET,
                                               table_name,
-                                              self.table_schema)
+                                              self.table_schema,
+                                              time_partitioning=time_partitioning)
         if created:
             logger.info("table:{} created".format(table_name))
         else:
@@ -56,6 +61,14 @@ class TableManager:
         """ create today and tommow tables
         return create result
         """
+        if self.is_time_partitioning:
+            table_name_patitioning = create_bq_table_name(self.site_name,
+                                                          time_partitioning_type=self.time_partitioning_type)
+            created_partitioning = self.create_table(table_name_patitioning,
+                                                     time_partitioning=self.is_time_partitioning)
+            logger.debug("created_partitioning:{}".format(created_partitioning))
+            return created_partitioning
+
         now = datetime.now()
         logger.debug("now.hour:{}".format(now.hour))
         created_tommorow = None
@@ -82,6 +95,7 @@ class TableManager:
         self.clean_up_memory()
         return
 
+
 if __name__ == '__main__':
     logger.info("start managing BigQuery tables...\n"
                 "PROJECT_ID:{} "
@@ -90,27 +104,9 @@ if __name__ == '__main__':
                                             DATA_SET,
                                             BQ_TABLE_PREFIX))
 
-    def create_bq_client():
-        bq_result = False
-        for i in range(1, BQ_CONNECTION_RETRY+1):
-            try:
-                bq_client = get_client(json_key_file=JSON_KEY_FILE,
-                                       readonly=False)
-            except Exception as e:
-                logger.error("connecting BigQuery failed."
-                             "count:{}/{}"
-                             "\n{}".format(i, BQ_CONNECTION_RETRY, e))
-                bq_result = False
-                sleep(i*15)
-            else:
-                return bq_client
-
-        if bq_result is False:
-            logger.critical("connnecting BigQuery retry failed."
-                            "count:{}/{}".format(i, BQ_CONNECTION_RETRY))
-            return bq_result
-
-    bq_client = create_bq_client()
+    bq_client = create_bq_client(retry=BQ_CONNECTION_RETRY,
+                                 retry_internal_base=BQ_CONNECTION_RETRY_BASE,
+                                 json_key_file=JSON_KEY_FILE)
     if bq_client is False:
         exit("create_bq_client() failed")
 
@@ -123,10 +119,14 @@ if __name__ == '__main__':
             except BrokenPipeError:
                 logger.error("BrokenPipeError at tm.main()\n"
                              "retry create_bq_client()")
-                bq_client = create_bq_client()
+                bq_client = create_bq_client(retry=BQ_CONNECTION_RETRY,
+                                             retry_internal_base=BQ_CONNECTION_RETRY_BASE,
+                                             json_key_file=JSON_KEY_FILE)
+
                 if bq_client is False:
                     exit("retry create_bq_client() failed. exit()")
                 break
+
             except Exception as e:
                 logger.critical("{} at tm.main()\n".format(e))
                 exit()
