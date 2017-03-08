@@ -307,15 +307,7 @@ class redis2bqSerial:
         else:
             return json_line
 
-    @timeout(MAIN_PROCESS_TIMEOUT)
-    def main(self):
-        for s in (SIGINT, SIGTERM):
-            signal(s, self.signal_exit_func)
-
-        if not self.ensure_dependencies():
-            return
-
-        """Write the data to BigQuery in small chunks."""
+    def create_lines_from_brpop(self) -> None:
         CHUNK_NUM = min(self.llen, MAX_CHUNK_NUM)
         logger.debug("PROJECT_ID:{}, "
                      "DATA_SET:{}, "
@@ -332,8 +324,8 @@ class redis2bqSerial:
                                             REDIS_HOST,
                                             REDIS_PORT,
                                             self.site_name))
-        redis_writing_errors = 0
 
+        redis_writing_errors = 0
         while len(self.lines) < CHUNK_NUM:
             res = None
             logger.debug("len(self.lines):{}".format(len(self.lines)))
@@ -369,6 +361,17 @@ class redis2bqSerial:
                 if json_line:
                     self.lines.append(json_line)
 
+    @timeout(MAIN_PROCESS_TIMEOUT)
+    def main(self):
+        for s in (SIGINT, SIGTERM):
+            signal(s, self.signal_exit_func)
+
+        if not self.ensure_dependencies():
+            return
+
+        """Write the data to BigQuery in small chunks."""
+        self.create_lines_from_brpop()
+
         if len(self.lines) == 0:
             logger.debug("len(self.lines) == 0 return")
             return
@@ -382,7 +385,6 @@ class redis2bqSerial:
                            'retry failed, BigQuery not inserted. '
                            'restore Redis...'.format(self.site_name))
             self.restore_to_redis(self.lines)
-            return
 
         logger.debug("[{}] BigQuery "
                      "inserted {} "
@@ -391,41 +393,33 @@ class redis2bqSerial:
                                        len(self.lines)))
 
 
-if __name__ == '__main__':
-    keep_processing = True
+keep_processing = True
 
-    def graceful_exit(num=None, frame=None):
-        global keep_processing
-        logger.info("graceful_exit")
-        keep_processing = False
 
-    for s in (SIGINT, SIGTERM):
-        signal(s, graceful_exit)
-    logger.info("site_name start:" +
-                ",".join([site["site_name"] for site in OCEANUS_SITES]))
+def graceful_exit(num=None, frame=None):
+    global keep_processing
+    logger.info("graceful_exit")
+    keep_processing = False
 
-    bq_client = create_bq_client(retry=CONNECTION_RETRY,
-                                 retry_internal_base=RETRY_INTERVAL_BASE,
-                                 json_key_file=JSON_KEY_FILE)
 
-    if bq_client is False:
-        exit("create_bq_client() failed")
-
+def process_sites(bq_client, sites):
     while keep_processing:
-
-        for site in OCEANUS_SITES:
+        for site in sites:
             r2bq = redis2bqSerial(site, bq_client)
             try:
                 r2bq.main()
             except BrokenPipeError:
                 logger.critical("BrokenPipeError"
                                 "retry create_bq_client()")
-                bq_client = create_bq_client()
+                bq_client = create_bq_client(retry=CONNECTION_RETRY,
+                                             retry_internal_base=RETRY_INTERVAL_BASE,
+                                             json_key_file=JSON_KEY_FILE)
                 if bq_client is False:
-                    logger.critical("Retry create_bq_client()"
-                                    "failed clean_up()")
+                    logger.critical("Failed retry create_bq_client() "
+                                    "clean_up()")
                     r2bq.clean_up()
-                break
+                    break
+
             except TimeoutError:
                 logger.critical("TimeoutError clean_up()")
                 r2bq.clean_up()
@@ -437,3 +431,19 @@ if __name__ == '__main__':
             del r2bq
             gc.collect()
         sleep(SERIAL_INTERVAL_SECOND)
+
+
+if __name__ == '__main__':
+    for s in (SIGINT, SIGTERM):
+        signal(s, graceful_exit)
+
+    logger.info("site_name start:" +
+                ",".join([site["site_name"] for site in OCEANUS_SITES]))
+
+    bq_client = create_bq_client(retry=CONNECTION_RETRY,
+                                 retry_internal_base=RETRY_INTERVAL_BASE,
+                                 json_key_file=JSON_KEY_FILE)
+    if bq_client is False:
+        exit("create_bq_client() failed")
+
+    process_sites(bq_client, OCEANUS_SITES)

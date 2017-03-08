@@ -78,7 +78,7 @@ FORM_TABLE_SCHEMA = [
 ]
 
 """
-'OCEANUS_SITES' is list of dictionaries
+'OCEANUS_SITES' is list of dicts
  that contains several parameters
 
 'site_name' used as
@@ -87,6 +87,13 @@ FORM_TABLE_SCHEMA = [
  - url path (/swallow/bizocean)
    default: fisrt one
 'table_schema' table schema of BigQuery
+'time_partitioning_type' "" or "DAY" dafault ""
+    - ""
+        Tables are saved with surfix "_YYYYMMDD"
+    - "DAY"
+        Create table using time_partitioning_type=DAY option
+        https://cloud.google.com/bigquery/docs/creating-partitioned-tables
+
 'method' method_name in SwallowResorce or PirateResource
 'chunk_num'
  When writing to the BigQuery, divided into small chunks
@@ -94,9 +101,10 @@ FORM_TABLE_SCHEMA = [
 
 e.g.
 (
-    {"site_name": (string),
+    {"site_name": (str),
      "table_schema": (dict),
-     "method": (string),
+     "time_partitioning_type": (str),
+     "method": (str),
      "chunk_num": (int)
      },
 )
@@ -129,13 +137,13 @@ OCEANUS_SITES = (
      },
     {"site_name": "movieform",
      "table_schema": FORM_TABLE_SCHEMA,
-     "time_partitioning_type": "",
+     "time_partitioning_type": "DAY",
      "method": 'pirate',
      "chunk_num": 1,
      },
     {"site_name": "namecard",
      "table_schema": FORM_TABLE_SCHEMA,
-     "time_partitioning_type": "",
+     "time_partitioning_type": "DAY",
      "method": 'pirate',
      "chunk_num": 1,
      },
