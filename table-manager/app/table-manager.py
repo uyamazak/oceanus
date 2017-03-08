@@ -122,11 +122,9 @@ if __name__ == '__main__':
                 bq_client = create_bq_client(retry=BQ_CONNECTION_RETRY,
                                              retry_internal_base=BQ_CONNECTION_RETRY_BASE,
                                              json_key_file=JSON_KEY_FILE)
-
                 if bq_client is False:
                     exit("retry create_bq_client() failed. exit()")
                 break
-
             except Exception as e:
                 logger.critical("{} at tm.main()\n".format(e))
                 exit()
