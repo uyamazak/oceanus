@@ -1,0 +1,1 @@
+kubectl run gopub --image=asia.gcr.io/oceanus-dev/gopub:v20170317-01 --port=8765  --env="GOPUBSUB_SUBSCRIPTION_NAME=oceanus-test"
