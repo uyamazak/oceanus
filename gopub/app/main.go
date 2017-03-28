@@ -14,8 +14,6 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"golang.org/x/net/context"
-	//"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 )
 
 type ReceivedData struct {
@@ -30,7 +28,7 @@ func NewReceivedData(buf []byte) (*ReceivedData, error) {
 		return d, errors.New("Received bytes have not fields")
 	}
 	d.Key = string(fields[0])
-	d.Value = bytes.Join(fields[1:], []byte(" "))
+	d.Value = bytes.Trim(buf[len(d.Key):], " \t\n")
 	return d, nil
 }
 
@@ -136,6 +134,33 @@ func NewTopicsMeta() (*TopicsMeta, error) {
 		ConfigString:  configString,
 	}, nil
 }
+func connectionHandler(conn net.Conn, ps *PubService) {
+	defer conn.Close()
+	bufferSize, _ := strconv.ParseUint(os.Getenv("GOPUB_BUFFER_SIZE"), 10, 64)
+	buf := make([]byte, bufferSize)
+
+	for {
+		n, err := conn.Read(buf)
+		if err != nil {
+			if err.Error() == "EOF" {
+				return
+			}
+			log.Printf("conn.Read error: %v", err)
+			return
+		}
+		go func() {
+			err = ps.publishHandler(buf[:n])
+			if err != nil {
+				log.Printf("publishHandler err: %v", err)
+				log.Printf("err type:%v", reflect.TypeOf(err).String())
+				if reflect.TypeOf(err).String() == "*grpc.rpcError" {
+					log.Fatal("*grpc.rpcError")
+				}
+			}
+		}()
+		conn.Write(buf[:n])
+	}
+}
 
 func main() {
 	projectID := os.Getenv("PROJECT_ID")
@@ -184,34 +209,5 @@ func main() {
 			return
 		}
 		connectionHandler(conn, service)
-	}
-}
-
-func connectionHandler(conn net.Conn, ps *PubService) {
-	defer conn.Close()
-	bufferSize, _ := strconv.ParseUint(os.Getenv("GOPUB_BUFFER_SIZE"), 10, 64)
-	buf := make([]byte, bufferSize)
-
-	for {
-		n, err := conn.Read(buf)
-		if err != nil {
-			if err.Error() == "EOF" {
-				return
-			}
-			log.Printf("conn.Read error: %v", err)
-			return
-		}
-		go func() {
-			err = ps.publishHandler(buf[:n])
-			if err != nil {
-				log.Printf("publishHandler err: %v", err)
-				log.Printf("err type:%v", reflect.TypeOf(err).String())
-				if reflect.TypeOf(err).String() == "*grpc.rpcError" {
-					log.Printf("reflect.TypeOf(err).String()!!!!!!!!!!!!!!")
-				}
-
-			}
-		}()
-		conn.Write(buf[:n])
 	}
 }
