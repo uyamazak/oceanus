@@ -33,21 +33,22 @@ func NewReceivedData(buf []byte) (*ReceivedData, error) {
 }
 
 type PubService struct {
-	Ctx    context.Context
-	Client *pubsub.Client
-	Topics map[string]*pubsub.Topic
+	Ctx             context.Context
+	Client          *pubsub.Client
+	Topics          map[string]*pubsub.Topic
+	TopicNamePrefix string
 }
 
-func NewPubService(tm *TopicsMeta) (*PubService, error) {
+func NewPubService(tm *TopicsMeta, projectID string) (*PubService, error) {
 	ps := &PubService{}
 	ps.Ctx = context.Background()
-	projectID := os.Getenv("PROJECT_ID")
 	client, err := pubsub.NewClient(ps.Ctx, projectID)
 	if err != nil {
 		return ps, errors.New(fmt.Sprintf("Failed to create client: %v", err))
 	}
 	ps.Client = client
 	ps.Topics, err = ps.getTopics(tm)
+	ps.TopicNamePrefix = tm.NamePrefix
 	if err != nil {
 		return ps, err
 	}
@@ -87,13 +88,12 @@ func (s *PubService) publishHandler(buf []byte) error {
 		log.Printf("Error in Received Data: %v", err)
 		return err
 	}
-	topicName := addPrefix(data.Key)
+	topicName := s.TopicNamePrefix + data.Key
 	topic, ok := s.Topics[topicName]
 	if ok == false {
 		msg := fmt.Sprintf("Topic %v does not exists in config file", topicName)
 		log.Print(msg)
 		return errors.New(msg)
-
 	}
 	result := topic.Publish(s.Ctx, &pubsub.Message{Data: data.Value})
 	_, err = result.Get(s.Ctx)
@@ -106,37 +106,36 @@ func (s *PubService) publishHandler(buf []byte) error {
 type TopicsMeta struct {
 	Names         []string
 	OriginalNames []string
+	NamePrefix    string
 	Count         int
 	ConfigString  string
 }
 
-func addPrefix(name string) string {
-	prefix := os.Getenv("GOPUB_TOPIC_NAME_PREFIX")
-	return prefix + name
+func (tm *TopicsMeta) addNamePrefix(name string) string {
+	return tm.NamePrefix + name
 }
-func NewTopicsMeta() (*TopicsMeta, error) {
-	configString := os.Getenv("GOPUB_TOPICS")
-	configNames := strings.Split(configString, ",")
+func NewTopicsMeta(configTopics string, prefix string) (*TopicsMeta, error) {
+	tm := &TopicsMeta{
+		ConfigString: configTopics,
+		NamePrefix:   prefix,
+	}
+	configNames := strings.Split(configTopics, ",")
 	if len(configNames) == 0 {
 		return &TopicsMeta{}, errors.New("no configName found")
 	}
 	names := []string{}
 	orgNames := []string{}
 	for _, name := range configNames {
-		names = append(names, addPrefix(name))
+		names = append(names, tm.addNamePrefix(name))
 		orgNames = append(orgNames, name)
 	}
-
-	return &TopicsMeta{
-		Names:         names,
-		OriginalNames: orgNames,
-		Count:         len(names),
-		ConfigString:  configString,
-	}, nil
+	tm.Names = names
+	tm.OriginalNames = orgNames
+	tm.Count = len(names)
+	return tm, nil
 }
-func connectionHandler(conn net.Conn, ps *PubService) {
+func connectionHandler(conn net.Conn, buf_func func([]byte) error, bufferSize uint64) {
 	defer conn.Close()
-	bufferSize, _ := strconv.ParseUint(os.Getenv("GOPUB_BUFFER_SIZE"), 10, 64)
 	buf := make([]byte, bufferSize)
 
 	for {
@@ -148,17 +147,17 @@ func connectionHandler(conn net.Conn, ps *PubService) {
 			log.Printf("conn.Read error: %v", err)
 			return
 		}
+		conn.Write(buf[:n])
 		go func() {
-			err = ps.publishHandler(buf[:n])
+			err = buf_func(buf[:n])
 			if err != nil {
-				log.Printf("publishHandler err: %v", err)
+				log.Printf("buf_func err: %v", err)
 				log.Printf("err type:%v", reflect.TypeOf(err).String())
 				if reflect.TypeOf(err).String() == "*grpc.rpcError" {
 					log.Fatal("*grpc.rpcError")
 				}
 			}
 		}()
-		conn.Write(buf[:n])
 	}
 }
 
@@ -166,7 +165,12 @@ func main() {
 	projectID := os.Getenv("PROJECT_ID")
 	listenHost := os.Getenv("LISTEN_HOST")
 	listenPort := os.Getenv("LISTEN_PORT")
-	topicsMeta, err := NewTopicsMeta()
+	bufferSize, err := strconv.ParseUint(os.Getenv("GOPUB_BUFFER_SIZE"), 10, 64)
+	if err != nil {
+		log.Printf("bufferSize is invalid %v", err)
+		return
+	}
+	topicsMeta, err := NewTopicsMeta(os.Getenv("GOPUB_TOPICS"), os.Getenv("GOPUB_TOPIC_NAME_PREFIX"))
 	if err != nil {
 		log.Printf("Failed to create topicsMeta %v", err)
 		return
@@ -187,7 +191,7 @@ func main() {
 		topicsMeta.Count,
 		listenHost,
 		listenPort,
-		os.Getenv("GOPUB_BUFFER_SIZE"))
+		bufferSize)
 
 	listen, err := net.Listen("tcp", listenHost+":"+listenPort)
 	defer listen.Close()
@@ -195,7 +199,7 @@ func main() {
 		log.Printf("Failed to listen tcp %v", err)
 		return
 	}
-	service, err := NewPubService(topicsMeta)
+	service, err := NewPubService(topicsMeta, projectID)
 	if err != nil {
 		log.Printf("NewPubService error: %v", err)
 		return
@@ -208,6 +212,6 @@ func main() {
 			log.Printf("Failed to accept %v", err)
 			return
 		}
-		connectionHandler(conn, service)
+		connectionHandler(conn, service.publishHandler, bufferSize)
 	}
 }
