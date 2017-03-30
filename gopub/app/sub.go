@@ -15,52 +15,49 @@ import (
 	"cloud.google.com/go/pubsub"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
+
+	"./pubservice"
 )
 
 func main() {
-	ctx := context.Background()
-	// Sets your Google Cloud Platform project ID.
-
 	projectID := os.Getenv("PROJECT_ID")
-	fmt.Println("projectID", projectID)
-	// Creates a client.
-	p_client, err := pubsub.NewClient(ctx, projectID)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+	if os.Args[1] == "" {
+		log.Print("topicName is not provided by os.Args[1]")
+		return
 	}
-	//log.Print(reflect.TypeOf(p_client))
-	//log.Print(reflect.TypeOf(ctx))
-	topic := createTopicIfNotExists(p_client)
-	subscription_name := os.Getenv("GOPUB_SUBSCRIPTION_NAME")
-	//defer deleteSub(p_client, subscription_name)
-	sub := p_client.Subscription(subscription_name)
-	sub_exists, _ := sub.Exists(ctx)
+	topicName := os.Args[1]
+	topicsMeta, _ := pubservice.NewTopicsMeta(os.Args[1], "")
+	subscriptionName := "test-" + topicName
+	log.Print(subscriptionName)
+	service, err := pubservice.NewPubService(topicsMeta, projectID)
+	sub := service.Client.Subscription(subscriptionName)
+	sub_exists, _ := sub.Exists(service.Ctx)
 	log.Print(sub_exists)
 	log.Print(sub)
 	if err != nil {
 		log.Print("sub.Exists Error")
 		return
 	}
+	topic := service.Topics[topicName]
 	if sub_exists == false {
-		sub, err = p_client.CreateSubscription(ctx, subscription_name, topic, time.Second*10, nil)
+		sub, err = service.Client.CreateSubscription(service.Ctx, subscriptionName, topic, time.Second*10, nil)
 		if err != nil {
-			log.Printf("Failed to create client: %v", err)
+			log.Printf("CreateSubscription Failed: %v", err)
 			return
 		}
 	}
-
-	//log.Print(sub)
-	subMsgs(p_client, subscription_name, topic)
+	deleteSub(service.Client, subscriptionName)
+	subMsgs(service.Ctx, service.Client, subscriptionName, topic)
 }
 
-func deleteSub(p_client *pubsub.Client, subscription_name string) {
+func deleteSub(p_client *pubsub.Client, subscriptionName string) {
 	// capture ctrl+c and stop CPU profiler
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for sig := range c {
 			log.Printf("captured %v, stopping profiler and exiting..", sig)
-			delete(p_client, subscription_name)
+			delete(p_client, subscriptionName)
 			os.Exit(1)
 		}
 	}()
@@ -85,10 +82,8 @@ func list(client *pubsub.Client) ([]*pubsub.Subscription, error) {
 	return subs, nil
 }
 
-func subMsgs(client *pubsub.Client, name string, topic *pubsub.Topic) error {
-	fmt.Printf("subMsgs Start")
-	ctx := context.Background()
-	log.Printf("name: %v", name)
+func subMsgs(ctx context.Context, client *pubsub.Client, name string, topic *pubsub.Topic) error {
+	log.Printf("subMsgs Start: %v\n", name)
 	sub := client.Subscription(name)
 	sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
 		// TODO: Handle message.
@@ -97,7 +92,6 @@ func subMsgs(client *pubsub.Client, name string, topic *pubsub.Topic) error {
 		m.Ack()
 	})
 	return nil
-
 }
 func create(client *pubsub.Client, name string, topic *pubsub.Topic) error {
 	ctx := context.Background()

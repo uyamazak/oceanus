@@ -26,7 +26,7 @@ client.connect((host, port))
 #    client.close()
 
 for i in range(0, 10000):
-    client.send("{}".format(i).encode("utf8"))
+    client.send("bizocean {}".format(i).encode("utf8"))
     response = client.recv(4096)
     print(response)
 
