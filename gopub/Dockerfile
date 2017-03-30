@@ -10,13 +10,12 @@ ENV GOOGLE_APPLICATION_CREDENTIALS key.json
 
 ENV PROJECT_ID "oceanus-dev"
 ENV GOPUB_TOPIC_NAME_PREFIX "oceanus-gopub-"
-ENV GOPUB_TOPICS "bizocean,movieform,namecard,skj,docreq,bizpow"
-ENV GOPUB_SUBSCRIPTION_NAME "dev-subscription"
+ENV GOPUB_TOPICS "bizocean,movieform,namecard,skj,docreq,bizpow,moneynext"
+ENV GOPUB_SUBSCRIPTION_NAME "oceanus-subscription"
 ENV GOPUB_BUFFER_SIZE 4096
 ENV LISTEN_HOST ""
 ENV LISTEN_PORT 8765
 EXPOSE ${LISTEN_PORT}
-
 
 COPY app /go/app
 WORKDIR /go/
