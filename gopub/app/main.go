@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"net"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"reflect"
 	"runtime"
@@ -37,9 +35,6 @@ func connectionHandler(conn net.Conn, bufferSize uint64, bufferReceiver func([]b
 }
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
-	}()
 	projectID := os.Getenv("PROJECT_ID")
 	listenHost := os.Getenv("LISTEN_HOST")
 	listenPort := os.Getenv("LISTEN_PORT")
