@@ -5,6 +5,7 @@ from cerberus import Validator
 from datetime import datetime
 from resources.execution import ExecutionResource
 from common.utils import resp_beacon_gif, oceanus_logging, is_internal_ip
+from common.gopub_utils import publish2gopub
 from common.errors import RedisWritingError
 
 logger = oceanus_logging(__name__)
@@ -35,7 +36,7 @@ class SwallowResource(ExecutionResource):
         return user_data
 
     def on_get(self, req, resp, site_name=None):
-        if site_name is None:
+        if not site_name:
             site_name = self.get_default_site_name(self.method_label)
             logger.debug("use default site_name "
                          "{} {}".format(site_name, self.method_label))
@@ -165,7 +166,7 @@ class SwallowResource(ExecutionResource):
         if validate_result:
             user_data['jsn'] = self.clean_json(user_data['jsn'])
             resp.status = falcon.HTTP_200
-            redis_data = json.dumps(user_data)
+            redis_data = json.dumps(user_data, sort_keys=True, separators=(',', ':'))
             try:
                 redis_result = self.write_to_redis(site_name, redis_data)
             except RedisWritingError:
@@ -175,6 +176,10 @@ class SwallowResource(ExecutionResource):
                 self.publish_to_redis(site_name, redis_data)
             except RedisWritingError:
                 logger.error("redis publish failed")
+
+            if not publish2gopub(site_name, redis_data):
+                logger.error("gopub failed")
+
         else:
             logger.error("validate error:{}"
                          "user_data:{}"

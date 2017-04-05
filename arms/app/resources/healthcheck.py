@@ -6,6 +6,7 @@ from common.utils import oceanus_logging, is_internal_ip
 from common.settings import (OCEANUS_SITES,
                              REDIS_HOST,
                              REDIS_PORT)
+from common.gopub_utils import is_available_gopub
 logger = oceanus_logging()
 
 CHUNK_NUM_SUM = sum([i["chunk_num"] for i in OCEANUS_SITES])
@@ -34,7 +35,7 @@ class HealthCheckResource(object):
         if not resp.body:
             resp.body = ''
         if not body:
-            body = resp.body + "503 server error\n"
+            body = resp.body + "503 server error"
         resp.body = resp.body + body
         logger.critical('{}'.format(resp.body))
         return resp
@@ -79,6 +80,10 @@ class HealthCheckResource(object):
     def on_get(self, req, resp):
         r_result = self._connect_redis()
         if not r_result:
+            resp = self._create_error_resp(resp)
+            return
+
+        if not is_available_gopub():
             resp = self._create_error_resp(resp)
             return
 

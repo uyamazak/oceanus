@@ -20,7 +20,7 @@ def oceanus_logging(name=None):
     if loggers.get(name):
         return loggers.get(name)
 
-    LOG_LEVEL = environ['LOG_LEVEL']
+    LOG_LEVEL = environ.get('LOG_LEVEL', 'WARNING')
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - '
                                   '%(levelname)s - '

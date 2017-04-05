@@ -2,6 +2,7 @@ import falcon
 import json
 from cerberus import Validator
 from datetime import datetime
+from common.gopub_utils import publish2gopub
 from common.errors import RedisWritingError
 from common.utils import oceanus_logging
 from resources.execution import ExecutionResource
@@ -35,7 +36,7 @@ class PirateResource(ExecutionResource):
         return user_data
 
     def on_post(self, req, resp, site_name):
-        if site_name is None:
+        if not site_name:
             site_name = self.get_default_site_name(self.method_label)
             logger.debug("use defaule site_name "
                          "{} {}".format(site_name, self.method_label))
@@ -154,7 +155,7 @@ class PirateResource(ExecutionResource):
             return
 
         user_data['jsn'] = self.clean_json(user_data['jsn'])
-        redis_data = json.dumps(user_data)
+        redis_data = json.dumps(user_data, sort_keys=True, separators=(',', ':'))
         redis_result = None
         try:
             redis_result = self.write_to_redis(site_name, redis_data)
@@ -165,6 +166,9 @@ class PirateResource(ExecutionResource):
             self.publish_to_redis(site_name, redis_data)
         except RedisWritingError:
             logger.error("redis publish failed")
+
+        if not publish2gopub(site_name, redis_data):
+            logger.error("gopub failed")
 
         if req.get_param('debug', required=False):
             logger.info("site_name:{}\n"

@@ -79,7 +79,7 @@ class ExecutionResource(object):
         if not json_text:
             return
         json_text = json.loads(json_text)
-        json_text = json.dumps(json_text, sort_keys=True)
+        json_text = json.dumps(json_text, sort_keys=True, separators=(',', ':'))
         return json_text
 
     def adjust_user_data(self, user_data):
