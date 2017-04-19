@@ -9,15 +9,19 @@ y ou can judge important data in real time and can notify and aggregate
 Run it on Docker and Google Container Engine.
 
 ## Description
-![oceanus構成図](https://docs.google.com/a/bizocean.co.jp/drawings/d/1R_UMH1IGs_pE5TRjOmmMdp1_FyT5rRx8KfuPZxvLDK4/pub?w=1018&h=964 "oceanus構成図")
+![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170419/20170419163411.png "oceanus構成図")
 
 oceanusは低予算のビッグデータ収集＆活用基盤です。
 
 bizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）でビッグデータを活用してます。
 
+例えば、会員属性や行動ログのデータを元に、メールマガジン広告のクリックを機械学習して予測してます。
+
 ビッグデータの保存と分析には初期費用不要でディスクもスキャンも安いBigQuery、サーバーにはDockerとGoogle Container Engineを使っています。
 
-まだ絶賛開発中のため詳細やインストール手順等は質問ください。
+機械学習にはGoogle Cloud Datalabを使ってPythonで書いてます。
+
+まだ絶賛開発中のため、bizoceanの環境に依存するものがいろいろ混じってたり、詳細やインストール手順等は書けていないので、興味がある方はご連絡ください。
 
 ### arms/
 web server
