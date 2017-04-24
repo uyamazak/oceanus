@@ -1,23 +1,23 @@
 oceanus
 ========
+oceanusはbizocean(https://www.bizocean.jp)のデータ収集＆活用プロジェクトです。
 
-Open Source Data collecter. Fast and low cost.
+集めたデータをユーザーサポートや、サイト改善に活かします。
 
-Oceanus get HTTP Request and save to Google BigQuery and
-y ou can judge important data in real time and can notify and aggregate
-
-Run it on Docker and Google Container Engine.
+インフラにはDockerとKubernetes(Google Container Engine)を活用してコスト削減にも挑戦しています。
 
 ## Description
 ![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170120/20170120102719.png "oceanus構成図")
 
+HTTP経由で送られた様々なデータをリアルタイムにBigQueryに保存し、簡単に素早くデータを活用できるようにします。
 
-アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存することができます。
-開発はローカルのDocker、本番はGoogle Cloud Platform（GCP）のGoogle Container Engine（GKE）で運用することができます。
+アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存し、簡単に素早くデータを活用できるようにします。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作っています。
+開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用することができます。
 
-プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しているので、その勉強用としてもいかがでしょうか。
+自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作られています。
+
+プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しています。
 
 導入や運用の支援、自社でのデータ分析のサポートも行いますので、興味のある方はご連絡ください。
 
@@ -54,7 +54,7 @@ oceanusでは、BigQueryへのストリーミングインサートを使用し�
 
 
 ### 低コスト
-bizoceanでは月間1000万PV、1日70万レコード計250MBを超えるデータを送り続けていますが、GCPのコストは1万円/月程度（2016年10月時点）で収まっています。
+bizoceanでは月間1000万PV、1日70万レコード計200MBを超えるデータを送り続けていますが、GCPのコストは1万円/月程度（2016年10月時点）で収まっています。
 
 そのうちサーバー代（GKE）は5000円程度のため、国レベルで冗長化するマルチリージョン構成も、同じものをもう一つ+5000円程度で可能です。
 
@@ -122,14 +122,14 @@ Docker image of most official of Redis With Persistent Disc on GCP.
 ### table-manager/
 To see if there is a table required on the BigQuery, creating one if there is none
 
-- python3
+- Python3
 - BigQuery
 
 ### revelation/
 Using the PubPub of Redis, perform a streaming process.
 It can be write to the slack and Google spread sheets depending on the conditions.
 
-- python3
+- Python3
 - Redis
 - RabbitMQ
 - Celery http://www.celeryproject.org/
@@ -146,7 +146,7 @@ management tools. docker build, push etc.
 - shell scripts
 
 ## Demo
-http://www.bizocean.jp
+https://www.bizocean.jp
 
 Google Chromeなどで開発者ツール（F12）を開きながら、bizocean上のページを読み込みます。「Network」の検索窓で「oceanus」を入力すると下記のようなURLに送信しているデータが確認できます。
 

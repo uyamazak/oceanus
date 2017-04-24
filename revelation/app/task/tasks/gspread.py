@@ -56,13 +56,17 @@ class GoogleSpreadSheetsTasks:
 
         logger.debug("worksheets: {}".format(self.worksheets_list))
 
-    def create_ws_title(self, prefix="", suffix="", date_format="%Y-%m"):
+    def create_ws_title(self, prefix="", suffix="",
+                        date_format="%Y-%m", insert_date=True):
         if date_format is None:
             date_format = "%Y-%m"
-        d = datetime.now()
-        return "{}{}{}".format(prefix,
-                               d.strftime(date_format),
-                               suffix)
+        if insert_date:
+            d = datetime.now()
+            return "{}{}{}".format(prefix,
+                                   d.strftime(date_format),
+                                   suffix)
+        else:
+            return "{}{}".format(prefix, suffix)
 
     def get_ws(self, ws_title=None):
         if not ws_title:
@@ -98,9 +102,11 @@ class GoogleSpreadSheetsTasks:
         title_prefix = kwargs.get("title_prefix", "")
         title_suffix = kwargs.get("title_suffix", "")
         date_format = kwargs.get("date_format", None)
+        insert_date = kwargs.get("insert_date", True)
         ws_title = self.create_ws_title(prefix=title_prefix,
                                         suffix=title_suffix,
-                                        date_format=date_format)
+                                        date_format=date_format,
+                                        insert_date=insert_date)
         row = self.format_ws_row(data)
         ws = self.get_ws(ws_title)
         if not self.is_token_valid():

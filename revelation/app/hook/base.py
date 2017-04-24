@@ -91,6 +91,7 @@ class BaseHook:
     def __init__(self, message, redis):
         self.item = self.prepare_item(message)
         self.redis = redis
+        self.message = message
 
     def main(self) -> int:
         """

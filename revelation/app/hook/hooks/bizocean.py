@@ -1,7 +1,5 @@
 from hook.base import BaseHook
-from common.utils import oceanus_logging
 from task.celery_app import send2ws
-logger = oceanus_logging()
 
 
 class BizoceanHook(BaseHook):

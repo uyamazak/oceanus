@@ -6,4 +6,5 @@ sudo docker run -dit \
         -e REDIS_PD_SERVICE_HOST=192.168.2.70 \
         -e GOPUB_SERVICE_HOST=192.168.2.70 \
         -e LOG_LEVEL=DEBUG \
-        asia.gcr.io/oceanus-dev/arms:latest
+        asia.gcr.io/oceanus-dev/arms:latest \
+        gunicorn -c gunicorn_conf_debug.py arms:app

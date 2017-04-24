@@ -24,6 +24,10 @@ SENDGRID_API_KEY = environ.get('SENDGRID_API_KEY', "")
 SENDGRID_FROM_EMAIL = environ.get('SENDGRID_FROM_EMAIL', "yu_yamazaki+sgfrom@bizocean.co.jp")
 SENDGRID_TO_EMAIL = environ.get('SENDGRID_TO_EMAIL', "yu_yamazaki+sgto@bizocean.co.jp")
 
+"""Gopub settings"""
+GOPUB_HOST = environ.get('GOPUB_SERVICE_HOST', "localhost")
+GOPUB_PORT = int(environ.get('GOPUB_SERVICE_PORT', 8765))
+
 """
 BigQuery's table settings
 """

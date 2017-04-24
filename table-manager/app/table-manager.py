@@ -33,13 +33,13 @@ class TableManager:
             self.is_time_partitioning = True
         self.bq_client = bq_client
 
-    def table_exsits(self, table_name):
+    def table_exists(self, table_name):
         return self.bq_client.check_table(DATA_SET,
                                           table_name)
 
     def create_table(self, table_name, time_partitioning=""):
         """ create table in BigQuery"""
-        if self.table_exsits(table_name):
+        if self.table_exists(table_name):
             logger.debug("table {} already exists."
                          "".format(table_name))
             return False
