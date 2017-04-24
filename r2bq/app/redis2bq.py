@@ -31,8 +31,8 @@ SERIAL_INTERVAL_SECOND = float(environ.get('SERIAL_INTERVAL_SECOND', 1.0))
 MAX_CHUNK_NUM = int(environ.get('MAX_CHUNK_NUM', 150))
 CONNECTION_RETRY = int(environ.get('CONNECTION_RETRY', 3))
 WRITING_RETRY = int(environ.get('WRITING_RETRY', 3))
-RETRY_INTERVAL_BASE = int(environ.get('RETRY_INTERVAL_BASE', 5))
-MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 45))
+RETRY_INTERVAL_BASE = int(environ.get('RETRY_INTERVAL_BASE', 7))
+MAIN_PROCESS_TIMEOUT = int(environ.get('MAIN_PROCESS_TIMEOUT', 60))
 
 
 class redis2bqSerial:
@@ -182,7 +182,6 @@ class redis2bqSerial:
                                            e))
                 self.retry_wait(i)
                 continue
-
             logger.debug("inserted:{}".format(inserted))
 
             if inserted:
@@ -192,13 +191,11 @@ class redis2bqSerial:
                                'Problem writing data BigQuery.'
                                'retry:{}/{}'.format(self.site_name,
                                                     i, WRITING_RETRY))
-
         if inserted:
             if i > 1:
                 logger.info("[{}] "
                             "BigQuery retry "
                             "success".format(self.site_name))
-
             return True
         else:
             logger.critical("[{}] "
@@ -403,6 +400,7 @@ def graceful_exit(num=None, frame=None):
 
 
 def process_sites(bq_client, sites):
+    global keep_processing
     while keep_processing:
         for site in sites:
             r2bq = redis2bqSerial(site, bq_client)
@@ -439,6 +437,7 @@ if __name__ == '__main__':
 
     logger.info("site_name start:" +
                 ",".join([site["site_name"] for site in OCEANUS_SITES]))
+    logger.info("PROJECT_ID:{} DATA_SET:{}".format(PROJECT_ID, DATA_SET))
 
     bq_client = create_bq_client(retry=CONNECTION_RETRY,
                                  retry_internal_base=RETRY_INTERVAL_BASE,

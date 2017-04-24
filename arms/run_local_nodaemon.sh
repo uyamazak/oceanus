@@ -8,4 +8,5 @@ sudo docker run -it \
         -e GOPUB_TOPIC_NAME=ml30gen9testtopic \
         -e GOPUB_SUBSCRIPTION_NAME=ml30gen9testsub \
         -e LOG_LEVEL=ERROR \
-        asia.gcr.io/oceanus-dev/arms:latest
+        asia.gcr.io/oceanus-dev/arms:latest \
+        gunicorn -c gunicorn_conf_debug.py arms:app
