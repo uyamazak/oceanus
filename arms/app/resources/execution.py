@@ -104,11 +104,18 @@ class ExecutionResource(object):
         - and via client's proxy
           [002512 172.16.18.111, 111.111.111.111, 130.211.0.0/22]
 
+        - with unknown
+          ['unknown', '111.111.111.111', '222.222.222.222', '130.211.0.0/22']
+
         """
+        if len(access_route) > 2 and access_route[0] == "unknown":
+            del access_route[0]
+            logger.error('delete unknown from:{}'.format(access_route))
 
         if len(access_route) == 3:
             """via client's proxy ip"""
             return access_route[1]
+
         else:
             """Direct or via Google Load balancer"""
             return access_route[0]
