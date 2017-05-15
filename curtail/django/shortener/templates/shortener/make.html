@@ -1,0 +1,38 @@
+{% extends "shortener/base.html" %}
+
+{% block title %}URL Shortner - Make your URL shorter!{% endblock %}
+
+{% block content %}
+
+<div class="panel panel-default">
+ <div class="panel-body">
+ <div class="col-sm-12">
+ redirect url:
+ <input type="text" name="url" id="url" class="form-control input-sm" placeholder="https://www.bizocean.jp" />
+  <div style="margin:5px 0 0;">
+  beacon:
+  <select name="beacon" id="beacon" class="form-control">
+  {% for b in beacons %}
+  <option value="{{b.id}}">{{b.label}} [{{b.endpoint}}]</option>
+  {% endfor %}
+  </select>
+  </div>
+
+
+  <div style="margin:5px 0 0;">beacon parameters:
+    <input type="text" name="parameters" id="parameters" class="form-control">
+    ex. tit=mail_title&oid=2
+  </div>
+
+
+ </div>
+
+ <div class="col-sm-12" style="margin:15px 0 0;">
+ {% csrf_token %}
+ <button id="submitButton" class="btn btn-primary">Submit</button></p>
+ </div>
+ </div>
+ <div class="panel-footer"><span id="url-result">Enter the URL above and click submit!</span></div>
+ <div class="panel-footer">sample beacon url:<br><span id="beacon-result"></span></div>
+</div>
+{% endblock %}
