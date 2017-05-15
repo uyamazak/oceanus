@@ -1,0 +1,10 @@
+# pack-refs with: peeled fully-peeled 
+f331225b77a6304651dfb583a38bb7d1e96e5ab2 refs/remotes/origin/config
+1ed2aa03b6ef5800882b4c08102f726c82681f79 refs/remotes/origin/deprecat
+b98c3772962b26c33eb82cc23028ffa88a3af96f refs/remotes/origin/jonparrott-patch-1
+622ce45ce4f7930035a0ed7b378edb9e2e10c097 refs/remotes/origin/jonparrott-patch-2
+390a05610285b3a45549bf4824e91252b51947b2 refs/remotes/origin/markdown
+6edb41044cc7e9a9eef42f917598cede8fea4174 refs/remotes/origin/master
+9bc21b4801a360f518206ce10f446e6dfa8a76ca refs/remotes/origin/playground
+9c04fcc7b6d584736362783d6b6e9acf729a450f refs/remotes/origin/projectid
+d3061cd726dafd0944c55fee30a403f37b2e821f refs/remotes/origin/yaml
