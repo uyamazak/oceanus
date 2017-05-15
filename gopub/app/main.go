@@ -29,6 +29,7 @@ func connectionHandler(conn net.Conn, bufferSize uint64, bufferReceiver func([]b
 			err = bufferReceiver(buf[:n])
 			if err != nil {
 				log.Printf("bufferReceiver err: %v \n type:%v", err, reflect.TypeOf(err).String())
+				return
 			}
 		}()
 	}

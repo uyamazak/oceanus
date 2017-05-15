@@ -40,7 +40,7 @@ def resp_beacon_gif(resp):
     resp.append_header('expires', 'Mon, 01 Jan 1990 00:00:00 GMT')
     resp.append_header('pragma', 'no-cache')
     resp.append_header('Content-type', 'image/gif')
-    resp.body = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
+    resp.data = base64.b64decode('R0lGODlhAQABAID/AP///wAA'
                                  'ACwAAAAAAQABAAACAkQBADs=')
     return resp
 
@@ -69,28 +69,6 @@ def create_bq_table_name(site_name, delta_days=0,
         date_part = datetime.now().strftime('_%Y%m%d')
 
     return prefix + date_part
-
-
-def create_bq_client(retry: int, retry_internal_base: int,
-                     key_file: str):
-    bq_result = False
-    for i in range(1, retry + 1):
-        try:
-            bq_client = get_client(json_key_file=key_file,
-                                   readonly=False)
-        except Exception as e:
-            logger.error("connecting BigQuery failed."
-                         "count:{}/{}"
-                         "\n{}".format(i, retry, e))
-            bq_result = False
-            sleep(i * retry_internal_base)
-        else:
-            return bq_client
-
-    if bq_result is False:
-        logger.critical("connnecting BigQuery retry failed."
-                        "count:{}/{}".format(i, retry))
-        return False
 
 
 def convert2jst(dt_str):

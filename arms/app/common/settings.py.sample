@@ -3,86 +3,8 @@
 # and to recommend the use of a hard link .
 # When you git clone from repository,
 # please create a hard link to run the init.sh.
-
 from os import environ
+from importlib import import_module
 
-
-""" Redis settings"""
-REDIS_HOST = environ.get('REDISMASTER_SERVICE_HOST', "localhost")
-REDIS_PORT = environ.get('REDISMASTER_SERVICE_PORT', 6379)
-
-"""
-BigQuery's table settings
-"""
-LOG_TABLE_SCHEMA = [
-    {'name': 'dt',  'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'oid', 'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'sid', 'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'uid', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'rad', 'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'evt', 'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'tit', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'url', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'ref', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'jsn', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'ua',  'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'dev', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'enc', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'scr', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'vie', 'type': 'STRING', 'mode': 'nullable'},
-]
-
-FORM_TABLE_SCHEMA = [
-    {'name': 'dt',    'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'oid',   'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'sid',   'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'rad',   'type': 'STRING', 'mode': 'REQUIRED'},
-    {'name': 'uid',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'name',  'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'cname', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'email', 'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'tel',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'jsn',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'ua',    'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'dev',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'url',   'type': 'STRING', 'mode': 'nullable'},
-    {'name': 'enc',   'type': 'STRING', 'mode': 'nullable'},
-]
-
-"""
-'OCEANUS_SITES' is list of dictionaries
- that contains several parameters
-
-'site_name' used as
- - redis list's key name,
- - part of BigQuery table name,
- - url path (/swallow/bizocean)
-    default: fisrt one
-'table_schema' table schema of BigQuery
-'method' method_name in SwallowResorce or PirateResource
-'chunk_num'
- When writing to the BigQuery, divided into small chunks
- 1 is every time, default 50
-
-e.g.
-(
-    {"site_name": (string) [a-z0-9_]+,
-     "table_schema": (dict),
-     "method": (string),
-     "chunk_num": (int)
-     },
-)
-"""
-
-OCEANUS_SITES = (
-    {"site_name": "samplesite",
-     "table_schema": LOG_TABLE_SCHEMA,
-     "method": 'swallow',
-     "chunk_num": 50,
-     },
-    {"site_name": "sampleform",
-     "table_schema": FORM_TABLE_SCHEMA,
-     "method": 'pirate',
-     "chunk_num": 1,
-     },
-)
+OCEANUS_SETTINGS = environ.get("OCEANUS_SETTINGS", "common.bizocean_settings")
+globals().update(import_module(OCEANUS_SETTINGS).__dict__)
