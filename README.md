@@ -1,31 +1,26 @@
 oceanus
 ========
-oceanusはbizocean(https://www.bizocean.jp)のデータ収集＆活用プロジェクトです。
+oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活用プロジェクトです。
 
-集めたデータをユーザーサポートや、サイト改善に活かします。
+データの蓄積と分析にはGoogle BigQuery、ストリーミング処理にはCloud Pub/Subを利用しています。
 
-インフラにはDockerとKubernetes(Google Container Engine)を活用してコスト削減にも挑戦しています。
+インフラにはDockerとKubernetes(Google Container Engine)を活用して、メンテナンスコストを削減しています。
 
 ## Description
 ![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170419/20170419163411.png "oceanus構成図")
 
-HTTP経由で送られた様々なデータをリアルタイムにBigQueryに保存し、簡単に素早くデータを活用できるようにします。
+HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存し、簡単に素早くデータを活用できるようにします。
 
-アクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存し、簡単に素早くデータを活用できるようにします。
+開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
 
-開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用することができます。
+自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作ってます。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作られています。
 
 プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しています。
 =======
-oceanusは低予算のビッグデータ収集＆活用基盤です。
-
 bizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）でビッグデータを活用してます。
 
 例えば、会員属性や行動ログのデータを元に、メールマガジン広告のクリックを機械学習して予測してます。
-
-ビッグデータの保存と分析には初期費用不要でディスクもスキャンも安いBigQuery、サーバーにはDockerとGoogle Container Engineを使っています。
 
 機械学習にはGoogle Cloud Datalabを使ってPythonで書いてます。
 
@@ -34,18 +29,20 @@ bizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以�
 web server
 Get parameters and save to Redis list and PubSub.
 
-- python3
+- Python3
 - falcon https://falconframework.org/
 - Cerberus http://docs.python-cerberus.org/en/stable/
 
 ### r2bq/
-Remove the data from Redis list and save to BigQuery.
+Pull the data from Redis list and save to BigQuery.
 
-- python3
+- Python3
 - Redis
 - BigQuery
 
 ### redis-pd/
+Redis with Persistent Disc.
+
 https://redis.io/
 Docker image of most official of Redis With Persistent Disc on GCP.
 
@@ -57,25 +54,30 @@ To see if there is a table required on the BigQuery, creating one if there is no
 - BigQuery
 
 ### revelation/
-Using the PubPub of Redis, perform a streaming process.
-It can be write to the slack and Google spread sheets depending on the conditions.
+Using the Google Cloud Pub/Sub, perform a streaming process.
+ex. Sending Email, Writing SpreadSheet.
+
+Tasks are processed asynchronously via RabbitMQ and Celery.
 
 - Python3
 - Redis
 - RabbitMQ
 - Celery http://www.celeryproject.org/
 - BigQuery
+- Cloud Pub/Sub
 - SendGrid https://sendgrid.kke.co.jp/
 - Google SpreadSheet
 
+
+### rabbitmq/
+https://www.rabbitmq.com/
+
 ### gopub/
-A High-speed high-speed relay server written in Go language which receives data by socket TCP/IP and sends it to Google Cloud Pub/Sub asynchronously.
+A High-speed relay server written in Go language which receives data by socket TCP/IP and sends it to Google Cloud Pub/Sub asynchronously.
 
 - Golang
 - Google Cloud Pub/Sub
 
-### rabbitmq/
-https://www.rabbitmq.com/
 
 ### management/
 management tools. docker build, push etc.
@@ -103,6 +105,7 @@ Google Cloud Account
 
 
 ## Install
+まだ開発中のため、bizocean特有のコードや設定を多く含んでいます。ご興味のある方はお問い合わせください。
 
 
 ## Contribution
