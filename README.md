@@ -9,16 +9,18 @@ oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活�
 ## Description
 ![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170419/20170419163411.png "oceanus構成図")
 
-HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存し、簡単に素早くデータを活用できるようにします。
+HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存し、簡単に素早くデータを活用できるようにします。
 
 開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作ってます。
+自社サービスのデータをBigQueryで一元管理したい、でも予算は限られているbizoceanのために作ってます。
+
+プログラミング言語には主にPythonとGo言語、インフラにはDockerとGoogle Container Engineを利用しています。
 
 
-プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しています。
-=======
-bizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）でビッグデータを活用してます。
+bizoceanでの実績
+================
+会員数200万人、月間約1000万PVのbizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）のインフラコストでビッグデータを活用してます。
 
 例えば、会員属性や行動ログのデータを元に、メールマガジン広告のクリックを機械学習して予測してます。
 
@@ -106,6 +108,8 @@ Google Cloud Account
 
 ## Install
 まだ開発中のため、bizocean特有のコードや設定を多く含んでいます。ご興味のある方はお問い合わせください。
+
+必要に応じて無料のハンズオンセミナー等も開催を予定しています。
 
 
 ## Contribution
