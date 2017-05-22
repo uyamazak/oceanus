@@ -4,7 +4,7 @@
  <title>{% block title %}Welcome to mysite{% endblock %}</title>
  {% load staticfiles %}
  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
- <link rel="stylesheet" type="text/css" href="{% static 'shortenersite/css/custom.css' %}" />
+ <meta name="robots" content="noindex">
  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -38,13 +38,19 @@ function returnSuccess(data, textStatus, jqXHR) {
 </script>
 <body>
 <div id="wrap">
-
-
-<div id="content">
-    {% block content %}
-
-    {% endblock %}
-</div>
+  <header><h1>oceanus URL Shortner</h1></header>
+  <div id="content">
+	{% block content %}{% endblock %}
+    {% block footer %}
+    <div class="panel-footer">
+        <ul>
+            <li><a href="{% url 'make'%}">single</a>
+            <li><a href="{% url 'make_article'%}">article</a>
+            <li><a href="{% url 'admin:login'%}">admin</a>
+        </ul>
+	 </div>
+    {% endblock%}
+  </div>
 </div>
 </body>
 </html>

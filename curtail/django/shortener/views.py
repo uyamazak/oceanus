@@ -74,8 +74,10 @@ def make_article(request):
 
     return render(request, 'shortener/make_article.html', c)
 
+
 def index(request):
     """dummy page"""
+    logging.error("dummy page access")
     return render(request, 'shortener/index.html')
 
 
@@ -110,7 +112,9 @@ def _create_beacon_url(url_obj, request):
 
 
 def redirect_original(request, short_id):
-    logger.info(request.META)
+    # logger.info(request.META)
+    logging.getLogger().setLevel(logging.DEBUG)
+    logging.error(request.META)
     url_obj = get_object_or_404(Url, pk=short_id)
     beacon_url = _create_beacon_url(url_obj, request)
     _send_beacon(beacon_url)
@@ -148,7 +152,6 @@ def shorten_url(request):
 
 def _get_short_code(url, beacon, beacon_parameters, author):
     length = 6
-    logging.info("_get_short_code")
     logging.info(beacon_parameters)
     exists = Url.objects.filter(url=url,
                                 beacon=beacon,
