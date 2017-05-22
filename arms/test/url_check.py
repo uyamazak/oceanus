@@ -29,6 +29,8 @@ post_list = [
 
 once_get_list = [
         "{}/swallow/bizocean?oid=test&evt=pageview&uid=1084205&ref=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fcontact%2F&tit=%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B%E5%AE%8C%E4%BA%86%EF%BD%9Cbizocean%20-%20%E3%81%82%E3%82%89%E3%82%86%E3%82%8B%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%E3%82%92%E6%8F%90%E4%BE%9B%E3%81%99%E3%82%8B%EF%BC%81&url=https%3A%2F%2Ftest.bizocean.jp%2Fdoc%2Fcontact%2Finquiry%2Fcomplete%2F&enc=UTF-8&scr=1920x1080&vie=1903x510&sid=86895a04e5a59600",
+        "{}/pierce/shortener?evt=redirect&uid=12345&url=https://www.bizocean.jp&rad=111.111.111.111&oid=2",
+        "{}/gaze/mailaction?evt=open&uid=12345",
         ]
 
 once_post_list =[

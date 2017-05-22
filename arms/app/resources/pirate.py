@@ -163,12 +163,9 @@ class PirateResource(ExecutionResource):
             resp.status = falcon.HTTP_500
 
         try:
-            self.publish_to_redis(site_name, redis_data)
-        except RedisWritingError:
-            logger.error("redis publish failed")
-
-        if not publish2gopub(site_name, redis_data):
-            logger.error("gopub failed")
+            publish2gopub(site_name, redis_data)
+        except Exception as e:
+            logger.error("gopub failed:{}".format(e))
 
         if req.get_param('debug', required=False):
             logger.info("site_name:{}\n"

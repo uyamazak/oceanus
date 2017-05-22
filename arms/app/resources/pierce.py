@@ -86,14 +86,14 @@ class PierceResource(ExecutionResource):
                      'maxlength': 16}
                     ),
             # user agent
-            'ua':  (req.get_param('ua', required=True),
+            'ua':  (req.get_param('ua', required=False, default=""),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
                      'maxlength': 512}
                     ),
             # device detecting from user agent
-            'dev': (self.get_client_device(req.get_param('ua', required=True)),
+            'dev': (self.get_client_device(req.get_param('ua', required=False, default="")),
                     {'type': 'string',
                      'nullable': True,
                      'empty': True,
@@ -178,12 +178,9 @@ class PierceResource(ExecutionResource):
                 resp.status = falcon.HTTP_500
 
             try:
-                self.publish_to_redis(site_name, redis_data)
-            except RedisWritingError:
-                logger.error("redis publish failed")
-
-            if not publish2gopub(site_name, redis_data):
-                logger.error("gopub failed")
+                publish2gopub(site_name, redis_data)
+            except Exception as e:
+                logger.error("gopub failed:{}".format(e))
 
         else:
             logger.error("validate error:{}"
