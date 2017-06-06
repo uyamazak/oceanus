@@ -1,0 +1,56 @@
+version: '3'
+services:
+  arms:
+    image: "asia.gcr.io/oceanus-dev/arms:latest"
+    env_file: ./arms/.env.local
+    ports:
+     - "8080:80"
+    command: [gunicorn, -c, gunicorn_conf_debug.py, "arms:app"]
+    depends_on:
+      - redis-pd
+      - gopub
+
+  redis-pd:
+    image: "asia.gcr.io/oceanus-dev/redis-pd:latest"
+    ports:
+      - "6379:6379"
+    volumes:
+      - .redis-pd/data:/data
+
+  r2bq:
+    image: "asia.gcr.io/oceanus-dev/r2bq:latest"
+    env_file: ./r2bq/.env.local
+    depends_on:
+      - redis-pd
+
+  table-manager:
+    env_file: ./table-manager/.env.local
+    image: "asia.gcr.io/oceanus-dev/table-manager:latest"
+
+  revelation:
+    image: "asia.gcr.io/oceanus-dev/revelation:latest"
+    env_file: ./revelation/.env.local.prod
+    depends_on:
+      - redis-pd
+      - rabbitmq
+
+  revelation-worker:
+    image: "asia.gcr.io/oceanus-dev/revelation:latest"
+    env_file: ./revelation/.env.local.prod
+    depends_on:
+      - redis-pd
+      - rabbitmq
+    command: [celery, -A, "task.celery_app", worker, "--loglevel=DEBUG"]
+
+  rabbitmq:
+    image: "asia.gcr.io/oceanus-dev/rabbitmq:latest"
+    env_file: ./rabbitmq/.env.local
+    ports:
+      - "5672:5672"
+
+  gopub:
+    image: "asia.gcr.io/oceanus-dev/gopub:latest"
+    env_file: ./gopub/.env.local
+    command: [go, run, "app/main.go"]
+    ports:
+      - "8765:8765"
