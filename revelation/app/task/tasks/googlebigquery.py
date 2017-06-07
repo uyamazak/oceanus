@@ -16,7 +16,7 @@ jinja2_env = Environment(
 logger = oceanus_logging()
 LOG_LEVEL = os.environ['LOG_LEVEL']
 
-JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
+GOOGLE_APPLICATION_CREDENTIALS = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 DATA_SET = os.environ['DATA_SET']
 PROJECT_ID = os.environ['PROJECT_ID']
 TABLE_PREFIX = os.environ['BQ_TABLE_PREFIX']
@@ -69,7 +69,7 @@ class GoogleBigQueryTasks:
                    HISTORY_LIMIT=HISTORY_LIMIT,
                    )
         logger.debug(sql)
-        bq_client = get_client(json_key_file=JSON_KEY_FILE)
+        bq_client = get_client(json_key_file=GOOGLE_APPLICATION_CREDENTIALS)
         job_id, _results = bq_client.query(sql, timeout=30)
         complete, row_count = bq_client.check_job(job_id)
         if complete:

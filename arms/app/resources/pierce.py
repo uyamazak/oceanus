@@ -13,10 +13,11 @@ logger = oceanus_logging(__name__)
 
 class PierceResource(ExecutionResource):
     """
-    短縮URL用。
-    サーバーからアクセスが来るので
-    radやuaをGETパラメーターで受ける。
-    レスポンスは1pxGifではなくokの文字列
+    For URL Shortener.
+    Since it is accessed via the server, not the client,
+    IP and UA are received as GET parameters.
+    Since it is not necessary for the response to be an image,
+    return ok as a string.
     """
     method_label = "pierce"
 

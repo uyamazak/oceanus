@@ -13,8 +13,9 @@ logger = oceanus_logging()
 class PirateResource(ExecutionResource):
     method_label = "pirate"
     """
-    The oceanus pirate receives form data
-    in JSON format, save to Redis
+    Pirate receives POST data.
+    From HTML form, AJAX etc.
+    Response empty string.
     """
 
     def adjust_user_data(self, user_data):

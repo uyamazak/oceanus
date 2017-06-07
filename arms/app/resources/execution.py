@@ -149,6 +149,7 @@ class ExecutionResource(object):
 
     """
     Default both method is disabled.
+    Use overwrite them
     """
 
     def on_get(self, req, resp, site_name):

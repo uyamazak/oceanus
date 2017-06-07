@@ -1,4 +1,4 @@
-FROM python:3.5-alpine
+FROM python:3.6-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
 RUN apk add --force --update build-base
@@ -13,15 +13,11 @@ cerberus \
 redis \
 user-agents
 
-ENV REDISMASTER_SERVICE_HOST localhost
-ENV REDISMASTER_SERVICE_PORT 6379
-
-ENV OCEANUS_ARMS_HOST https://example.jp
-ENV LOG_LEVEL WARNING
-
-ENV WEB_CONCURRENCY 2
-
-ENV REDIS_DELAY_LIMIT_RATE 2
+# set by kubernetes
+# ENV REDIS_PD_SERVICE_HOST localhost
+# ENV REDIS_PD_SERVICE_PORT 6379
+# ENV GOPUB_SERVICE_HOST localhost
+# ENV GOPUB_SERVICE_PORT 8765
 
 RUN mkdir /oceanus/
 COPY app /oceanus/app/

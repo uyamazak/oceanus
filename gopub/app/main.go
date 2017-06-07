@@ -41,7 +41,7 @@ func main() {
 	listenPort := os.Getenv("LISTEN_PORT")
 	publishMode := os.Getenv("GOPUB_PUBLISH_MODE")
 	if len(publishMode) == 0 {
-		log.Pritf("GOPUB_PUBLISH_MODE is invalid %v. Set COMBINED or INDIVIDUAL or BOTH.", err)
+		log.Printf("GOPUB_PUBLISH_MODE is invalid %v. Set COMBINED or INDIVIDUAL or BOTH.")
 	}
 	bufferSize, err := strconv.ParseUint(os.Getenv("GOPUB_BUFFER_SIZE"), 10, 64)
 	if err != nil {

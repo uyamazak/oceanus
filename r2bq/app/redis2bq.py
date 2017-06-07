@@ -23,7 +23,7 @@ logger = oceanus_logging(__name__)
 """Google Parameters"""
 PROJECT_ID = environ['PROJECT_ID']
 DATA_SET = environ['DATA_SET']
-JSON_KEY_FILE = environ['JSON_KEY_FILE']
+GOOGLE_APPLICATION_CREDENTIALS = environ['GOOGLE_APPLICATION_CREDENTIALS']
 
 """Serial Parameters"""
 BRPOP_TIMEOUT = int(environ.get('BRPOP_TIMEOUT', 1))
@@ -411,7 +411,7 @@ def process_sites(bq_client, sites):
                                 "retry create_bq_client()")
                 bq_client = create_bq_client(retry=CONNECTION_RETRY,
                                              retry_internal_base=RETRY_INTERVAL_BASE,
-                                             json_key_file=JSON_KEY_FILE)
+                                             json_key_file=GOOGLE_APPLICATION_CREDENTIALS)
                 if bq_client is False:
                     logger.critical("Failed retry create_bq_client() "
                                     "clean_up()")
@@ -441,7 +441,7 @@ if __name__ == '__main__':
 
     bq_client = create_bq_client(retry=CONNECTION_RETRY,
                                  retry_internal_base=RETRY_INTERVAL_BASE,
-                                 json_key_file=JSON_KEY_FILE)
+                                 json_key_file=GOOGLE_APPLICATION_CREDENTIALS)
     if bq_client is False:
         exit("create_bq_client() failed")
 

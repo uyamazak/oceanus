@@ -18,8 +18,15 @@ class GazeResource(ExecutionResource):
 
     def adjust_user_data(self, user_data):
         """
-        in order to prevent unnecessary validate error
-        convert lower, upper, length
+        Gaze is a resource to check how many seconds the mail is open.
+        By redirecting by changing the 'evt' parameter every few seconds,
+        you can check how many seconds the mail is open.
+        'evt' names mean
+        open - 0 seconds
+        see  - 2 seconds
+        read - 6 seconds
+        done - 10 seconds
+
         """
         if user_data['enc']:
             """img tag at emailopen,

@@ -22,7 +22,7 @@ urlpatterns = [
     url(r'^make/$', make, name='make'),
     url(r'^make_article/$', make_article, name='make_article'),
     url(r'^makeshort/$', shorten_url, name='shortenurl'),
-    url(r'^(?P<short_id>\w{6})$', redirect_original, name='redirectoriginal'),
+    url(r'^(?P<short_id>\w{3,12})$', redirect_original, name='redirectoriginal'),
 ]
 if not os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
     import debug_toolbar

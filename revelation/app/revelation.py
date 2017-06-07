@@ -16,17 +16,17 @@ from subscriber import (list_subscriptions,
 
 logger = oceanus_logging()
 
-JSON_KEY_FILE = environ.get('JSON_KEY_FILE')
 SPREAD_SHEET_KEY = environ.get('SPREAD_SHEET_KEY')
 GOPUB_COMBINED_TOPIC_NAME = environ.get("GOPUB_COMBINED_TOPIC_NAME")
-PUBSUB_PULL_INTERVAL = int(environ.get("PUBSUB_PULL_INTERVAL", 1))
+GOPUB_COMBINED_SUBSCRIPTION_NAME = environ.get("GOPUB_COMBINED_SUBSCRIPTION_NAME")
+PUBSUB_PULL_INTERVAL = int(environ.get("PUBSUB_PULL_INTERVAL", 2))
 
 
 class Revelation:
     """
     Revelation can check the contents of channels and data
-    by classifying the data acquired from Redis' PubSub and
-    pass it to tasks.
+    by filtering the data acquired from Google Cloud Pub/Sub
+    and pass it to tasks.
     Writing to Google spreadsheets, sending mail, etc. are
     handled on the task side through the task queue
     """
@@ -47,10 +47,19 @@ class Revelation:
         self.pubsub_client = pubsub.Client()
         self.topic = self.pubsub_client.topic(GOPUB_COMBINED_TOPIC_NAME)
 
+        if GOPUB_COMBINED_SUBSCRIPTION_NAME not in list_subscriptions(GOPUB_COMBINED_TOPIC_NAME):
+            create_subscription(GOPUB_COMBINED_TOPIC_NAME,
+                                GOPUB_COMBINED_SUBSCRIPTION_NAME)
+            logger.debug("create_subscription. "
+                         "topic:{} "
+                         "sub:{}".format(GOPUB_COMBINED_TOPIC_NAME,
+                                         GOPUB_COMBINED_SUBSCRIPTION_NAME))
+
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
             self.keep_processing = False
-        delete_subscription(GOPUB_COMBINED_TOPIC_NAME, GOPUB_COMBINED_TOPIC_NAME)
+        delete_subscription(GOPUB_COMBINED_TOPIC_NAME,
+                            GOPUB_COMBINED_SUBSCRIPTION_NAME)
         sys.exit("delete subscription and sys.exit()")
 
     def separete_channnel_data(self, raw_message):
@@ -68,27 +77,22 @@ class Revelation:
                                            REDIS_PORT,
                                            self.site_name_list))
 
-        """Receives a message from a pull subscription."""
-        existing_subs = list_subscriptions(GOPUB_COMBINED_TOPIC_NAME)
-        if GOPUB_COMBINED_TOPIC_NAME not in existing_subs:
-            create_subscription(GOPUB_COMBINED_TOPIC_NAME, GOPUB_COMBINED_TOPIC_NAME)
-        subscription = self.topic.subscription(GOPUB_COMBINED_TOPIC_NAME)
+        subscription = self.topic.subscription(GOPUB_COMBINED_SUBSCRIPTION_NAME)
 
         while self.keep_processing:
             results = subscription.pull(return_immediately=True, max_messages=100)
             logger.debug('Received {} messages.'.format(len(results)))
             for ack_id, message in results:
                 separeted_message = self.separete_channnel_data(message.data)
-                logger.debug("separeted_message: {}".format(separeted_message))
                 if not separeted_message["data"]:
                     logger.debug('not data')
-                    subscription.acknowledge(ack_id)
                     continue
                 count = apply_hook(separeted_message, self.redis)
                 if count > 0:
-                    logger.debug("apply_hook count:{}".format(count))
-            # Acknowledge received messages. If you do not acknowledge, Pub/Sub will
-            # redeliver the message.
+                    logger.debug("apply_hook count:{}"
+                                 "separeted_message: {}".format(count, separeted_message))
+            # Acknowledge received messages. If you do not acknowledge,
+            # Pub/Sub will redeliver the message.
             if results:
                 subscription.acknowledge([ack_id for ack_id, message in results])
             sleep(PUBSUB_PULL_INTERVAL)

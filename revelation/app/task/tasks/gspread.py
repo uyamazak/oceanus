@@ -11,7 +11,7 @@ from common.utils import oceanus_logging
 logger = oceanus_logging()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-JSON_KEY_FILE = os.environ['JSON_KEY_FILE']
+GOOGLE_APPLICATION_CREDENTIALS = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 SPREAD_SHEET_KEY = os.environ['SPREAD_SHEET_KEY']
 
 
@@ -22,7 +22,7 @@ class GoogleSpreadSheetsTasks:
 
     def authorize_gspread(self) -> None:
         scope = ['https://spreadsheets.google.com/feeds']
-        credentials = SAC.from_json_keyfile_name(JSON_KEY_FILE, scope)
+        credentials = SAC.from_json_keyfile_name(GOOGLE_APPLICATION_CREDENTIALS, scope)
         self.gclient = gspread.authorize(credentials)
         self.gsheet = self.gclient.open_by_key(SPREAD_SHEET_KEY)
 
