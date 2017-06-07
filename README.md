@@ -9,7 +9,6 @@ oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活�
 ## Description
 ![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170419/20170419163411.png "oceanus構成図")
 
-<<<<<<< HEAD
 HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存し、簡単に素早くデータを活用できるようにします。
 
 開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
@@ -38,7 +37,7 @@ bizocean( https://www.bizocean.jp/ )の会員属性や行動ログのデータ�
 
 ### arms/
 web server
-Get parameters and save to Redis list and Cloud Pub/Sub.
+Get parameters and save to Redis list and Cloud Pub/Sub through gopub.
 
 - Python3
 - falcon https://falconframework.org/
@@ -115,17 +114,16 @@ Kubernetes OR Google Container Engine
 Google Cloud Account
 
 ## Usage
-
-
 ## Install
-まだ開発中のため、bizocean特有のコードや設定を多く含んでいます。
+## Contribution
+
+まだbizoceanでしか動いていないため、特有のコードや設定を多く含んでいます。
 
 自社での利用にご興味のある方はお問い合わせください。
 
 必要に応じて無料のハンズオンセミナー等も開催を予定しています。
 
 
-## Contribution
 
 
 ## Licence
@@ -135,4 +133,3 @@ Google Cloud Account
 ## Author
 
 [uyamazak](http://uyamazak.hatenablog.com/)
-
