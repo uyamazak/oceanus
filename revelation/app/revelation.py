@@ -3,6 +3,7 @@ import sys
 import redis
 from os import environ
 from time import sleep
+from multiprocessing import Process
 from google.cloud import pubsub
 from signal import signal, SIGINT, SIGTERM
 from common.utils import oceanus_logging
@@ -19,7 +20,9 @@ logger = oceanus_logging()
 SPREAD_SHEET_KEY = environ.get('SPREAD_SHEET_KEY')
 GOPUB_COMBINED_TOPIC_NAME = environ.get("GOPUB_COMBINED_TOPIC_NAME")
 GOPUB_COMBINED_SUBSCRIPTION_NAME = environ.get("GOPUB_COMBINED_SUBSCRIPTION_NAME")
-PUBSUB_PULL_INTERVAL = int(environ.get("PUBSUB_PULL_INTERVAL", 2))
+PUBSUB_PULL_INTERVAL = int(environ.get("PUBSUB_PULL_INTERVAL", 1))
+PROCESS_RESTART_MESSAGE_COUNT = 3000
+ONCE_PULL_COUNT = 100
 
 
 class Revelation:
@@ -60,7 +63,6 @@ class Revelation:
             self.keep_processing = False
         delete_subscription(GOPUB_COMBINED_TOPIC_NAME,
                             GOPUB_COMBINED_SUBSCRIPTION_NAME)
-        sys.exit("delete subscription and sys.exit()")
 
     def separete_channnel_data(self, raw_message):
         channel = raw_message.split()[0]
@@ -73,15 +75,21 @@ class Revelation:
 
         logger.info("REDIS_HOST:{}, "
                     "REDIS_PORT:{}, "
-                    "REDIS_LIST:{}".format(REDIS_HOST,
-                                           REDIS_PORT,
-                                           self.site_name_list))
+                    "REDIS_LIST:{}, "
+                    "GOPUB_COMBINED_TOPIC_NAME:{}, "
+                    "GOPUB_COMBINED_SUBSCRIPTION_NAME:{}, "
+                    "".format(REDIS_HOST,
+                              REDIS_PORT,
+                              self.site_name_list,
+                              GOPUB_COMBINED_TOPIC_NAME,
+                              GOPUB_COMBINED_SUBSCRIPTION_NAME))
 
         subscription = self.topic.subscription(GOPUB_COMBINED_SUBSCRIPTION_NAME)
-
+        message_count = 0
         while self.keep_processing:
-            results = subscription.pull(return_immediately=True, max_messages=100)
-            logger.debug('Received {} messages.'.format(len(results)))
+            results = subscription.pull(return_immediately=True,
+                                        max_messages=ONCE_PULL_COUNT)
+            # logger.debug('Received {} messages.'.format(len(results)))
             for ack_id, message in results:
                 separeted_message = self.separete_channnel_data(message.data)
                 if not separeted_message["data"]:
@@ -90,15 +98,28 @@ class Revelation:
                 count = apply_hook(separeted_message, self.redis)
                 if count > 0:
                     logger.debug("apply_hook count:{}"
-                                 "separeted_message: {}".format(count, separeted_message))
+                                 "separeted_message:{}".format(count, separeted_message))
             # Acknowledge received messages. If you do not acknowledge,
             # Pub/Sub will redeliver the message.
             if results:
                 subscription.acknowledge([ack_id for ack_id, message in results])
+            message_count += len(results)
             sleep(PUBSUB_PULL_INTERVAL)
+
+            if message_count > PROCESS_RESTART_MESSAGE_COUNT:
+                logger.info('over message_count break')
+                break
+        sys.exit("end while exit")
 
 
 if __name__ == '__main__':
     logger.info("starting make revelation and send to RabbitMQ...")
-    reve = Revelation([site["site_name"] for site in OCEANUS_SITES])
-    reve.main()
+
+    def main():
+        reve = Revelation([site["site_name"] for site in OCEANUS_SITES])
+        reve.main()
+
+    while True:
+        p = Process(target=main)
+        p.start()
+        p.join()
