@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import redis
+import gc
 from os import environ
 from time import sleep
 from multiprocessing import Process
@@ -12,8 +13,7 @@ from common.settings import (REDIS_HOST,
                              OCEANUS_SITES)
 from hook.hook import apply_hook
 from subscriber import (list_subscriptions,
-                        create_subscription,
-                        delete_subscription)
+                        create_subscription)
 
 logger = oceanus_logging()
 
@@ -21,8 +21,8 @@ SPREAD_SHEET_KEY = environ.get('SPREAD_SHEET_KEY')
 GOPUB_COMBINED_TOPIC_NAME = environ.get("GOPUB_COMBINED_TOPIC_NAME")
 GOPUB_COMBINED_SUBSCRIPTION_NAME = environ.get("GOPUB_COMBINED_SUBSCRIPTION_NAME")
 PUBSUB_PULL_INTERVAL = int(environ.get("PUBSUB_PULL_INTERVAL", 1))
-PROCESS_RESTART_MESSAGE_COUNT = 3000
-ONCE_PULL_COUNT = 100
+PROCESS_RESTART_MESSAGE_COUNT = int(environ.get("PROCESS_RESTART_MESSAGE_COUNT", 10000))
+ONCE_PULL_COUNT = int(environ.get("ONCE_PULL_COUNT", 200))
 
 
 class Revelation:
@@ -61,8 +61,8 @@ class Revelation:
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
             self.keep_processing = False
-        delete_subscription(GOPUB_COMBINED_TOPIC_NAME,
-                            GOPUB_COMBINED_SUBSCRIPTION_NAME)
+        # delete_subscription(GOPUB_COMBINED_TOPIC_NAME,
+        #                    GOPUB_COMBINED_SUBSCRIPTION_NAME)
 
     def separete_channnel_data(self, raw_message):
         channel = raw_message.split()[0]
@@ -123,3 +123,4 @@ if __name__ == '__main__':
         p = Process(target=main)
         p.start()
         p.join()
+        gc.collect()
