@@ -61,8 +61,6 @@ class Revelation:
     def signal_exit_func(self, num, frame):
         if self.keep_processing:
             self.keep_processing = False
-        # delete_subscription(GOPUB_COMBINED_TOPIC_NAME,
-        #                    GOPUB_COMBINED_SUBSCRIPTION_NAME)
 
     def separete_channnel_data(self, raw_message):
         channel = raw_message.split()[0]
@@ -89,7 +87,7 @@ class Revelation:
         while self.keep_processing:
             results = subscription.pull(return_immediately=True,
                                         max_messages=ONCE_PULL_COUNT)
-            # logger.debug('Received {} messages.'.format(len(results)))
+            logger.debug('Received {} messages.'.format(len(results)))
             for ack_id, message in results:
                 separeted_message = self.separete_channnel_data(message.data)
                 if not separeted_message["data"]:
@@ -97,8 +95,9 @@ class Revelation:
                     continue
                 count = apply_hook(separeted_message, self.redis)
                 if count > 0:
-                    logger.debug("apply_hook count:{}"
-                                 "separeted_message:{}".format(count, separeted_message))
+                    logger.info("apply_hook count:{}".format(count))
+                    logger.debug("separeted_message:{}".format(separeted_message))
+
             # Acknowledge received messages. If you do not acknowledge,
             # Pub/Sub will redeliver the message.
             if results:
@@ -107,7 +106,7 @@ class Revelation:
             sleep(PUBSUB_PULL_INTERVAL)
 
             if message_count > PROCESS_RESTART_MESSAGE_COUNT:
-                logger.info('over message_count break')
+                logger.info('over message_count break:{}'.format(message_count))
                 break
         sys.exit("end while exit")
 

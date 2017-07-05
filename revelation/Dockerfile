@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.6-slim
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
 RUN pip install --upgrade -q \
