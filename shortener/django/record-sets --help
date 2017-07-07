@@ -1,0 +1,49 @@
+[m[1mNAME[m
+    gcloud dns - manage your Cloud DNS managed-zones and record-sets
+
+[m[1mSYNOPSIS[m
+    [1mgcloud dns[m [4mGROUP[m [[4mGCLOUD_WIDE_FLAG ...[m]
+
+[m[1mDESCRIPTION[m
+    The gcloud dns command group lets you create and manage DNS zones and their
+    associated records on Google Cloud DNS.
+
+    Cloud DNS is a scalable, reliable and managed authoritative DNS service
+    running on the same infrastructure as Google. It has low latency, high
+    availability and is a cost-effective way to make your applications and
+    services available to your users.
+
+    More information on Cloud DNS can be found here:
+    https://cloud.google.com/dns and detailed documentation can be found here:
+    https://cloud.google.com/dns/docs/
+
+[m[1mGCLOUD WIDE FLAGS[m
+    These flags are available to all commands: --account, --configuration,
+    --flatten, --format, --help, --log-http, --project, --quiet, --trace-token,
+    --user-output-enabled, --verbosity. Run [1m$ gcloud help[m for details.
+
+[m[1mGROUPS[m
+    [1m[1;4mGROUP[1m[m is one of the following:
+
+     [1mmanaged-zones[m
+        Manage your Cloud DNS managed-zones.
+
+     [1mproject-info[m
+        View Cloud DNS related information for a project.
+
+     [1mrecord-sets[m
+        Manage the record-sets within your managed-zones.
+
+[m[1mEXAMPLES[m
+    To see how to create and maintain managed-zones, run:
+
+        $ gcloud dns managed-zones --help
+
+    To see how to maintain the record-sets within a managed-zone, run:
+
+        $ gcloud dns record-sets --help
+
+    To display Cloud DNS related information for your project, run:
+
+        $ gcloud dns project-info describe --help
+[m
