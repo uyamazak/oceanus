@@ -11,7 +11,7 @@ from common.utils import oceanus_logging
 from common.settings import (REDIS_HOST,
                              REDIS_PORT,
                              OCEANUS_SITES)
-from hook.hook import apply_hook
+from hook.hook import apply_hooks
 from subscriber import (list_subscriptions,
                         create_subscription)
 
@@ -93,7 +93,8 @@ class Revelation:
                 if not separeted_message["data"]:
                     logger.debug('not data')
                     continue
-                count = apply_hook(separeted_message, self.redis)
+                # Main process
+                count = apply_hooks(separeted_message, self.redis)
                 if count > 0:
                     logger.info("apply_hook count:{}".format(count))
                     logger.debug("separeted_message:{}".format(separeted_message))

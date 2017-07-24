@@ -1,9 +1,9 @@
-from .hooks.bizocean import BizoceanHook
-from .hooks.movieform import MovieformHook
-from .hooks.docreq import DocreqHook
+# from .hooks.bizocean import BizoceanHook
+# from .hooks.movieform import MovieformHook
+# from .hooks.docreq import DocreqHook
+from importlib import import_module
 
-INSTALLED_HOOKS = (
-    BizoceanHook,
-    MovieformHook,
-    DocreqHook,
-)
+# this is set of ("path.to.package_name", "HookFunctionName")
+INSTALLED_HOOKS = (("hook.hooks.bizocean", "BizoceanHook"),
+                   ("hook.hooks.movieform", "MovieformHook"),
+                   ("hook.hooks.docreq", "DocreqHook"))
