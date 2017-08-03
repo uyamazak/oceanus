@@ -1,8 +1,8 @@
 from os import environ
 from hook.base import BaseHook
-from task.celery_app import send_user_history
 from common.utils import oceanus_logging
-from task.celery_app import send2ws
+from task.googlebigquery.tasks import send_user_history
+from task.gspread.tasks import send2ws
 logger = oceanus_logging()
 
 DOQREQ_DELAY_SECONDS = int(environ.get("DOQREQ_DELAY_SECONDS", 90))

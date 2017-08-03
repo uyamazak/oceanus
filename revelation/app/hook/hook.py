@@ -1,17 +1,21 @@
-from .hook_settings import INSTALLED_HOOKS
 from importlib import import_module
+from common.utils import oceanus_logging
+from .hook_settings import INSTALLED_HOOKS
+logger = oceanus_logging()
 
 
 def get_installed_hooks():
-    hooks = []
-    for pkg_name, func_name in INSTALLED_HOOKS:
-        pkg = import_module(pkg_name)
-        hooks.append(getattr(pkg, func_name))
+    loaded_hooks = []
+    for hook_string in INSTALLED_HOOKS:
+        module_name, class_name = hook_string.rsplit(".", 1)
+        pkg = import_module(module_name)
+        loaded_hooks.append(getattr(pkg, class_name))
 
-    return hooks
+    return loaded_hooks
 
 
 hooks = get_installed_hooks()
+logger.info("installed_hooks: {}".format(hooks))
 
 
 def apply_hooks(message, redis):

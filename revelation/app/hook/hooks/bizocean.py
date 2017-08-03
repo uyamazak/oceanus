@@ -1,5 +1,5 @@
 from hook.base import BaseHook
-from task.celery_app import send2ws
+from task.gspread.tasks import send2ws
 
 
 class BizoceanHook(BaseHook):
