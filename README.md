@@ -1,4 +1,4 @@
-oceanus
+oeanus
 ========
 oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活用プロジェクトです。
 
@@ -7,9 +7,9 @@ oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活�
 インフラにはDockerとKubernetes(Google Container Engine)を活用して、メンテナンスコストを削減しています。
 
 ## Description
-![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170419/20170419163411.png "oceanus構成図")
+![oceanus構成図](https://docs.google.com/a/bizocean.co.jp/drawings/d/1qn4Sv-qOY-04SoEmJQXzZfb-dWGHzc654MYy_Y8v6Gk/pub?w=697&amp;h=901 "oceanus構成図")
 
-HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存し、簡単に素早くデータを活用できるようにします。
+HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存とPub/Subに送信し、簡単にデータを活用できます。
 
 開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
 
@@ -22,13 +22,11 @@ bizoceanでの実績
 ================
 会員数200万人、月間約1000万PVのbizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）のインフラコストでビッグデータを活用してます。
 
-HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータを高速かつ低コストでBigQueryに保存し、簡単に素早くデータを活用できるようにします。
-
 開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために作ってます。
+自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために開発が行われています。
 
-プログラミング言語にはPython、インフラにはDockerとGoogle Container Engineを利用しています。
+主なプログラミング言語にPython、インフラにはDockerとGoogle Container Engineを利用しています。
 
 bizocean( https://www.bizocean.jp/ )の会員属性や行動ログのデータを元に、メールマガジン広告のクリックを機械学習して予測し、クリック率の高いユーザーを抽出する等を行っています。
 
@@ -36,10 +34,10 @@ bizocean( https://www.bizocean.jp/ )の会員属性や行動ログのデータ�
 
 
 ### arms/
-web server
 Get parameters and save to Redis list and Cloud Pub/Sub through gopub.
 
 - Python3
+- gunicorn http://gunicorn.org/
 - falcon https://falconframework.org/
 - Cerberus http://docs.python-cerberus.org/en/stable/
 - Cloud Pub/Sub
@@ -96,6 +94,22 @@ management tools. docker build, push etc.
 
 - shell scripts
 
+### shortener/
+
+URL shortening service for oceanus.
+
+By accessing the URL you made you can send the data to the beacon (oceanus/arms) before redirecting.
+
+Since it operates with Google App Engine, it can withstand sudden mass access.
+
+Only users registered with Django can make shortend URL and they will not be issued to anonymous user.
+
+- GAE Standard environment
+- Cloud SQL (MySQL)
+- Python2.7
+- Django
+
+
 ## Demo
 https://www.bizocean.jp
 
@@ -122,7 +136,6 @@ Google Cloud Account
 自社での利用にご興味のある方はお問い合わせください。
 
 必要に応じて無料のハンズオンセミナー等も開催を予定しています。
-
 
 
 
