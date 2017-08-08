@@ -9,6 +9,8 @@ oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活�
 ## Description
 ![oceanus構成図](https://docs.google.com/a/bizocean.co.jp/drawings/d/1qn4Sv-qOY-04SoEmJQXzZfb-dWGHzc654MYy_Y8v6Gk/pub?w=697&h=901 "oceanus構成図")
 
+<img src="https://docs.google.com/a/bizocean.co.jp/drawings/d/1qn4Sv-qOY-04SoEmJQXzZfb-dWGHzc654MYy_Y8v6Gk/pub?w=697&amp;h=901">
+
 HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存とPub/Subに送信し、簡単にデータを活用できます。
 
 開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
