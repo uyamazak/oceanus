@@ -1,15 +1,14 @@
 oeanus
 ========
-oceanusはbizocean( https://www.bizocean.jp )の低予算データ収集＆活用プロジェクトです。
+oceanusはbizocean( https://www.bizocean.jp )のデータ収集＆活用プロジェクトです。
 
 データの蓄積と分析にはGoogle BigQuery、ストリーミング処理にはCloud Pub/Subを利用しています。
 
-インフラにはDockerとKubernetes(Google Container Engine)を活用して、メンテナンスコストを削減しています。
+インフラにはDockerとKubernetes(Google Container Engine)を利用して運用コストを削減しています。
 
 ## Description
-![oceanus構成図](https://docs.google.com/a/bizocean.co.jp/drawings/d/1qn4Sv-qOY-04SoEmJQXzZfb-dWGHzc654MYy_Y8v6Gk/pub?w=697&h=901 "oceanus構成図")
+![oceanus構成図](https://cdn-ak.f.st-hatena.com/images/fotolife/u/uyamazak/20170816/20170816160317.png "oceanus構成図")
 
-<img src="https://docs.google.com/a/bizocean.co.jp/drawings/d/1qn4Sv-qOY-04SoEmJQXzZfb-dWGHzc654MYy_Y8v6Gk/pub?w=697&amp;h=901">
 
 HTTP経由で送られたアクセスログ、クリックログ、フォームデータ、リンククリックなどのデータをBigQueryに保存とPub/Subに送信し、簡単にデータを活用できます。
 
@@ -24,16 +23,13 @@ bizoceanでの実績
 ================
 会員数200万人、月間約1000万PVのbizocean( https://www.bizocean.jp/ )の各種データを集め、月3万円以下（2017年4月現在）のインフラコストでビッグデータを活用してます。
 
-開発環境はローカルのDocker、本番はGoogle Container Engine（GKE）で運用しています。
+自社サービスのデータをBigQueryで一元管理したい。でも予算は限られているというbizoceanのために開発しています。
 
-自社サービスのデータをBigQueryで一元管理したい。でも予算は限られている、というbizoceanのために開発が行われています。
-
-主なプログラミング言語にPython、インフラにはDockerとGoogle Container Engineを利用しています。
+サーバーはGoogle Container Engine（GKE）を主ににすべてGCP上で運用しています。
 
 bizocean( https://www.bizocean.jp/ )の会員属性や行動ログのデータを元に、メールマガジン広告のクリックを機械学習して予測し、クリック率の高いユーザーを抽出する等を行っています。
 
-機械学習にはGoogle Cloud Datalabを使ってPythonで書いてます。
-
+データからのレポート作成にはData Studio( https://datastudio.google.com/ )、データ探索や機械学習にはCloud Datalabを使用しています。
 
 ### arms/
 Get parameters and save to Redis list and Cloud Pub/Sub through gopub.
@@ -102,7 +98,7 @@ URL shortening service for oceanus.
 
 By accessing the URL you made you can send the data to the beacon (oceanus/arms) before redirecting.
 
-Since it operates with Google App Engine, it can withstand sudden mass access.
+It operates with Google App Engine, so it can withstand sudden mass access.
 
 Only users registered with Django can make shortend URL and they will not be issued to anonymous user.
 
@@ -125,7 +121,7 @@ https://oceanus.bizocean.co.jp/swallow/bizocean?
 
 Docker
 
-Kubernetes OR Google Container Engine
+Google Container Engine
 
 Google Cloud Account
 
@@ -133,12 +129,11 @@ Google Cloud Account
 ## Install
 ## Contribution
 
-まだbizoceanでしか動いていないため、特有のコードや設定を多く含んでいます。
+個人、会社を問わず使えるように開発を進めていますが、まだ一部にbizocean特有のコードや設定を含んでいます。サンプルとしてご利用ください。
 
 自社での利用にご興味のある方はお問い合わせください。
 
-必要に応じて無料のハンズオンセミナー等も開催を予定しています。
-
+必要に応じてハンズオンセミナー等も開催も可能です。
 
 
 ## Licence
