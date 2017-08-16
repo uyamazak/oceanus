@@ -92,3 +92,41 @@ def is_internal_ip(client_ip_str) -> bool:
             return True
 
     return False
+
+
+def get_client_rad(access_route, logger=None):
+    """In most cases, the client's IP and
+    load balancer's IP are returned.
+    But rarely contains the user side of proxy IP,
+    return three IP in access_route
+
+    access_route
+    e.g.
+    [111.111.111.111] is example of real clieant ip.
+
+    - Direct Access
+      [111.111.111.111]
+
+    - via Google Load balancer
+      [111.111.111.111, 130.211.0.0/22]
+
+    - and via client's proxy
+      [002512 172.16.18.111, 111.111.111.111, 130.211.0.0/22]
+
+    - with unknown
+      ['unknown', '111.111.111.111', '222.222.222.222', '130.211.0.0/22']
+
+    """
+
+    if len(access_route) > 2 and access_route[0] == "unknown":
+        if logger:
+            logger.error('delete "unknown" from:{}'.format(access_route))
+        del access_route[0]
+
+    if len(access_route) == 3:
+        """via client's proxy ip"""
+        return access_route[1]
+
+    else:
+        """Direct or via Google Load balancer"""
+        return access_route[0]
