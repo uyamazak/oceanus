@@ -167,6 +167,6 @@ OCEANUS_SITES = (
      "table_schema": LOG_TABLE_SCHEMA,
      "time_partitioning_type": "",
      "method": 'pierce',
-     "chunk_num": 1,
+     "chunk_num": 5,
      },
 )

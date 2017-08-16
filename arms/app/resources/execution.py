@@ -4,7 +4,7 @@ import falcon
 import ipaddress
 from user_agents import parse as parse_ua
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
-from common.utils import oceanus_logging
+from common.utils import oceanus_logging, get_client_rad
 from common.errors import RedisWritingError
 logger = oceanus_logging()
 
@@ -75,39 +75,7 @@ class ExecutionResource(object):
         return user_data
 
     def get_client_rad(self, access_route):
-        """In most cases, the client's IP and
-        load balancer's IP are returned.
-        But rarely contains the user side of proxy IP,
-        return three IP in access_route
-
-        access_route
-        e.g.
-        [111.111.111.111] is example of real clieant ip.
-
-        - Direct Access
-          [111.111.111.111]
-
-        - via Google Load balancer
-          [111.111.111.111, 130.211.0.0/22]
-
-        - and via client's proxy
-          [002512 172.16.18.111, 111.111.111.111, 130.211.0.0/22]
-
-        - with unknown
-          ['unknown', '111.111.111.111', '222.222.222.222', '130.211.0.0/22']
-
-        """
-        if len(access_route) > 2 and access_route[0] == "unknown":
-            del access_route[0]
-            logger.error('delete unknown from:{}'.format(access_route))
-
-        if len(access_route) == 3:
-            """via client's proxy ip"""
-            return access_route[1]
-
-        else:
-            """Direct or via Google Load balancer"""
-            return access_route[0]
+        return get_client_rad(access_route, logger)
 
     def get_client_device(self, ua) -> str:
         device = ""

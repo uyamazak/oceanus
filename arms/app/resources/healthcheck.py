@@ -2,7 +2,7 @@ import falcon
 import redis
 import os
 from pprint import pformat
-from common.utils import oceanus_logging, is_internal_ip
+from common.utils import oceanus_logging, is_internal_ip, get_client_rad
 from common.settings import (OCEANUS_SITES,
                              REDIS_HOST,
                              REDIS_PORT)
@@ -50,40 +50,12 @@ class HealthCheckResource(object):
         return resp
 
     def _get_client_rad(self, access_route):
-        """In most cases, the client's IP and
-        load balancer's IP are returned.
-        But rarely contains the user side of proxy IP,
-        return three IP in access_route
-
-        access_route
-        e.g.
-        [*.*.*.*] is example of real clieant ip.
-
-        - Direct Access
-          [*.*.*.*]
-
-        - via Google Load balancer
-          [*.*.*.*, 130.211.0.0/22]
-
-        - and via client's proxy
-          [002512 172.16.18.111, *.*.*.*, 130.211.0.0/22]
-
-        """
-
-        if len(access_route) == 3:
-            """via client's proxy ip"""
-            return access_route[1]
-        else:
-            """Direct or via Google Load balancer"""
-            return access_route[0]
+        return get_client_rad(access_route, logger)
 
     def on_get(self, req, resp):
-        r_result = self._connect_redis()
-        if not r_result:
-            resp = self._create_error_resp(resp)
-            return
+        is_available_gopub()
 
-        if not is_available_gopub():
+        if not self._connect_redis():
             resp = self._create_error_resp(resp)
             return
 
