@@ -42,12 +42,12 @@ class NamecardHook(BaseHook):
             "tel2":          jsn.get("tel2", ""),
             "tel3":          jsn.get("tel3", ""),
             "email":        data.get("email", ""),
-            "bussiness":     jsn.get("bussiness", ""),
+            "business":      jsn.get("business", ""),
             "post":          jsn.get("post", ""),
             "occupational":  jsn.get("occupational", ""),
             "employees":     jsn.get("employees", ""),
             "turnover":      jsn.get("turnover", ""),
-            "anq1":          jsn.get("anq1", ""),
+            "anq":           jsn.get("anq", ""),
             "anq2":          jsn.get("anq2", ""),
         }
         logger.info("form_data:{}".format(form_data))
