@@ -1,6 +1,9 @@
 FROM python:3.6-slim
 MAINTAINER yu_yamazaki@bizocean.co.jp
 
+RUN apt-get update && \
+    apt-get install -y gcc
+
 RUN pip install --upgrade -q \
 pip \
 bigquery-python \
@@ -8,10 +11,8 @@ requests \
 redis \
 Celery \
 Jinja2 \
-google-api-python-client \
 google-cloud-pubsub \
 gspread \
-oauth2client==3.0.0 \
 sendgrid
 
 # set by kubernetes
@@ -24,4 +25,4 @@ RUN mkdir /oceanus/
 COPY app /oceanus/app
 WORKDIR /oceanus/app
 
-CMD ["python3","revelation.py"]
+CMD ["python3", "revelation.py"]
