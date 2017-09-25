@@ -1,8 +1,5 @@
-FROM python:3.6-slim
+FROM python:3.6-alpine
 MAINTAINER yu_yamazaki@bizocean.co.jp
-
-RUN apt-get update && \
-    apt-get install -y gcc
 
 RUN pip install --upgrade -q \
 pip \
@@ -11,7 +8,6 @@ requests \
 redis \
 Celery \
 Jinja2 \
-google-cloud-pubsub \
 gspread \
 sendgrid
 

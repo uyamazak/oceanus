@@ -1,11 +1,13 @@
 from task.celery_app import app, logger
 from .gspread import GoogleSpreadSheetsTasks
 
+
 gs_tasks = GoogleSpreadSheetsTasks()
 
 
 @app.task(bind=True, rate_limit='1/s')
 def send2ws(self, data, **kwargs):
+    logger.debug("send2ws")
     try:
         result = gs_tasks.send2ws(data, **kwargs)
     except Exception as e:

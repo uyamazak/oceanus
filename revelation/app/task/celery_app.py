@@ -20,4 +20,4 @@ celery_backend = 'rpc://'
 app = Celery('tasks', broker=celery_broker, backend=celery_backend)
 app.autodiscover_tasks(INSTALLED_TASKS)
 
-logger.info("INSTALLED_TASKS: {}".format(INSTALLED_TASKS))
+logger.info("!INSTALLED_TASKS: {}".format(INSTALLED_TASKS))
