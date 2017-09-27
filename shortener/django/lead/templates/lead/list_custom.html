@@ -1,0 +1,25 @@
+{% extends "lead/base.html" %}
+
+{% block title %}lead list{% endblock %}
+
+{% block h1%}
+bizocean カスタムリード管理画面
+{% endblock%}
+{% block content %}
+
+<div class="jumbotron">
+玄人向け
+</div>
+
+
+<table class="table table-striped table-bordered">
+{% for q in queries %}
+    <tr>
+        <td>
+        <a style="display:block;" href="{% url "detail_custom_lead" q.pk %}">{{ q.title }}</a>
+        </td>
+    </tr>
+{% endfor %}
+</table>
+
+{% endblock %}
