@@ -24,20 +24,20 @@ urlpatterns = [
 
     url(r'^oceanusadmin/', include(admin.site.urls), name="admin"),
 
-    url(r'^oceanuslogin$', auth_views.login, name='login'),
-    url(r'^oceanuslogout$', auth_views.logout, {'next_page': '/query'}, name='logout'),
+    url(r'^oceanuslogin/?$', auth_views.login, name='login'),
+    url(r'^oceanuslogout/?$', auth_views.logout, {'next_page': '/oceanuslogin/'}, name='logout'),
 
-    url(r'^shortener/make$', make, name='make'),
-    url(r'^shortener/make_article$', make_article, name='make_article'),
-    url(r'^shortener/makeshort$', shorten_url, name='shortenurl'),
+    url(r'^shortener/make/?$', make, name='make'),
+    url(r'^shortener/make_article/?$', make_article, name='make_article'),
+    url(r'^shortener/makeshort/?$', shorten_url, name='shortenurl'),
 
-    url(r'^lead$', list_queries, name='list_leads'),
-    url(r'^lead-custom$', list_custom_queries, name='list_custom_leads'),
-    url(r'^lead/(?P<query_id>\d+)$', detail_query, name='detail_lead'),
-    url(r'^lead-custom/(?P<query_id>\d+)$', detail_custom_query, name='detail_custom_lead'),
-    url(r'^lead/(?P<query_id>\d+)/download$', download_query, name='download_lead'),
+    url(r'^lead/?$', list_queries, name='list_leads'),
+    url(r'^lead-custom/?$', list_custom_queries, name='list_custom_leads'),
+    url(r'^lead/(?P<query_id>\d+)/?$', detail_query, name='detail_lead'),
+    url(r'^lead-custom/(?P<query_id>\d+)/?$', detail_custom_query, name='detail_custom_lead'),
+    url(r'^lead/(?P<query_id>\d+)/download/?$', download_query, name='download_lead'),
 
-    url(r'^(?P<short_id>\w{3,12})$', redirect_original, name='redirectoriginal'),
+    url(r'^(?P<short_id>\w{3,16})$', redirect_original, name='redirectoriginal'),
 ]
 if not os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
     import debug_toolbar

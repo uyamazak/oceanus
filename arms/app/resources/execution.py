@@ -37,6 +37,16 @@ class ExecutionResource(object):
 
         return result
 
+    def publish_to_redis(self, site_name, data):
+        redis_publish_result = None
+        try:
+            redis_publish_result = self.r.publish(site_name, data)
+        except Exception as e:
+            logger.error('Problem publish to Redis. '
+                         '{} {}'.format(e, redis_publish_result))
+
+        return redis_publish_result
+
     def validate_json(self, field, value, error):
         if not value:
             return

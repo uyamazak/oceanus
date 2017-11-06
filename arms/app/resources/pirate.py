@@ -163,6 +163,8 @@ class PirateResource(ExecutionResource):
         except RedisWritingError:
             resp.status = falcon.HTTP_500
 
+        self.publish_to_redis(site_name, redis_data)
+
         try:
             publish2gopub(site_name, redis_data)
         except Exception as e:

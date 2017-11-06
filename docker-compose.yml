@@ -38,6 +38,8 @@ services:
     depends_on:
       - redis-pd
       - rabbitmq
+    volumes:
+      - ./revelation/app:/oceanus/app
 
   revelation-worker:
     build: ./revelation

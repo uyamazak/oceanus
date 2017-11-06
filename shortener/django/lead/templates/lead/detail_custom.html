@@ -4,12 +4,16 @@
 
 {% block h1 %}{{ query_obj.title }}{% endblock %}
 
+
+{% block container-class %}container-fluid{% endblock %}
+
 {% block content %}
+{% if request.user.is_staff %} <a href="{% url 'admin:lead_query_change' query_obj.id %}" target="_blank">編集</a>{% endif %}
 <div class="text-right"><a href="{% url "list_leads" %}">案件一覧に戻る</a></div>
 <div class="jumbotron">
-        期間を指定して、リードを検索することができます。検索後、CSV形式にてダウンロードすることができます。<br>
-        ※この画面では一部の項目が表示されます。すべての項目を確認するには、ダウンロード後にご確認ください。
+        {{ query_obj.description }}
 </div>
+
 
 
 <h2>期間指定</h2>
@@ -21,9 +25,59 @@
 </div>
 </form>
 
-<p class="text-center">全{{ results.total_rows }}件</p>
+<script>
+/* Japanese initialisation for the jQuery UI date picker plugin. */
+/* Written by Kentaro SATO (kentaro@ranvis.com). */
+( function( factory ) {
+    if ( typeof define === "function" && define.amd ) {
 
-<table class="table table-striped table-bordered">
+        // AMD. Register as an anonymous module.
+        define( [ "../widgets/datepicker" ], factory );
+    } else {
+
+        // Browser globals
+        factory( jQuery.datepicker );
+    }
+}( function( datepicker ) {
+
+datepicker.regional.ja = {
+    closeText: "閉じる",
+    prevText: "&#x3C;前",
+    nextText: "次&#x3E;",
+    currentText: "今日",
+    monthNames: [ "1月","2月","3月","4月","5月","6月",
+    "7月","8月","9月","10月","11月","12月" ],
+    monthNamesShort: [ "1月","2月","3月","4月","5月","6月",
+    "7月","8月","9月","10月","11月","12月" ],
+    dayNames: [ "日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日" ],
+    dayNamesShort: [ "日","月","火","水","木","金","土" ],
+    dayNamesMin: [ "日","月","火","水","木","金","土" ],
+    weekHeader: "週",
+    dateFormat: "yy/mm/dd",
+    firstDay: 0,
+    isRTL: false,
+    showMonthAfterYear: true,
+    yearSuffix: "年" };
+datepicker.setDefaults( datepicker.regional.ja );
+
+return datepicker.regional.ja;
+
+} ) );
+$( function() {
+
+  $.datepicker.setDefaults( $.datepicker.regional[ "jp" ] );
+  $("#id_START_DATE, #id_END_DATE").datepicker({
+    dateFormat: "yy-mm-dd"
+  });
+} );
+</script>
+
+{% if results.total_rows  %}
+<p class="text-center">全{{ results.total_rows }}件</p>
+{% endif %}
+<div class="container-fluid">
+
+<table class="table table-striped table-bordered" style="font-size:0.9em;white-space: nowrap;">
   <thead class="thead-inverse">
   <tr>
   {% for s in results.schema %}
@@ -41,13 +95,18 @@
   {% endfor %}
   </tbody>
 </table>
-
+</div>
 
 {% if request.user.is_staff %}
-<h3>SQL ※スタッフのみ</h3>
+<h3>SQL</h3>
 <h4>プレビュー用</h4>
 <pre>
 {{ query_obj.preview_sql }}
+</pre>
+
+<h4>実行されるクエリ</h4>
+<pre>
+{{ query_sql }}
 </pre>
 {% endif %}
 {% endblock %}

@@ -115,28 +115,24 @@ def detail_custom_query(request, query_id):
     placements = _get_placements(query_obj.preview_sql)
     if request.method == "POST":
         form = create_form_from_placements(placements, {k: v for k, v in request.POST.items()})
+        replacements = _get_form_values(form)
+        if query_obj.preview_sql:
+            query_sql = query_obj.preview_sql.format(**replacements)
+            client = bigquery.Client()
+            bq = client.run_sync_query(query_sql)
+            bq.use_legacy_sql = query_obj.use_legacy_sql
+            bq.max_results = MAX_RESULTS
+            bq.run()
+            context = {"query_obj": query_obj,
+                       "query_sql": query_sql,
+                       "results": bq,
+                       "form": form}
     else:
         form = create_form_from_placements(placements)
-
+        context = {"query_obj": query_obj,
+                   "form": form}
     logger.debug("placements: {}".format(placements))
 
-    bq = None
-    query_sql = None
-    replacements = _get_form_values(form)
-
-    if query_obj.preview_sql:
-        query_sql = query_obj.preview_sql.format(**replacements)
-        client = bigquery.Client()
-        bq = client.run_sync_query(query_sql)
-        bq.use_legacy_sql = query_obj.use_legacy_sql
-        bq.max_results = MAX_RESULTS
-        bq.run()
-
-    context = {"query_obj": query_obj,
-               "query_sql": query_sql,
-               "results": bq,
-               "form": form,
-               }
     return render(request, 'lead/detail_custom.html', context)
 
 

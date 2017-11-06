@@ -167,6 +167,12 @@ OCEANUS_SITES = (
      "table_schema": LOG_TABLE_SCHEMA,
      "time_partitioning_type": "",
      "method": 'pierce',
-     "chunk_num": 5,
+     "chunk_num": 1,
+     },
+    {"site_name": "seegull",
+     "table_schema": LOG_TABLE_SCHEMA,
+     "time_partitioning_type": "DAY",
+     "method": 'swallow',
+     "chunk_num": 20,
      },
 )

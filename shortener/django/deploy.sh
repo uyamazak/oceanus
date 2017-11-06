@@ -1,1 +1,2 @@
-gcloud app --project oceanus-gae deploy
+gcloud app --project oceanus-gae deploy --no-promote
+

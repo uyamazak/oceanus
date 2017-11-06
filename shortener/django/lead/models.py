@@ -16,7 +16,7 @@ class Query(models.Model):
                                              "{START_DATE} {END_DATE} がYYYY-MM-DD形式で置換されます")
 
     use_legacy_sql = models.BooleanField(default=True, help_text="スタンダードSQLを使いたい場合はチェックを外してください。")
-    use_custom_replacement = models.BooleanField(default=False, help_text="START_DATE, END_DATE以外の置換を使いたい場合はチェックしてください")
+    use_custom_replacement = models.BooleanField(default=False, help_text="スタッフ専用。START_DATE, END_DATE以外の置換を使いたい場合はチェックしてください")
     users = models.ManyToManyField(User, help_text="表示とCSVダウンロードできるユーザーを指定してください")
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)

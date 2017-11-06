@@ -1,0 +1,19 @@
+docker build -t asia.gcr.io/oceanus-dev/oceanus-revelation:latest /home/BIZOCEAN/yu_yamazaki/project-oceanus/revelation
+
+docker images | grep revelation | head -5
+
+kubectl run oceanus-revelation --image=asia.gcr.io/oceanus-dev/oceanus-revelation:  --env="REDISMASTER_SERVICE_HOST=10.3.240.126"
+
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/revelation/www:/var/www -it --rm --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test asia.gcr.io/oceanus-dev/oceanus-revelation:v1
+
+#daemon
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/revelation/www:/var/www -it -d --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-revelation:latest
+
+docker run -v /home/BIZOCEAN/yu_yamazaki/project-oceanus/revelation/www:/var/www -it --rm --env DATA_SET=oceanus_test --env REDISMASTER_SERVICE_HOST=ml30gen9 -e REDISLIST=oceanus_test -e LOG_LEVEL=DEBUG asia.gcr.io/oceanus-dev/oceanus-revelation:latest
+
+
+#worker
+kc run revelation-worker --image=asia.gcr.io/oceanus-dev/revelation:v20170112-02 --command -- sh ./run_worker.sh
+
+# sub.py
+kc exec -it `kc get po | grep revelation | grep -v worker | awk '{print $1;}'` python sub.py
