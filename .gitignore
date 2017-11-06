@@ -1,3 +1,5 @@
+management/*/*
+management/*
 *.pyc
 .env*
 *.swp
