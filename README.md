@@ -87,11 +87,6 @@ A High-speed relay server written in Go language which receives data by socket T
 - Google Cloud Pub/Sub
 
 
-### management/
-management tools. docker build, push etc.
-
-- shell scripts
-
 ### shortener/
 
 URL shortening service for oceanus.
