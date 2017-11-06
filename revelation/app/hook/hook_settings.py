@@ -1,4 +1,3 @@
 INSTALLED_HOOKS = ("hook.hooks.bizocean.BizoceanHook",
                    "hook.hooks.movieform.MovieformHook",
-                   "hook.hooks.docreq.DocreqHook",
-                   "hook.hooks.namecard.NamecardHook")
+                   "hook.hooks.docreq.DocreqHook")
