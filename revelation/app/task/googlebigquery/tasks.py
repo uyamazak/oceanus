@@ -4,7 +4,7 @@ from task.celery_app import app, logger
 bq_tasks = GoogleBigQueryTasks()
 
 
-@app.task(bind=True, rate_limit='15/m')
+@app.task(bind=True, rate_limit='15/m', retry_kwargs={'max_retries': 3})
 def send_user_history(self, site_name, sid, data, **kwargs):
     try:
         result = bq_tasks.send_user_history(site_name=site_name,

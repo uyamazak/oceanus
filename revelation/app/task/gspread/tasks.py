@@ -5,7 +5,7 @@ from .gspread import GoogleSpreadSheetsTasks
 gs_tasks = GoogleSpreadSheetsTasks()
 
 
-@app.task(bind=True, rate_limit='1/s')
+@app.task(bind=True, rate_limit='1/s', retry_kwargs={'max_retries': 3})
 def send2ws(self, data, **kwargs):
     logger.debug("send2ws")
     try:

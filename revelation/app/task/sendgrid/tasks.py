@@ -4,7 +4,7 @@ from task.celery_app import app, logger
 sg_tasks = SendGridTasks()
 
 
-@app.task(bind=True, rate_limit='10/m')
+@app.task(bind=True, rate_limit='10/m', retry_kwargs={'max_retries': 3})
 def send2email(self, **kwargs):
     try:
         result = sg_tasks.send2email(kwargs)
