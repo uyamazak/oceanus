@@ -11,6 +11,7 @@ bigquery-python \
 google-api-python-client \
 cerberus \
 redis \
+gevent \
 user-agents
 
 # set by kubernetes
