@@ -12,6 +12,7 @@ google-api-python-client \
 cerberus \
 redis \
 gevent \
+timeout-decorator \
 user-agents
 
 # set by kubernetes

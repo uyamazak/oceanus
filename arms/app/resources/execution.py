@@ -3,10 +3,12 @@ import redis
 import falcon
 import ipaddress
 from user_agents import parse as parse_ua
+from timeout_decorator import timeout
 from common.settings import REDIS_HOST, REDIS_PORT, OCEANUS_SITES
 from common.utils import oceanus_logging, get_client_rad
 from common.errors import RedisWritingError
 logger = oceanus_logging()
+TIMEOUT_SECONDS = 3
 
 
 class ExecutionResource(object):
@@ -25,6 +27,7 @@ class ExecutionResource(object):
     def __init__(self):
         self.r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
+    @timeout(TIMEOUT_SECONDS)
     def write_to_redis(self, site_name, data):
         result = None
         try:
@@ -37,6 +40,7 @@ class ExecutionResource(object):
 
         return result
 
+    @timeout(TIMEOUT_SECONDS)
     def publish_to_redis(self, site_name, data):
         redis_publish_result = None
         try:
