@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import redis
-from os import environ
 from sys import exit
 from signal import signal, SIGINT, SIGTERM
 from common.utils import oceanus_logging
@@ -8,8 +7,6 @@ from common.settings import (REDIS_HOST, REDIS_PORT, OCEANUS_SITES)
 from hook.hook import apply_hooks
 
 logger = oceanus_logging()
-
-PROJECT_ID = environ["PROJECT_ID"]
 
 
 class Revelation:
@@ -56,8 +53,6 @@ class Revelation:
 
         self.pubsub.subscribe(self.site_name_list)
         for message in self.pubsub.listen():
-            # logger.debug("for message in pubsub.listen()")
-
             if not message:
                 logger.debug('not message')
                 continue
